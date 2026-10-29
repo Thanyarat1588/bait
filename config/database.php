@@ -90,7 +90,6 @@ define('BASE_PATH',   dirname(__DIR__));
 define('UPLOAD_PATH', BASE_PATH . '/uploads');
 define('UPLOAD_URL',  BASE_URL . '/uploads');
 define('UPLOAD_URL_ABSOLUTE', BASE_URL_ABSOLUTE . '/uploads'); // สำหรับ og:image ที่ต้องเป็น absolute URL
-define('CACHE_PATH',  BASE_PATH . '/cache/translations');
 
 // Translation settings — MyMemory (api.mymemory.translated.net), free, no API key.
 // Anonymous quota is 5,000 words/day; an email here (yours, not a user's —

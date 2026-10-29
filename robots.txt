@@ -1,9 +1,15 @@
+# Used only when mod_rewrite is off: otherwise .htaccess serves robots.php (the same rules, with the real domain in the
+# Sitemap line and the folder the site is installed in). These rules assume the folder /bait/ - change them when the site
+# is installed somewhere else. Crawlers read robots.txt only at the domain root: when the site lives in a sub-folder,
+# copy these lines into the robots.txt at the root of the domain.
 User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /includes/
-Disallow: /config/
-Disallow: /cache/
-Disallow: /uploads/
+Allow: /bait/
+Disallow: /bait/admin/
+Disallow: /bait/includes/
+Disallow: /bait/config/
+Disallow: /bait/cache/
+Allow: /bait/uploads/programs-docs/
+Disallow: /bait/uploads/
+Disallow: /bait/search.php
 
-Sitemap: BASE_URL_PLACEHOLDER/sitemap.xml.php
+# Sitemap must be a full address (https://your-domain/bait/sitemap.xml.php); robots.php writes it automatically.

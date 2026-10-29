@@ -164,7 +164,9 @@ $groupPager = function (string $g) use ($totals, $perPage, $pageNo, $pageKey, $q
     return paginationNav($p);
 };
 trackPageView($_SERVER['REQUEST_URI'], ($lang === 'en' ? 'Search: ' : 'ค้นหา: ') . $q);
-$pageTitle = ($lang === 'en' ? 'Search' : 'ค้นหา') . ($q ? ': ' . $q : '');
+// The English page title is translated by layout/header.php: a visitor's search words must never reach the translator
+// (every new query became a new translation_cache row and used up the daily quota) — so it is just "Search" there.
+$pageTitle = $lang === 'en' ? 'Search' : 'ค้นหา' . ($q ? ': ' . $q : '');
 $metaDesc = $lang === 'en'
     ? 'Search news, articles, programs and staff of the Faculty of Business Administration and Information Technology.'
     : 'ค้นหาข่าวสาร บทความ หลักสูตร และบุคลากรของคณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ';

@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             fileTrackNew($up);
             $imagePath = $up;
         } else {
-            $errors[] = 'อัปโหลดภาพไม่สำเร็จ (รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5MB)';
+            $errors[] = 'อัปโหลดภาพไม่สำเร็จ (รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ขนาดไม่เกิน 5MB)';
         }
     }
 
@@ -327,7 +327,7 @@ include BASE_PATH . '/admin/layout/header.php';
             <input type="file" name="image" id="imageInput" accept="image/jpeg,image/png,image/webp,image/gif">
           </label>
           <p class="ne-dropzone-filename" id="imageFilename"></p>
-          <p class="ne-hint">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5MB</p>
+          <p class="ne-hint">รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ขนาดไม่เกิน 5MB</p>
         </div>
 
          <div class="ne-panel">

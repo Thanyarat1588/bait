@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     fileCommitChanges();
     settingsDone($uploadFailed, !empty($notProcessed)
         ? 'ภาพต้องถูกปรับเป็นขาวดำก่อน: ใช้ Chrome หรือ Edge รุ่นใหม่ เลือกไฟล์แล้วรอข้อความ "ปรับภาพเป็นขาวดำ…แล้ว" ก่อนกดบันทึก'
-        : 'รองรับ JPG, PNG, WEBP ไม่เกิน 8MB');
+        : 'รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ไม่เกิน 8MB');
 }
 
 $pageTitle  = 'ตั้งค่าเว็บไซต์ — ข้อความ & ภาพ Footer';

@@ -17,6 +17,8 @@ if ($auth->isLoggedIn()) {
 }
 
 $faculty = $db->fetchOne("SELECT logo, faculty_name_th FROM faculty LIMIT 1") ?: [];
+// fresh install (no account yet): point to the one-time setup page that creates the Super Admin
+$noUsersYet = (int)($db->fetchOne("SELECT COUNT(*) AS c FROM users")['c'] ?? 0) === 0;
 
 $error   = '';
 $success = '';
@@ -345,6 +347,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <span><?= $expired === 'post'
         ? 'เซสชันหมดอายุ ข้อมูลที่เพิ่งกดบันทึก<strong>ยังไม่ได้บันทึก</strong> — กดปุ่มย้อนกลับของเบราว์เซอร์เพื่อคัดลอกข้อความที่พิมพ์ไว้ แล้วเข้าสู่ระบบใหม่และบันทึกอีกครั้ง'
         : 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' ?></span>
+    </div>
+    <?php endif; ?>
+    <?php if ($noUsersYet): ?>
+    <div class="alert alert-info alert-custom d-flex align-items-start gap-2 mb-3" role="alert">
+      <i class="bi bi-gear-fill" style="margin-top:2px;"></i>
+      <span>ยังไม่มีบัญชีผู้ใช้ในระบบ — <a href="<?= BASE_URL ?>/admin/setup.php" class="fw-semibold">ตั้งค่าครั้งแรก (สร้างบัญชี Super Admin)</a></span>
     </div>
     <?php endif; ?>
     <?php if ($error): ?>

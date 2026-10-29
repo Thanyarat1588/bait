@@ -87,7 +87,7 @@ function withLang(string $url, string $lang): string {
 // REQUEST_URI already includes the /bait subdirectory prefix (same as
 // $currentUrl above), so prepend scheme+host only — prepending BASE_URL
 // here would duplicate the subdirectory into /bait/bait/...
-$urlOrigin = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+$urlOrigin = siteOrigin();
 // the alternates point at the same clean address as the canonical, only ?lang= differs
 $altPath = (string)parse_url($currentUrl, PHP_URL_PATH) . (parse_url($currentUrl, PHP_URL_QUERY) ? '?' . parse_url($currentUrl, PHP_URL_QUERY) : '');
 $hrefThUrl = $urlOrigin . withLang($altPath, 'th');
@@ -156,16 +156,13 @@ $t = fn(string $s) => $lang === 'en' ? translateText($s, 'en') : $s;
 <script type="application/ld+json"><?= $schemaJson ?></script>
 <?php endif; ?>
 <?php if (empty($orgSchemaFull)): // pages that print the full organisation graph (home, about) set $orgSchemaFull; every other page gets this lean node with the same @id ?>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "EducationalOrganization",
-  "@id": "<?= BASE_URL_ABSOLUTE ?>/#faculty",
-  "name": "<?= e($siteName) ?>",
-  "alternateName": "BAIT RMUTSB",
-  "url": "<?= BASE_URL_ABSOLUTE ?>/"<?= !empty($faculty['logo']) ? ',' . PHP_EOL . '  "logo": "' . UPLOAD_URL_ABSOLUTE . '/' . e($faculty['logo']) . '"' : '' ?>
-}
-</script>
+<?php
+// json_encode, not e(): a name with " or \ used to make the JSON invalid (e() escapes for HTML, not for JSON)
+$leanOrg = ['@context' => 'https://schema.org', '@type' => 'EducationalOrganization', '@id' => BASE_URL_ABSOLUTE . '/#faculty',
+    'name' => (string)$siteName, 'alternateName' => 'BAIT RMUTSB', 'url' => BASE_URL_ABSOLUTE . '/'];
+if (!empty($faculty['logo'])) $leanOrg['logo'] = UPLOAD_URL_ABSOLUTE . '/' . $faculty['logo'];
+?>
+<script type="application/ld+json"><?= json_encode($leanOrg, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_PRETTY_PRINT) ?></script>
 <?php endif; ?>
 
 <link rel="sitemap" type="application/xml" href="<?= BASE_URL ?>/sitemap.xml">

@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     saveSettingsRow($db, $data);
     fileCommitChanges();
     $notice = ($mo['enabled'] && $mo['popup'] && $mo['popup_image'] === '') ? 'ยังไม่ได้อัปโหลดรูปป๊อปอัป ป๊อปอัปจะไม่แสดงจนกว่าจะมีรูป' : '';
-    settingsDone($uploadFailed, 'รองรับ JPG, PNG, WEBP', $notice);
+    settingsDone($uploadFailed, 'รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP', $notice);
 }
 
 $pageTitle  = 'ตั้งค่าเว็บไซต์ — ไว้อาลัย';

@@ -39,7 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $confirm = postRaw('confirm_password');
         $user    = $db->fetchOne("SELECT password_hash FROM users WHERE user_id = ?", [$me['user_id']]);
 
-        if (!password_verify($current, $user['password_hash'])) {
+        // Somebody using a signed-in computer left open must not be able to guess the password here without limit:
+        // 5 wrong guesses, then 15 minutes' wait (kept in the session; a new session needs the password to sign in anyway)
+        $pwFails = array_values(array_filter((array)($_SESSION['pw_change_fails'] ?? []), fn($t) => is_int($t) && $t > time() - 900));
+        if (count($pwFails) >= 5) {
+            $error = 'ใส่รหัสผ่านปัจจุบันผิดหลายครั้งเกินไป กรุณารอ ' . max(1, (int)ceil(($pwFails[0] + 900 - time()) / 60)) . ' นาทีแล้วลองใหม่';
+        } elseif (!password_verify($current, $user['password_hash'])) {
+            $pwFails[] = time();
+            $_SESSION['pw_change_fails'] = $pwFails;
             $error = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
         } elseif (strlen($new) < 8) {
             $error = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร';
@@ -47,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'รหัสผ่านใหม่และยืนยันไม่ตรงกัน';
         } else {
             $auth->changePassword($me['user_id'], $new);
+            unset($_SESSION['pw_change_fails']);
             $success = 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว';
         }
     }

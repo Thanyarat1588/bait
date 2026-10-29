@@ -88,7 +88,8 @@ function statGridHandle(Database $db, string $table, array $state): void {
 
     if ($action === 'delete') {
         $id = (int)($_POST['count_id'] ?? 0);
-        $db->delete($table, 'count_id = ?', [$id]);
+        // 0 rows = somebody else deleted it already (or a made-up id): say so instead of "deleted"
+        if ($db->delete($table, 'count_id = ?', [$id]) < 1) jsonError('ไม่พบแถวนี้ (อาจถูกลบไปแล้ว) กรุณาโหลดหน้านี้ใหม่');
         jsonSuccess([], 'ลบแล้ว');
     }
 }

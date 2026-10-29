@@ -18,7 +18,7 @@ $perPage = 15;
 
 $where  = '1=1';
 $params = [];
-if ($search) { $where .= ' AND a.title LIKE ?'; $params[] = "%$search%"; }
+if ($search) { $where .= ' AND a.title LIKE ?'; $params[] = '%' . addcslashes($search, '%_\\') . '%'; }
 if ($status) { $where .= ' AND a.status = ?';  $params[] = $status; }
 
 $total = (int)($db->fetchOne("SELECT COUNT(*) as c FROM articles a WHERE $where", $params)['c'] ?? 0);

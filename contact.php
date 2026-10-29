@@ -58,7 +58,7 @@ $contactIcons = [
   <div class="section-header">
     <div>
       <h2 style="color:var(--primary)"><?= $t('ศูนย์พื้นที่ของเรา') ?></h2>
-      <p><?= $t('เข้าเยี่ยมชมหรือติดต่อผ่านศูนย์พื้นที่ทั้ง 4 แห่ง') ?></p>
+      <p><?= $lang === 'en' ? 'Visit or get in touch through any of our ' . count($campuses) . ' campuses' : 'เข้าเยี่ยมชมหรือติดต่อผ่านศูนย์พื้นที่ทั้ง ' . count($campuses) . ' แห่ง' ?></p>
     </div>
   </div>
 

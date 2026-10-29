@@ -304,7 +304,7 @@ $breadcrumbItems = [
       // "&nbsp;" into visible "&amp;nbsp;" text on the page.
       $aboutPlain = html_entity_decode(strip_tags($faculty['about']), ENT_QUOTES, 'UTF-8');
       ?>
-      <div class="text-muted prose"><?= $lang === 'en' ? translateText($aboutPlain, 'en') : nl2br(e($aboutPlain)) ?></div>
+      <div class="text-muted prose"><?= nl2br(e($lang === 'en' ? translateText($aboutPlain, 'en', 'th', true) : $aboutPlain)) ?></div>
       <?php endif; ?>
     </div>
     <div class="reveal">
@@ -330,6 +330,35 @@ $breadcrumbItems = [
 
 <!-- ============ HISTORY TIMELINE ============ -->
 <?php
+// "ปัจจุบัน": the campuses and the number of programmes per level are read from the database (they used to be typed in
+// and went out of date: the page said ปวส. ๖ / ปริญญาตรี ๕ / ปริญญาโท ๑ while the programme list showed something else).
+// Counted: programmes open for applications. The first campus (lowest id) is the faculty office, as in orgSchema().
+$thaiNum = fn($n) => strtr((string)$n, ['0' => '๐', '1' => '๑', '2' => '๒', '3' => '๓', '4' => '๔', '5' => '๕', '6' => '๖', '7' => '๗', '8' => '๘', '9' => '๙']);
+$histCampusNames = [];
+foreach (array_values($campuses) as $i => $hc) $histCampusNames[] = trim((string)$hc['campus_name']) . ($i === 0 ? ' (สำนักงานคณบดี)' : '');
+$histLevels = [];
+foreach ($db->fetchAll("SELECT COALESCE(NULLIF(TRIM(el.level_abbr), ''), el.level_name) AS lv, COUNT(*) AS c
+                        FROM programs p JOIN education_levels el ON el.level_id = p.level_id
+                        WHERE p.is_active = 1 GROUP BY el.level_id, lv ORDER BY MIN(el.level_order), el.level_id") as $hl) {
+    $histLevels[] = $hl['lv'] . ' ' . $thaiNum((int)$hl['c']) . ' หลักสูตร';
+}
+$histNow = 'จัดการเรียนการสอนที่ศูนย์ทั้ง ' . $thaiNum(count($histCampusNames)) . ' แห่ง'
+    . ($histCampusNames ? ' คือ ' . (count($histCampusNames) > 1 ? implode(' ', array_slice($histCampusNames, 0, -1)) . ' และ' . end($histCampusNames) : $histCampusNames[0]) : '')
+    . ($histLevels ? ' ในระดับ ' . implode(' ', $histLevels) : '');
+if ($lang === 'en') {
+    // English written from the same numbers (machine translation of a sentence that changes with the data would vary)
+    $enList = fn(array $a) => count($a) > 1 ? implode(', ', array_slice($a, 0, -1)) . ' and ' . end($a) : ($a[0] ?? '');
+    $enCampus = [];
+    foreach (array_values($campuses) as $i => $hc) $enCampus[] = translateText(trim((string)$hc['campus_name']), 'en') . ($i === 0 ? ' (Dean\'s Office)' : '');
+    $enLevels = [];
+    foreach ($db->fetchAll("SELECT COALESCE(NULLIF(TRIM(el.level_abbr), ''), el.level_name) AS lv, COUNT(*) AS c
+                            FROM programs p JOIN education_levels el ON el.level_id = p.level_id
+                            WHERE p.is_active = 1 GROUP BY el.level_id, lv ORDER BY MIN(el.level_order), el.level_id") as $hl) {
+        $enLevels[] = (int)$hl['c'] . ' ' . translateText((string)$hl['lv'], 'en') . ((int)$hl['c'] === 1 ? ' program' : ' programs');
+    }
+    $histNow = 'Teaching is delivered at ' . (count($enCampus) === 1 ? 'one campus' : 'all ' . count($enCampus) . ' campuses') . ($enCampus ? ': ' . $enList($enCampus) : '')
+        . ($enLevels ? ', with ' . $enList($enLevels) : '') . '.';
+}
 $historySteps = [
   ['ก่อตั้ง', 'จุดเริ่มต้นของคณะ',
     ['คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ เดิมเป็นสถานที่ตั้งของสถาบันเทคโนโลยีราชมงคล วิทยาเขตพระนครศรีอยุธยา วาสุกรี']],
@@ -340,7 +369,7 @@ $historySteps = [
     ['มีประกาศในราชกิจจานุเบกษา ให้มหาวิทยาลัยเทคโนโลยีราชมงคลสุวรรณภูมิ จัดตั้งหน่วยงานเพื่อจัดการเรียนการสอนเป็นคณะ จำนวน ๖ คณะ']],
   ['ปัจจุบัน', 'ภารกิจและการจัดการเรียนการสอน',
     ['คณะมีภารกิจในการจัดการเรียนการสอนด้านบริหารธุรกิจและเทคโนโลยีสารสนเทศ วิจัย บริการวิชาการ และทำนุบำรุงศิลปวัฒนธรรม',
-     'จัดการเรียนการสอนที่ศูนย์ทั้ง ๔ แห่ง คือ ศูนย์พระนครศรีอยุธยา วาสุกรี (สำนักงานคณบดี) ศูนย์พระนครศรีอยุธยา หันตรา ศูนย์นนทบุรี และศูนย์สุพรรณบุรี ในระดับ ปวส. ๖ หลักสูตร ปริญญาตรี ๕ หลักสูตร และปริญญาโท ๑ หลักสูตร']],
+     $histNow]],
 ];
 ?>
 <section class="section section-alt">

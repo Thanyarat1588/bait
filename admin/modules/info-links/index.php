@@ -95,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
     $iconImagePath = null;
     if (!empty($_FILES['icon_image']['name'])) {
         $up = uploadMedia($_FILES['icon_image'], 'info-links');
+        if ($up) fileTrackNew($up['path']);   // first: a video/PDF refused below must not stay behind in uploads/
         if (!$up || $up['type'] !== 'image') jsonError('อัปโหลดรูปไอคอนไม่สำเร็จ (รองรับ JPG, PNG, GIF, WEBP, SVG)');
         $iconImagePath = $up['path'];
         fileTrackNew($iconImagePath);   // dropped again if this save does not go through

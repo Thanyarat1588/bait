@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
     $imagePath = null;
     if (!empty($_FILES['image']['name'])) {
         $up = uploadMedia($_FILES['image'], 'popups');
+        if ($up) fileTrackNew($up['path']);   // first: a video/PDF refused below must not stay behind in uploads/
         if (!$up || $up['type'] !== 'image') jsonError('อัปโหลดรูปไม่สำเร็จ (รองรับ JPG, PNG, GIF, WEBP, SVG ขนาดไม่เกิน 20MB)');
         $imagePath = $up['path'];
         fileTrackNew($imagePath);   // dropped again if this save does not go through

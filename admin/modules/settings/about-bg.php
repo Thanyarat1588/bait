@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasAboutBg) {
     }
     saveSettingsRow($db, ['about_bg' => json_encode($cur, JSON_UNESCAPED_UNICODE)]);
     fileCommitChanges();
-    settingsDone($uploadFailed, 'รองรับ JPG, PNG, WEBP ไม่เกิน 8MB');
+    settingsDone($uploadFailed, 'รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ไม่เกิน 8MB');
 }
 
 $pageTitle  = 'ข้อมูลคณะ — พื้นหลัง "เกี่ยวกับคณะ"';

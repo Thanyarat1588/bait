@@ -26,8 +26,8 @@ $where  = $statusF === 'active' ? staffCurrentSql('s') : ($statusF === 'resigned
 $params = [];
 if ($search) {
     $where   .= ' AND (s.full_name LIKE ? OR s.email LIKE ?)';
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    $params[] = '%' . addcslashes($search, '%_\\') . '%';
+    $params[] = '%' . addcslashes($search, '%_\\') . '%';
 }
 if ($campusId) { $where .= ' AND s.campus_id = ?'; $params[] = $campusId; }
 if ($typeId)   { $where .= ' AND s.staff_type_id = ?'; $params[] = $typeId; }

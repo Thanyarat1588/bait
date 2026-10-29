@@ -59,7 +59,7 @@ $programCampusNames = array_column(
 // in place, which would be overkill for a small reference widget.
 const RELATED_LIMIT = 5;
 $relatedTotal = (int)($db->fetchOne(
-    "SELECT COUNT(*) as c FROM programs WHERE major_id=? AND program_id != ?",
+    "SELECT COUNT(*) as c FROM programs WHERE major_id <=> ? AND program_id != ?",
     [$program['major_id'], $programId]
 )['c'] ?? 0);
 $related = $db->fetchAll(
@@ -67,7 +67,7 @@ $related = $db->fetchAll(
      FROM programs p
      LEFT JOIN majors m ON m.major_id=p.major_id
      JOIN education_levels el ON el.level_id=p.level_id
-     WHERE p.major_id=? AND p.program_id != ?
+     WHERE p.major_id <=> ? AND p.program_id != ?
      ORDER BY p.is_active DESC, p.level_id, p.program_id LIMIT " . RELATED_LIMIT,
     [$program['major_id'], $programId]
 );
@@ -274,12 +274,12 @@ $breadcrumbItems = [
         <h3 class="fs-h4"><?= $t('หลักสูตรที่เกี่ยวข้อง') ?></h3>
         <?php foreach ($related as $r): ?>
         <a href="?id=<?= (int)$r['program_id'] ?>&lang=<?= e($lang) ?>" class="side-list-item" style="text-decoration:none;align-items:flex-start">
-          <span class="badge-soft" style="flex-shrink:0"><?= e(tx($r['level_abbr'], $lang)) ?></span>
+          <span class="badge-soft" style="flex-shrink:0"><?= e(tx((string)($r['level_abbr'] ?? ''), $lang)) ?></span>
           <p class="side-list-title" style="margin:0"><?= e($t($r['program_name'])) ?><?= (int)$r['is_active'] !== 1 ? '<span class="program-closed-tag">' . ($lang === 'en' ? 'Closed' : 'ปิดรับสมัคร') . '</span>' : '' ?></p>
         </a>
         <?php endforeach; ?>
         <?php if ($relatedTotal > count($related)): ?>
-        <a href="<?= BASE_URL ?>/programs.php?major=<?= (int)$program['major_id'] ?>&lang=<?= e($lang) ?>" class="side-list-item" style="text-decoration:none;justify-content:center;font-weight:600;color:var(--primary)">
+        <a href="<?= BASE_URL ?>/programs.php?major=<?= $program['major_id'] === null ? 'none' : (int)$program['major_id'] ?>&lang=<?= e($lang) ?>" class="side-list-item" style="text-decoration:none;justify-content:center;font-weight:600;color:var(--primary)">
           <?= $t('ดูหลักสูตรทั้งหมดในสาขานี้') ?> <?= icon('arrow-right', 'icon-sm') ?>
         </a>
         <?php endif; ?>

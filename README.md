@@ -55,36 +55,63 @@ mysql -u root -p bait_db < database/schema.sql
 
 ### 3.1 สร้างบัญชี Super Admin คนแรก
 
-`database/schema.sql` ไม่มีบัญชีผู้ใช้ สร้างบัญชีแรกด้วยคำสั่ง (เปลี่ยนชื่อผู้ใช้ อีเมล และรหัสผ่านเป็นของคุณเอง):
-
-```bash
-php -r "echo password_hash('รหัสผ่านของคุณ', PASSWORD_BCRYPT, ['cost' => 12]), PHP_EOL;"
-```
-
-แล้วนำค่าที่ได้ไปใส่ใน SQL นี้ (phpMyAdmin → SQL):
-
-```sql
-INSERT INTO users (username, password_hash, full_name, email, role, is_active)
-VALUES ('ชื่อผู้ใช้', 'ค่าที่ได้จากคำสั่งข้างบน', 'ชื่อ-นามสกุล', 'อีเมล', 'superadmin', 1);
-```
+- **นำเข้าฐานข้อมูลจริง (ไฟล์ .sql ที่ส่งมอบ)**: บัญชีผู้ใช้ติดมากับฐานข้อมูลแล้ว ข้ามข้อนี้ได้
+- **ติดตั้งใหม่จาก `database/schema.sql`** (ไม่มีบัญชีผู้ใช้): เปิด `https://โดเมน/bait/admin/setup.php`
+  (หน้าเข้าสู่ระบบจะมีลิงก์ "ตั้งค่าครั้งแรก" ให้) กรอกชื่อผู้ใช้ ชื่อ-นามสกุล อีเมล และรหัสผ่าน แล้วกด "สร้างบัญชี Super Admin"
+  - หน้านี้ใช้ได้ **เฉพาะตอนที่ยังไม่มีบัญชีใดในระบบ** เมื่อสร้างแล้วจะปิดตัวเองถาวร (เปิดอีกครั้งจะขึ้น "ตั้งค่าเรียบร้อยแล้ว")
+  - ควรทำทันทีหลังนำเข้า schema.sql เพราะระหว่างที่ยังไม่มีบัญชี ใครก็ตามที่เปิดหน้านี้ได้ก่อนจะเป็นผู้สร้างบัญชี
 
 ระบบมี Super Admin ได้บัญชีเดียว บัญชีอื่นเพิ่มจากเมนู "จัดการผู้ใช้" ในหลังบ้าน (เป็น Sub Admin)
 
-### 4. ตั้งค่า Permissions (Linux/Mac)
+### 3.2 ลืมรหัสผ่าน Super Admin
+
+ในระบบไม่มีปุ่ม "ลืมรหัสผ่าน" ผู้ดูแลเซิร์ฟเวอร์ตั้งรหัสใหม่ได้ดังนี้
+
+1. สร้างค่า hash ของรหัสผ่านใหม่ (บนเครื่องที่มี PHP):
+   ```bash
+   php -r "echo password_hash('รหัสผ่านใหม่', PASSWORD_BCRYPT, ['cost' => 12]), PHP_EOL;"
+   ```
+2. phpMyAdmin → SQL (เปลี่ยน `ชื่อผู้ใช้` เป็นของจริง) — `session_version + 1` ทำให้ทุกเครื่องที่ค้างล็อกอินบัญชีนี้ไว้ถูกออกจากระบบ:
+   ```sql
+   UPDATE users SET password_hash = 'ค่าที่ได้จากข้อ 1', session_version = session_version + 1, is_active = 1
+   WHERE username = 'ชื่อผู้ใช้' AND role = 'superadmin';
+   ```
+3. ถ้าล็อกอินผิดหลายครั้งจนถูกพัก 15 นาที ลบไฟล์ `cache/login_attempts.json` ได้ทันที
+
+### 4. สิทธิ์โฟลเดอร์ (Linux)
 
 ```bash
-chmod -R 755 /var/www/html/bait/
-chmod -R 777 /var/www/html/bait/uploads/
-chmod -R 777 /var/www/html/bait/cache/
+find /var/www/html/bait -type d -exec chmod 755 {} \;
+find /var/www/html/bait -type f -exec chmod 644 {} \;
+chmod -R 775 /var/www/html/bait/uploads /var/www/html/bait/cache   # PHP ต้องเขียนได้ (ไม่ต้องใช้ 777)
 ```
 
-### 5. ตั้งค่า Apache (ถ้าใช้ mod_rewrite)
+`cache/` เก็บเซสชันของหลังบ้าน (`cache/sessions`) ตัวนับล็อกอินผิด และแคชสถิติ — เว็บเปิดอ่านโฟลเดอร์นี้ไม่ได้ (`cache/.htaccess`)
 
-ตรวจสอบว่าเปิดใช้ `mod_rewrite`:
-```bash
-sudo a2enmod rewrite
-sudo systemctl restart apache2
-```
+### 5. ค่าเฉพาะของเว็บเซิร์ฟเวอร์
+
+- **Apache + mod_rewrite + mod_headers** (ใช้ `.htaccess`) — บนเซิร์ฟเวอร์ของตัวเอง: `sudo a2enmod rewrite headers && sudo systemctl restart apache2`
+  และต้องตั้ง `AllowOverride All` ให้โฟลเดอร์เว็บ
+- **ชื่อโฟลเดอร์ `/bait/`**: `.htaccess` มี 2 บรรทัดที่ผูกกับโฟลเดอร์นี้ ถ้าติดตั้งที่อื่นต้องแก้ให้ตรง
+  ```apache
+  ErrorDocument 404 /bait/404.php      # ติดตั้งที่ราก → /404.php
+  RewriteBase /bait/                   # ติดตั้งที่ราก → /
+  ```
+  และค่า `base` ใน `config/database.host.php` ต้องเป็นโดเมน + โฟลเดอร์เดียวกัน (เช่น `www.example.ac.th/bait`)
+- **ขนาดไฟล์อัปโหลด**: หลังบ้านรับวิดีโอได้ถึง 50 MB จึงต้องให้ PHP รับได้ ≥ 60 MB
+  - Apache mod_php (เช่น XAMPP): `.htaccess` ตั้งให้แล้ว
+  - PHP-FPM / CGI (โฮสต์ส่วนใหญ่): ใช้ไฟล์ `.user.ini` ที่รากเว็บ (มีให้แล้ว มีผลภายใน 5 นาที)
+  - ถ้าโฮสต์ไม่อนุญาตทั้งสองแบบ ให้ตั้งในแผงควบคุมโฮสต์: `upload_max_filesize = 60M`, `post_max_size = 65M`
+- **Nginx**: ไม่อ่าน `.htaccess` ต้องตั้งกฎเทียบเท่าเอง (ห้ามเข้า `cache/ includes/ config/ layout/ admin/layout/`, ไฟล์ที่ขึ้นต้นด้วยจุด, `*.sql *.ini *.md *.json *.log`,
+  ส่ง `/robots.txt` → `robots.php`, `/sitemap.xml` → `sitemap.xml.php`, หน้า 404 → `/bait/404.php`) และตั้ง header `Content-Security-Policy` ให้ `uploads/` ตาม `uploads/.htaccess`
+- **robots.txt**: เว็บอยู่ใต้ `/bait/` แต่ search engine อ่าน robots.txt ที่รากโดเมนเท่านั้น
+  ถ้าต้องการให้กฎมีผล ให้คัดลอกเนื้อหาจาก `https://โดเมน/bait/robots.txt` ไปไว้ใน robots.txt ที่รากโดเมน
+
+### 6. ตรวจหลังติดตั้ง
+
+1. เปิดหน้าแรก หน้าข่าว หน้าหลักสูตร และสลับภาษา TH/EN
+2. เข้าหลังบ้าน → แดชบอร์ด (ถ้ามีคำเตือน "ระบบกันการเดารหัสผ่านปิดอยู่" ให้แก้สิทธิ์โฟลเดอร์ `cache/` ให้ PHP เขียนได้)
+3. ลองอัปโหลดรูปข่าว 1 รูป แล้วลบข่าวทดสอบนั้นทิ้ง
 
 ---
 
@@ -113,6 +140,7 @@ bait/
 │   ├── assets/               # CSS/JS ของหลังบ้าน (ตัวอย่างรูปที่อัปโหลด, ย่อรูป, ตัวกรอง ฯลฯ)
 │   ├── tools/                # เครื่องมือผู้ดูแล (ตรวจไฟล์อัปโหลดที่ไม่มีใครใช้)
 │   ├── dashboard.php · login.php · logout.php · 403.php
+│   └── setup.php             # ตั้งค่าครั้งแรก: สร้าง Super Admin (ใช้ได้เฉพาะตอนยังไม่มีบัญชี)
 ├── assets/                   # CSS (tokens, base, components, pages) / JS / รูปของหน้าเว็บ
 ├── config/
 │   ├── database.php          # การตั้งค่าระบบ (ไม่มีรหัสผ่าน)
@@ -122,6 +150,7 @@ bait/
 ├── uploads/                  # ไฟล์ที่อัปโหลด (รูปและเอกสารของเว็บไซต์ปัจจุบัน — อัปขึ้นโฮสต์ทั้งโฟลเดอร์)
 ├── cache/                    # แคชของระบบ (ไม่อยู่ใน repository)
 ├── database/schema.sql       # SQL Schema (โครงสร้างตาราง ไม่มีข้อมูลจริง)
+├── .htaccess · .user.ini     # ค่า Apache / PHP (ขนาดอัปโหลด, header ความปลอดภัย, กันไฟล์สำคัญ)
 └── *.php                     # หน้าเว็บ: index, news, news-detail, it-news, articles, programs, program-detail, majors,
                               #   tuition, staff, about, campuses, campus-detail, contact, forms, info, statistics,
                               #   statistics-staff, search, privacy, 404, sitemap.xml, robots
@@ -140,12 +169,33 @@ bait/
 
 ---
 
+## สำรองและกู้คืนข้อมูล
+
+ข้อมูลของเว็บมี 2 ส่วน ต้องสำรอง **ทั้งคู่ในวันเดียวกัน** (ฐานข้อมูลอ้างชื่อไฟล์ใน uploads)
+
+| ส่วน | วิธีสำรอง | วิธีกู้คืน |
+|------|----------|-----------|
+| ฐานข้อมูล | phpMyAdmin → เลือกฐาน → Export (Quick, SQL) หรือ `mysqldump --single-transaction -u USER -p DBNAME > bait_YYYYMMDD.sql` | สร้างฐานว่าง (utf8mb4) → Import ไฟล์ .sql หรือ `mysql -u USER -p DBNAME < bait_YYYYMMDD.sql` |
+| ไฟล์อัปโหลด | ดาวน์โหลดโฟลเดอร์ `uploads/` ทั้งโฟลเดอร์ (FTP / File Manager ของโฮสต์) | อัปโหลดกลับไปที่ `uploads/` เดิม |
+
+- แนะนำสำรองอย่างน้อยสัปดาห์ละครั้ง และทุกครั้งก่อนรัน SQL / อัปเดตโค้ด
+- ไฟล์สำรองมีข้อมูลบัญชีผู้ใช้ (hash รหัสผ่าน) และอีเมลบุคลากร — เก็บในที่ปลอดภัย ห้ามวางไว้ในโฟลเดอร์เว็บ
+- ไม่ต้องสำรอง `cache/` (สร้างใหม่เองได้)
+
+## Log ที่ควรดู
+
+- ข้อผิดพลาดของ PHP: error log ของโฮสต์ (แผงควบคุม → Error Logs) หรือ `apache/logs/error.log` ใน XAMPP — ข้อความของระบบขึ้นต้นด้วย `BAIT:`
+- ความพยายามล็อกอินผิด: `cache/login_attempts.json` (เก็บ 15 นาที)
+- หน้าเว็บไม่แสดงรายละเอียด error ให้ผู้เข้าชม (`display_errors Off`) ต้องดูจาก log เท่านั้น
+
+---
+
 ## สิทธิ์ผู้ใช้งาน
 
 | สิทธิ์ | รายละเอียด |
 |--------|-----------|
-| **superadmin** | เข้าถึงได้ทุกระบบ รวมถึงจัดการผู้ใช้ |
-| **subadmin** | จัดการเนื้อหาทั่วไป ไม่สามารถจัดการผู้ใช้ได้ |
+| **superadmin** | เข้าถึงได้ทุกระบบ รวมถึงจัดการผู้ใช้ (มีได้บัญชีเดียว) |
+| **subadmin** | ทุกเมนูยกเว้น "จัดการผู้ใช้" — รวมถึงตั้งค่าเว็บไซต์ โหมดไว้อาลัย และลบข้อมูล (ตามนโยบายของคณะ) |
 
 ---
 

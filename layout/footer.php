@@ -5,13 +5,18 @@
 $settings = $settings ?? $db->fetchOne("SELECT * FROM site_settings LIMIT 1") ?: [];
 $faculty  = $faculty  ?? $db->fetchOne("SELECT logo, faculty_abbr, faculty_name_th, faculty_name_en FROM faculty LIMIT 1") ?: [];
 $footerCampusList = $footerCampuses ?? $db->fetchAll("SELECT campus_id, campus_name FROM campuses ORDER BY campus_id");
-$footerText = $settings['footer_text'] ?? '© ' . date('Y') . ' คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ มหาวิทยาลัยเทคโนโลยีราชมงคลสุวรรณภูมิ';
 $t = $t ?? fn(string $s) => $lang === 'en' ? translateText($s, 'en') : $s;
+// Default when the admin left "ข้อความ Footer" empty: Thai text with the Buddhist-era year (2569, not 2026), English with the CE year
+$footerText = trim((string)($settings['footer_text'] ?? '')) !== '' ? $settings['footer_text'] : ($lang === 'en'
+    ? '© ' . date('Y') . ' Faculty of Business Administration and Information Technology, Rajamangala University of Technology Suvarnabhumi'
+    : '© ' . ((int)date('Y') + 543) . ' คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ มหาวิทยาลัยเทคโนโลยีราชมงคลสุวรรณภูมิ');
 
+// the address of the first campus (the faculty office, the same one about.php names), not a fixed campus_id = 1 that may
+// not exist after campuses were deleted and added again
 $campus1 = $db->fetchOne(
     "SELECT c.campus_name, c.address, cc.contact_value
      FROM campuses c LEFT JOIN campus_contacts cc ON cc.campus_id = c.campus_id AND cc.contact_type = 'phone'
-     WHERE c.campus_id = 1 LIMIT 1"
+     ORDER BY c.campus_id, cc.contact_id LIMIT 1"
 );
 ?>
 </main>

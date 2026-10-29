@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $imagePath = null;
     if (!empty($_FILES['image']['name'])) {
         $up = uploadMedia($_FILES['image'], 'form-categories');
+        if ($up) fileTrackNew($up['path']);   // first: a video/PDF refused below must not stay behind in uploads/
         if (!$up || $up['type'] !== 'image') $errors[] = 'อัปโหลดรูปไอคอนไม่สำเร็จ (รองรับ JPG, PNG, GIF, WEBP, SVG)';
         else { $imagePath = $up['path']; fileTrackNew($imagePath); }
     }

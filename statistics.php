@@ -79,7 +79,8 @@ $totalCampuses = count($db->fetchAll("SELECT campus_id FROM campuses"));
 // ---- data for the click-to-filter explorer (raw rows: a few dozen numbers) ----
 $lastUpdated = $db->fetchOne("SELECT MAX(updated_at) AS u FROM student_counts WHERE year = ?", [$statsYear])['u'] ?? null;
 $exCampuses = array_map(fn($r) => ['id' => (int)$r['campus_id'], 'name' => $t($r['campus_name'])], $db->fetchAll("SELECT campus_id, campus_name FROM campuses ORDER BY campus_id"));
-$exLevels   = array_map(fn($r) => ['id' => (int)$r['level_id'], 'name' => $t($r['level_abbr'])], $db->fetchAll("SELECT level_id, level_abbr FROM education_levels ORDER BY level_order, level_id"));
+// a level saved without its short name falls back to the full name (an empty one used to break the whole page)
+$exLevels   = array_map(fn($r) => ['id' => (int)$r['level_id'], 'name' => $t(trim((string)($r['level_abbr'] ?? '')) !== '' ? (string)$r['level_abbr'] : (string)$r['level_name'])], $db->fetchAll("SELECT level_id, level_abbr, level_name FROM education_levels ORDER BY level_order, level_id"));
 $exMajors   = array_map(fn($r) => ['id' => (int)$r['major_id'], 'name' => $t($r['major_name'])], $db->fetchAll("SELECT major_id, major_name FROM majors ORDER BY major_id"));
 $pcMap = [];
 foreach ($db->fetchAll("SELECT program_id, campus_id FROM program_campuses") as $r) { $pcMap[(int)$r['program_id']][] = (int)$r['campus_id']; }

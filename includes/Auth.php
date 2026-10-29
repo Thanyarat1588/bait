@@ -19,6 +19,17 @@ class Auth {
             // A session cookie PHP cannot use (made up / damaged: characters outside A-Z a-z 0-9 , -) made session_start()
             // log two warnings on every request; treat it as no cookie: a fresh session starts and the old one is replaced.
             if (isset($_COOKIE[SESSION_NAME]) && !(is_string($_COOKIE[SESSION_NAME]) && preg_match('/^[A-Za-z0-9,-]{1,256}$/', $_COOKIE[SESSION_NAME]))) unset($_COOKIE[SESSION_NAME]);
+            // The session file must live as long as the session may (SESSION_LIFETIME, 8 h). On many Linux hosts the system
+            // removes session files from its shared folder after php.ini's gc_maxlifetime (24 min) whatever this script asks,
+            // so an admin writing a long news item was signed out. The site keeps its own folder (cache/sessions, closed to the
+            // web by cache/.htaccess) with its own clean-up; if that folder cannot be used, the server's default stays.
+            $sessDir = dirname(__DIR__) . '/cache/sessions';
+            if ((is_dir($sessDir) || @mkdir($sessDir, 0700, true)) && is_writable($sessDir)) {
+                session_save_path($sessDir);
+                ini_set('session.gc_probability', '1');
+                ini_set('session.gc_divisor', '200');
+            }
+            ini_set('session.gc_maxlifetime', (string)SESSION_LIFETIME);
             session_set_cookie_params([
                 'lifetime' => SESSION_LIFETIME,
                 'path'     => '/',
@@ -68,6 +79,8 @@ class Auth {
 
         // Regenerate session ID เพื่อป้องกัน Session Fixation
         session_regenerate_id(true);
+        // a fresh CSRF token too: one seen before sign-in (on the login page of a shared computer, say) must not work after it
+        unset($_SESSION['csrf_token']);
 
         // อัปเดต last_login
         $this->db->update('users', ['last_login' => date('Y-m-d H:i:s')], 'user_id = ?', [$user['user_id']]);

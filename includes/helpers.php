@@ -818,9 +818,18 @@ function imgSizeAttrs(string $path, bool $absolute = false): string {
  * parameters that really change the content (id, category, page > 1, tag, ...). Search words, junk parameters, page=0,
  * cat=abc and the like all collapse into the clean URL, so search engines see one address per page.
  */
+/**
+ * scheme://host[:port] of the site as configured (BASE_URL_ABSOLUTE), not the Host header of the request: a request sent
+ * with a made-up Host must not make canonical / hreflang point search engines at another domain.
+ */
+function siteOrigin(): string {
+    $u = defined('BASE_URL_ABSOLUTE') ? (parse_url(BASE_URL_ABSOLUTE) ?: []) : [];
+    $scheme = ($u['scheme'] ?? '') ?: ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+    $host = ($u['host'] ?? '') !== '' ? $u['host'] . (isset($u['port']) ? ':' . $u['port'] : '') : (string)($_SERVER['HTTP_HOST'] ?? '');
+    return $scheme . '://' . $host;
+}
+
 function canonicalUrl(): string {
-    // same scheme as BASE_URL_ABSOLUTE (config/database.php also honours X-Forwarded-Proto behind an https proxy)
-    $scheme = (defined('BASE_URL_ABSOLUTE') ? parse_url(BASE_URL_ABSOLUTE, PHP_URL_SCHEME) : '') ?: ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
     $path = (string)(parse_url((string)($_SERVER['SCRIPT_NAME'] ?? '/'), PHP_URL_PATH) ?: '/');
     if (basename($path) === 'index.php') $path = rtrim(dirname($path), '/\\') . '/';   // the home page is the folder address
     $q = [];
@@ -840,7 +849,7 @@ function canonicalUrl(): string {
     // sitemap.xml use. (A bare URL can show either language through the lang cookie, so it is never the canonical one.)
     $q['lang'] = currentLang();
     ksort($q);
-    return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? '') . $path . ($q ? '?' . http_build_query($q) : '');
+    return siteOrigin() . $path . ($q ? '?' . http_build_query($q) : '');
 }
 /** A query-string value as a trimmed string; '' (or $default) when it is missing or not a plain string — e.g. ?search[]=x must not crash trim(). */
 function getStr(string $key, string $default = ''): string {
@@ -971,11 +980,16 @@ function timeAgo(string $datetime): string {
 // ============================================================
 // PAGE VIEW TRACKER
 // ============================================================
+/** Crawlers, link-preview fetchers and uptime monitors are not visitors: they would inflate every number and the table. */
+function isBotRequest(): bool {
+    $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+    return $ua === '' || (bool)preg_match('/(?<![a-z])bot(?![a-z0-9_])|[a-z]bot[\/;]|telegrambot|whatsapp|robot|crawl|spider|slurp|facebookexternalhit|bingpreview|linkpreview|headless|lighthouse|pingdom|uptime|monitor\/|site24x7|statuscake|curl|wget|python-requests|python-urllib|axios\/|node-fetch|okhttp|scrapy|httpclient|go-http|java\//i', $ua);
+}
+
 function trackPageView(string $url, string $title = ''): void {
     if (isset($_GET['itx_refresh'])) return;   // the page loading itself again in the background to show new IT news: not a visit
+    if (isBotRequest()) return;
     $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
-    // Crawlers, link-preview fetchers and uptime monitors are not visitors: they would inflate every number and the table.
-    if ($ua === '' || preg_match('/(?<![a-z])bot(?![a-z0-9_])|[a-z]bot[\/;]|telegrambot|whatsapp|robot|crawl|spider|slurp|facebookexternalhit|bingpreview|linkpreview|headless|lighthouse|pingdom|uptime|monitor\/|site24x7|statuscake|curl|wget|python-requests|python-urllib|axios\/|node-fetch|okhttp|scrapy|httpclient|go-http|java\//i', $ua)) return;
     // One VISIT = one person's time on the site: the first page they open counts, moving to other pages / back to the home
     // page / reloading does not. A cookie that lives until the browser is closed holds the time of their last page; a new
     // visit starts when it is missing (first page, browser closed and opened again) or older than 30 minutes (left the

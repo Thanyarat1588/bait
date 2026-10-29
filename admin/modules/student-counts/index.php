@@ -69,7 +69,7 @@ foreach ($counts as $r) $progNames[$r['program_id']] = $r['program_name'];
 $dupProgNames = array_keys(array_filter(array_count_values($progNames), fn($c) => $c > 1));
 $byProgram = [];
 foreach ($counts as $r) {
-    $label = in_array($r['program_name'], $dupProgNames, true) ? $r['program_name'] . ' (' . $r['level_abbr'] . ')' : $r['program_name'];
+    $label = in_array($r['program_name'], $dupProgNames, true) ? $r['program_name'] . ' (' . ($r['level_abbr'] ?? '') . ')' : $r['program_name'];
     $byProgram[$label] = ($byProgram[$label] ?? 0) + (int)$r['total'];
 }
 arsort($byProgram);
@@ -178,7 +178,7 @@ $chartData = [
             $label = $r['program_name'];
             $hasUndo = $hasPrev && $r['prev_total'] !== null && (int)$r['prev_total'] !== (int)$r['total']; ?>
           <tr data-row data-id="<?= (int)$r['count_id'] ?>" data-old="<?= (int)$r['total'] ?>" data-group="<?= (int)$cid ?>" data-name="<?= e($g['name'] . ' · ' . $label) ?>">
-            <td class="sg-name"><?= e($label) ?><small>[<?= e($r['level_abbr']) ?>] · <?= e($r['major_name'] ?? 'บัณฑิตศึกษา') ?></small></td>
+            <td class="sg-name"><?= e($label) ?><small>[<?= e($r['level_abbr'] ?? '') ?>] · <?= e($r['major_name'] ?? 'บัณฑิตศึกษา') ?></small></td>
             <td class="sg-now"><label>ตอนนี้</label><b><?= number_format($r['total']) ?></b></td>
             <td class="sg-delta"><label>เพิ่ม / ลด</label><input type="number" step="1" inputmode="numeric" data-delta placeholder="+ / −" aria-label="เพิ่มหรือลด: <?= e($label) ?>"></td>
             <td class="sg-new"><label>ใหม่ (รวม)</label><input type="number" min="0" step="1" inputmode="numeric" data-new value="<?= (int)$r['total'] ?>" aria-label="จำนวนใหม่: <?= e($label) ?>"></td>
@@ -221,7 +221,7 @@ $chartData = [
     </div>
     <p class="ne-hint" style="margin-top:12px;margin-bottom:14px;">เลือกระดับ/สาขาก่อน เพื่อกรองรายการหลักสูตรด้านล่างให้สั้นลง</p>
     <div class="ne-field"><label for="fProgram">หลักสูตร <span style="color:var(--ne-danger)">*</span></label>
-      <select class="ne-select" id="fProgram"><option value="">— เลือกหลักสูตร —</option><?php foreach ($programs as $p): ?><option value="<?= $p['program_id'] ?>" data-major="<?= $p['major_id'] ?>" data-level="<?= $p['level_id'] ?>">[<?= e($p['level_abbr']) ?>] <?= e($p['program_name']) ?> (<?= e($p['major_name']) ?>)<?= (int)$p['is_active'] !== 1 ? ' — ปิดรับสมัคร' : '' ?></option><?php endforeach; ?></select></div>
+      <select class="ne-select" id="fProgram"><option value="">— เลือกหลักสูตร —</option><?php foreach ($programs as $p): ?><option value="<?= $p['program_id'] ?>" data-major="<?= $p['major_id'] ?>" data-level="<?= $p['level_id'] ?>">[<?= e($p['level_abbr'] ?? '') ?>] <?= e($p['program_name']) ?> (<?= e($p['major_name'] ?? '') ?>)<?= (int)$p['is_active'] !== 1 ? ' — ปิดรับสมัคร' : '' ?></option><?php endforeach; ?></select></div>
     <div class="ne-field" style="margin-bottom:0;"><label for="fTotal">จำนวนนักศึกษา (คน)</label><input type="number" class="ne-input" id="fTotal" value="0" min="0" step="1"></div>
   </div>
   <div class="modal-footer" style="border-top:1px solid var(--ne-line);">

@@ -5,7 +5,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/includes/helpers.php';
 if(!defined('BASE_PATH'))define('BASE_PATH',dirname(dirname(dirname(__DIR__))));
 $auth=new Auth();$auth->requireLogin();$db=Database::getInstance();
 if($_SERVER['REQUEST_METHOD']==='POST'){verifyCsrf();$a=$_POST['action']??'';
-  if($a==='save'){$id=(int)($_POST['level_id']??0);$name=postStr('level_name');$abbr=postStr('level_abbr');$ord=(int)($_POST['level_order']??0);if(!$name)jsonError('กรุณากรอกชื่อ');if(nameTaken($db,'education_levels','level_name','level_id',$name,$id))jsonError(dupMsg('ระดับการศึกษา', $name));$d=['level_name'=>$name,'level_abbr'=>$abbr?:null,'level_order'=>$ord];if($id){$db->update('education_levels',$d,'level_id=?',[$id]);jsonSuccess([],'แก้ไขแล้ว');}else{$db->insert('education_levels',$d);jsonSuccess([],'เพิ่มแล้ว');}}
+  if($a==='save'){$id=(int)($_POST['level_id']??0);$name=postStr('level_name');$abbr=postStr('level_abbr');$ord=(int)($_POST['level_order']??0);if(!$name)jsonError('กรุณากรอกชื่อ');if($abbr==='')jsonError('กรุณากรอกชื่อย่อ (ใช้แสดงบนการ์ดหลักสูตรและในกราฟสถิติ เช่น ปวช., ป.ตรี)');if(nameTaken($db,'education_levels','level_name','level_id',$name,$id))jsonError(dupMsg('ระดับการศึกษา', $name));$d=['level_name'=>$name,'level_abbr'=>$abbr?:null,'level_order'=>$ord];if($id){$db->update('education_levels',$d,'level_id=?',[$id]);jsonSuccess([],'แก้ไขแล้ว');}else{$db->insert('education_levels',$d);jsonSuccess([],'เพิ่มแล้ว');}}
   if($a==='delete'){$id=(int)($_POST['level_id']??0);$c=$db->count('programs','level_id=?',[$id]);if($c)jsonError("มีหลักสูตร $c รายการ");$db->delete('education_levels','level_id=?',[$id]);jsonSuccess([],'ลบแล้ว');}
 }
 $rows=$db->fetchAll("SELECT l.*,(SELECT COUNT(*) FROM programs WHERE level_id=l.level_id) pc FROM education_levels l ORDER BY l.level_order,l.level_id");
@@ -66,7 +66,7 @@ include BASE_PATH.'/admin/layout/header.php';?>
   <div class="modal-body" style="padding:20px;">
     <input type="hidden" id="fId">
     <div class="ne-field"><label for="fName">ชื่อระดับ <span style="color:var(--ne-danger)">*</span></label><input type="text" class="ne-input" id="fName"></div>
-    <div class="ne-field"><label for="fAbbr">ชื่อย่อ</label><input type="text" class="ne-input" id="fAbbr" placeholder="ปวช., ปวส., ป.ตรี"></div>
+    <div class="ne-field"><label for="fAbbr">ชื่อย่อ <span style="color:#c1443d">*</span></label><input type="text" class="ne-input" id="fAbbr" maxlength="20" required placeholder="ปวช., ปวส., ป.ตรี"></div>
     <div class="ne-field" style="margin-bottom:0;"><label for="fOrd">ลำดับ</label><input type="number" class="ne-input" id="fOrd" value="0" min="0"></div>
   </div>
   <div class="modal-footer" style="border-top:1px solid var(--ne-line);">

@@ -58,16 +58,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Dynamic contact rows — parallel arrays, same convention as
     // programs/create.php's topics_icon[]/topics_title[].
-    $cTypes  = $_POST['contact_type'] ?? [];
-    $cValues = $_POST['contact_value'] ?? [];
-    $cLabels = $_POST['display_label'] ?? [];
+    $arr = fn(string $k) => is_array($_POST[$k] ?? null) ? $_POST[$k] : [];
+    $cTypes  = $arr('contact_type');
+    $cValues = $arr('contact_value');
+    $cLabels = $arr('display_label');
     $submittedContacts = [];
     foreach ($cValues as $i => $value) {
-        $value = trim($value);
-        $type  = trim($cTypes[$i] ?? '');
-        $label = trim($cLabels[$i] ?? '');
+        $value = trim(is_string($value) ? $value : '');
+        $type  = trim(is_string($cTypes[$i] ?? null) ? $cTypes[$i] : '');
+        $label = trim(is_string($cLabels[$i] ?? null) ? $cLabels[$i] : '');
         if ($value === '' || !isset($contactTypeLabels[$type])) continue;
         $submittedContacts[] = ['contact_type' => $type, 'contact_value' => $value, 'display_label' => $label ?: null];
+    }
+
+    // every length is checked BEFORE anything is written: a too-long value used to stop the save half way (the campus row
+    // already changed, the old contacts already deleted) while the page said nothing had been saved
+    $tooLong = function (string $what, string $v, int $max) use (&$errors) {
+        if (mb_strlen($v, 'UTF-8') > $max) $errors[] = $what . ' ยาวเกินกำหนด (ใส่ได้ไม่เกิน ' . $max . ' ตัวอักษร ตอนนี้ ' . mb_strlen($v, 'UTF-8') . ')';
+    };
+    $tooLong('ชื่อศูนย์พื้นที่', $name, 255);
+    $tooLong('ที่อยู่', $address, 255);
+    $tooLong('ลิงก์แผนที่', $mapUrl, 500);
+    foreach ($submittedContacts as $n => $sc) {
+        $tooLong('ช่องทางติดต่อแถวที่ ' . ($n + 1) . ': ข้อมูลติดต่อ', $sc['contact_value'], 255);
+        $tooLong('ช่องทางติดต่อแถวที่ ' . ($n + 1) . ': ชื่อแสดง', (string)$sc['display_label'], 100);
     }
 
     // the same channel typed twice in this form
@@ -80,6 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $data = ['campus_name' => $name, 'address' => $address ?: null, 'map_url' => $mapUrl ?: null, 'image' => $imagePath];
+        // one transaction: the campus row and its contacts are saved together or not at all (a request that stops part way
+        // is rolled back when the connection closes, and its new picture is removed by fileTrackNew's clean-up)
+        $db->beginTransaction();
         if ($isEdit) {
             $db->update('campuses', $data, 'campus_id = ?', [$campusId]);
             $_SESSION['flash_success'] = 'แก้ไขศูนย์พื้นที่เรียบร้อยแล้ว';
@@ -92,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($submittedContacts as $c) {
             $db->insert('campus_contacts', array_merge(['campus_id' => $campusId], $c));
         }
+        $db->commit();
 
         fileCommitChanges();
         header('Location: index.php'); exit;
@@ -358,8 +376,8 @@ function contactRowHtml(type, value, label) {
   }
   return `<div class="ne-contact-row">
     <select class="ne-select" name="contact_type[]">${opts}</select>
-    <input type="text" class="ne-input" name="contact_value[]" placeholder="เบอร์โทร / URL / @username" value="${value.replace(/"/g,"&quot;")}">
-    <input type="text" class="ne-input" name="display_label[]" placeholder="ชื่อแสดง (ไม่บังคับ)" value="${label.replace(/"/g,"&quot;")}">
+    <input type="text" class="ne-input" name="contact_value[]" maxlength="255" placeholder="เบอร์โทร / URL / @username" value="${value.replace(/"/g,"&quot;")}">
+    <input type="text" class="ne-input" name="display_label[]" maxlength="100" placeholder="ชื่อแสดง (ไม่บังคับ)" value="${label.replace(/"/g,"&quot;")}">
     <button type="button" class="ne-contact-remove" onclick="this.closest(\'.ne-contact-row\').remove()"><i class="bi bi-trash"></i></button>
   </div>`;
 }

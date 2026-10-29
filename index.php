@@ -295,7 +295,7 @@ if ($mqOpt['enabled'] && $mq['items']):
   <div class="container">
     <div class="section-header center">
       <h2><?= $lang === 'en' ? 'Our Campuses' : 'ศูนย์พื้นที่' ?></h2>
-      <p><?= $lang === 'en' ? '4 campuses across central Thailand' : '4 ศูนย์พื้นที่ ครอบคลุมภาคกลางของประเทศ' ?></p>
+      <p><?= $lang === 'en' ? count($campuses) . ' campuses across central Thailand' : count($campuses) . ' ศูนย์พื้นที่ ครอบคลุมภาคกลางของประเทศ' ?></p>
     </div>
     <div class="grid grid-4">
       <?php foreach ($campuses as $c): echo campusCard($c, $lang); endforeach; ?>

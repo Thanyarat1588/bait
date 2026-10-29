@@ -45,7 +45,7 @@ $where  = '1=1';
 $params = [];
 if ($search) {
     $where   .= ' AND n.title LIKE ?';
-    $params[] = "%$search%";
+    $params[] = '%' . addcslashes($search, '%_\\') . '%';
 }
 if ($catId) {
     $where   .= ' AND n.category_id = ?';

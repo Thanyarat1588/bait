@@ -15,9 +15,10 @@ if (!in_array($lang, ['th', 'en'])) $lang = 'th';
 $_SESSION['lang'] = $lang;
 $t = fn(string $s) => $lang === 'en' ? translateText($s, 'en') : $s;
 
-$levelId    = (int)($_GET['level']  ?? 0);
-$campusId   = (int)($_GET['campus'] ?? 0);
-$majorParam = $_GET['major'] ?? '';
+// getStr: ?major[]=x is not a string (an array cast to int is 1, which used to filter by major id 1)
+$levelId    = (int)getStr('level');
+$campusId   = (int)getStr('campus');
+$majorParam = getStr('major');
 // "none" is the บัณฑิตศึกษา (graduate studies) filter — programs with no
 // สาขาวิชา assigned (ป.โท/ป.เอก that stand on their own, not tied to any one
 // undergraduate major). Anything else is a normal numeric major_id.
@@ -115,6 +116,7 @@ $breadcrumbItems = [
       <?php endforeach; ?>
       <option value="none" <?= $majorId === 'none' ? 'selected' : '' ?>><?= $t('บัณฑิตศึกษา') ?></option>
     </select>
+    <noscript><button type="submit" class="btn btn-primary btn-sm"><?= $t('กรอง') ?></button></noscript>
     <?php if ($levelId || $campusId || $majorId): ?>
     <a href="?lang=<?= e($lang) ?>" class="btn btn-ghost btn-sm"><?= icon('close', 'icon-sm') ?> <?= $t('ล้างตัวกรอง') ?></a>
     <?php endif; ?>

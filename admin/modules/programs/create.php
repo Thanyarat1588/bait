@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             fileTrackNew($upImg);
             $imagePath = $upImg;
         } else {
-            $errors[] = 'อัปโหลดภาพไม่สำเร็จ (รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5MB)';
+            $errors[] = 'อัปโหลดภาพไม่สำเร็จ (รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ขนาดไม่เกิน 5MB)';
         }
     }
 
@@ -209,6 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'image'        => $imagePath,
             'is_active'    => $isActive,
         ];
+        $db->beginTransaction();   // the programme and its campuses are saved together or not at all
         if ($isEdit) {
             $db->update('programs', $data, 'program_id = ?', [$programId]);
             $savedProgramId = $programId;
@@ -224,6 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($campusIds as $cid) {
             $db->insert('program_campuses', ['program_id' => $savedProgramId, 'campus_id' => $cid]);
         }
+        $db->commit();
 
         fileCommitChanges();
         redirectThenPrewarm('index.php', [$name, $aboutDesc, mb_substr(trim(strip_tags($aboutDesc)), 0, 140, 'UTF-8')]);
@@ -568,7 +570,7 @@ textarea.ne-input { overflow-y: hidden; resize: none; }
                      accept="image/jpeg,image/png,image/webp,image/gif">
             </label>
             <p class="ne-dropzone-filename" id="imageFilename"></p>
-            <p class="ne-hint">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5MB — แสดงเป็นภาพหลักในหน้ารายละเอียดหลักสูตร</p>
+            <p class="ne-hint">รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ขนาดไม่เกิน 5MB — แสดงเป็นภาพหลักในหน้ารายละเอียดหลักสูตร</p>
           </div>
         </div>
 

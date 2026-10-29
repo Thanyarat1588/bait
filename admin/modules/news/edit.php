@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             fileTrackNew($uploaded);
             $imagePath = $uploaded;
         } else {
-            $errors[] = 'อัปโหลดภาพไม่สำเร็จ (รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5MB)';
+            $errors[] = 'อัปโหลดภาพไม่สำเร็จ (รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ขนาดไม่เกิน 5MB)';
         }
     }
 
@@ -90,8 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ไม่เปลี่ยน slug และผู้เขียน (user_id) เมื่อแก้ไข: the author stays the person who wrote it, not whoever edited it last
         ];
 
+        $db->beginTransaction();   // the news item and its SDGs are saved together or not at all
         $db->update('news', $data, 'news_id = ?', [$newsId]);
         saveNewsSdgs($newsId, $selectedSdgs);
+        $db->commit();
         fileCommitChanges();
         $_SESSION['flash_success'] = 'แก้ไขข่าวสารเรียบร้อยแล้ว';
         $catName = '';
@@ -514,7 +516,7 @@ include BASE_PATH . '/admin/layout/header.php';
                    accept="image/jpeg,image/png,image/webp,image/gif">
           </label>
           <p class="ne-dropzone-filename" id="imageFilename"></p>
-          <p class="ne-hint">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5MB</p>
+          <p class="ne-hint">รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ขนาดไม่เกิน 5MB</p>
         </div>
 
         <?php include __DIR__ . '/_sdg_panel.php'; ?>

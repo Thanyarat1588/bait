@@ -25,12 +25,15 @@ const MODULES = [
   ['initStaffTreeScale', 'staff-tree-scale'], ['initExecBoard', 'exec-board'], ['initExecScroll', 'exec-scroll'],
   ['initCampusMap', 'campus-map'], ['initHistoryTimeline', 'history-timeline'], ['initCardSlider', 'card-slider'], ['initThaiWrap', 'thai-wrap'], ['initMourning', 'mourning'],
 ];
-const settled = await Promise.allSettled(MODULES.map(([, file]) => import(`./${file}.js${v}`)));
+// (a promise, not a top-level await: Safari 14 and older load module scripts but do not know top-level await, and
+// there the whole file failed to parse, so no menu, slider or search worked at all)
 const INIT = {};
-settled.forEach((r, i) => {
-  const [name, file] = MODULES[i];
-  if (r.status === 'fulfilled' && typeof r.value[name] === 'function') INIT[name] = r.value[name];
-  else console.error(`BAIT: could not load ${file}.js`, r.status === 'rejected' ? r.reason : 'missing export ' + name);
+const loaded = Promise.allSettled(MODULES.map(([, file]) => import(`./${file}.js${v}`))).then((settled) => {
+  settled.forEach((r, i) => {
+    const [name, file] = MODULES[i];
+    if (r.status === 'fulfilled' && typeof r.value[name] === 'function') INIT[name] = r.value[name];
+    else console.error(`BAIT: could not load ${file}.js`, r.status === 'rejected' ? r.reason : 'missing export ' + name);
+  });
 });
 const run = (name) => { try { if (INIT[name]) INIT[name](); } catch (err) { console.error(`BAIT: ${name} failed`, err); } };
 
@@ -126,8 +129,10 @@ function boot() {
   initShareFacebook();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
-}
+loaded.then(() => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+});

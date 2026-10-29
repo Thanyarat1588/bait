@@ -30,8 +30,8 @@ if ($articleId) {
     );
     if (!$article) { require __DIR__ . '/404.php'; exit; }
 
-    // in SQL, so two readers at once both count; updated_at = updated_at keeps "last edited" (sitemap) as it was
-    $db->query('UPDATE articles SET view_count = view_count + 1, updated_at = updated_at WHERE article_id = ?', [$articleId]);
+    // in SQL, so two readers at once both count; updated_at = updated_at keeps "last edited" (sitemap) as it was; bots do not count
+    if (!isBotRequest()) $db->query('UPDATE articles SET view_count = view_count + 1, updated_at = updated_at WHERE article_id = ?', [$articleId]);
 
     // Related = shares the most tags with this article (tags is a flat "a, b, c" column; compared
     // case-insensitively). A tag used by few articles counts for more than one used by almost all of

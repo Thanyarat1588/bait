@@ -67,7 +67,7 @@ if ($ready && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $image = $up;
             } elseif (!empty($_FILES['image']['name'])) {
                 $up = uploadImage($_FILES['image'], 'committee');
-                if (!$up) jsonError('อัปโหลดรูปไม่สำเร็จ (รองรับ JPG, PNG, WEBP ไม่เกิน 5MB)');
+                if (!$up) jsonError('อัปโหลดรูปไม่สำเร็จ (รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP ไม่เกิน 5MB)');
                 fileTrackNew($up);
                 if ($image) fileQueueDelete($image);
                 $image = $up;

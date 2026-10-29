@@ -23,19 +23,26 @@ if (!isset(sdgList()[$sdgFilter]) || !hasNewsSdgs()) $sdgFilter = 0;
 $page    = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 10;
 
-$where  = "n.status = 'เผยแพร่'";
-$params = [];
-if ($catId)  { $where .= ' AND n.category_id = ?'; $params[] = $catId; }
-if ($search) { $where .= ' AND n.title LIKE ?';     $params[] = '%' . addcslashes($search, '%_\\') . '%'; }   // a typed % or _ searches for that character (as in search.php)
+// Each filter as its own [sql, param], so the counts beside the category pills and on the SDG tiles can follow all the
+// OTHER filters (search word, tag, ...) — "(3)" then means "3 items if you click this", not the site-wide total.
+$conds = [];
+if ($catId)  $conds['cat']    = ['n.category_id = ?', $catId];
+if ($search) $conds['search'] = ['n.title LIKE ?', '%' . addcslashes($search, '%_\\') . '%'];   // a typed % or _ searches for that character (as in search.php)
 if ($tagFilter) {
     // tags is a flat "a, b, c" column, not a separate table — match a
     // whole tag, not a substring of one (e.g. "ครู" must not also match
     // inside "ไหว้ครู") by normalizing both sides to a comma-delimited
     // list with no spaces and requiring the tag to sit between two commas.
-    $where .= " AND CONCAT(',', REPLACE(n.tags, ' ', ''), ',') LIKE CONCAT('%,', ?, ',%')";
-    $params[] = addcslashes(str_replace(' ', '', $tagFilter), '%_\\');   // ?tag=% must not match every item
+    $conds['tag'] = ["CONCAT(',', REPLACE(n.tags, ' ', ''), ',') LIKE CONCAT('%,', ?, ',%')", addcslashes(str_replace(' ', '', $tagFilter), '%_\\')];   // ?tag=% must not match every item
 }
-if ($sdgFilter) { $where .= ' AND n.news_id IN (SELECT news_id FROM news_sdgs WHERE sdg = ?)'; $params[] = $sdgFilter; }
+if ($sdgFilter) $conds['sdg'] = ['n.news_id IN (SELECT news_id FROM news_sdgs WHERE sdg = ?)', $sdgFilter];
+/** [where, params] of the published news matching every filter except $skip. */
+$whereExcept = function (string $skip = '') use ($conds): array {
+    $w = "n.status = 'เผยแพร่'"; $p = [];
+    foreach ($conds as $k => [$sql, $val]) if ($k !== $skip) { $w .= ' AND ' . $sql; $p[] = $val; }
+    return [$w, $p];
+};
+[$where, $params] = $whereExcept();
 
 $total = (int)($db->fetchOne("SELECT COUNT(*) as c FROM news n WHERE $where", $params)['c'] ?? 0);
 $pager = paginate($total, $perPage, $page, '?cat=' . $catId . '&search=' . urlencode($search) . '&tag=' . urlencode($tagFilter) . ($sdgFilter ? '&sdg=' . $sdgFilter : '') . '&lang=' . $lang . '&page={page}');
@@ -53,12 +60,18 @@ $newsList = attachNewsSdgs($newsList);
 $sdgCounts = [];
 if (hasNewsSdgs()) {
     try {
-        foreach ($db->fetchAll("SELECT s.sdg, COUNT(*) AS c FROM news_sdgs s JOIN news n ON n.news_id = s.news_id WHERE n.status = 'เผยแพร่' GROUP BY s.sdg") as $r) $sdgCounts[(int)$r['sdg']] = (int)$r['c'];
+        [$sw, $sp] = $whereExcept('sdg');
+        foreach ($db->fetchAll("SELECT s.sdg, COUNT(*) AS c FROM news_sdgs s JOIN news n ON n.news_id = s.news_id WHERE $sw GROUP BY s.sdg", $sp) as $r) $sdgCounts[(int)$r['sdg']] = (int)$r['c'];
     } catch (Throwable $e) { $sdgCounts = []; }
 }
+// site-wide counts: the sidebar list (its links start a fresh filter)
 $categories = $db->fetchAll("SELECT c.*, COUNT(n.news_id) as cnt
      FROM categories c LEFT JOIN news n ON n.category_id=c.category_id AND n.status='เผยแพร่'
      GROUP BY c.category_id ORDER BY c.category_name");
+// the pills above the list keep the other filters, so their counts do too
+[$cw, $cp] = $whereExcept('cat');
+$pillCounts = [];
+foreach ($db->fetchAll("SELECT n.category_id, COUNT(*) AS c FROM news n WHERE $cw GROUP BY n.category_id", $cp) as $r) $pillCounts[(int)$r['category_id']] = (int)$r['c'];
 
 $featuredNews = $db->fetchAll(
     "SELECT n.news_id, n.title, n.image, n.created_at, c.category_name, c.color
@@ -135,11 +148,11 @@ $breadcrumbItems = [
       <div class="tab-pills" style="margin-bottom:24px">
         <?php $keep = array_filter(['search' => $search, 'tag' => $tagFilter, 'sdg' => $sdgFilter ?: ''], fn($v) => $v !== ''); ?>
         <a href="?<?= e(http_build_query($keep + ['lang' => $lang])) ?>" class="tab-pill <?= !$catId ? 'is-active' : '' ?>">
-          <?= $t('ทั้งหมด') ?> (<?= number_format($db->count('news', "status='เผยแพร่'")) ?>)
+          <?= $t('ทั้งหมด') ?> (<?= number_format(array_sum($pillCounts)) ?>)
         </a>
         <?php foreach ($categories as $cat): ?>
         <a href="?<?= e(http_build_query(['cat' => (int)$cat['category_id']] + $keep + ['lang' => $lang])) ?>" class="tab-pill <?= $catId == $cat['category_id'] ? 'is-active' : '' ?>">
-          <?= e($t($cat['category_name'])) ?> (<?= $cat['cnt'] ?>)
+          <?= e($t($cat['category_name'])) ?> (<?= number_format($pillCounts[(int)$cat['category_id']] ?? 0) ?>)
         </a>
         <?php endforeach; ?>
       </div>
@@ -186,7 +199,8 @@ $breadcrumbItems = [
         <h4><?= icon('target') ?> <?= $lang === 'en' ? 'Sustainable Development Goals (SDGs)' : 'เป้าหมายการพัฒนาที่ยั่งยืน (SDGs)' ?></h4>
         <div class="sdg-grid">
           <?php foreach (sdgList() as $no => $g): $cnt = $sdgCounts[$no] ?? 0; ?>
-          <a href="?<?= e(http_build_query($sdgFilter === $no ? ['lang' => $lang] : ['sdg' => $no, 'lang' => $lang])) ?>" class="sdg-tile<?= $sdgFilter === $no ? ' is-active' : '' ?><?= $cnt ? '' : ' is-empty' ?>" style="--sdg:<?= $g[0] ?>;--sdg-ink:<?= inkOn($g[0]) ?>" title="SDGs <?= $no ?>: <?= e($lang === 'en' ? $g[2] : $g[1]) ?> (<?= $cnt ?>)"<?= $sdgFilter === $no ? ' aria-current="true"' : '' ?>><?= $no ?><small><?= $cnt ?></small><span class="visually-hidden"> <?= e($lang === 'en' ? $g[2] : $g[1]) ?>, <?= $cnt ?> <?= $lang === 'en' ? 'news' : 'ข่าว' ?></span></a>
+          <?php $sdgKeep = array_filter(['cat' => $catId ?: '', 'search' => $search, 'tag' => $tagFilter], fn($v) => $v !== ''); // a tile keeps the category / search / tag, as a category pill keeps the SDG ?>
+          <a href="?<?= e(http_build_query($sdgFilter === $no ? $sdgKeep + ['lang' => $lang] : $sdgKeep + ['sdg' => $no, 'lang' => $lang])) ?>" class="sdg-tile<?= $sdgFilter === $no ? ' is-active' : '' ?><?= $cnt ? '' : ' is-empty' ?>" style="--sdg:<?= $g[0] ?>;--sdg-ink:<?= inkOn($g[0]) ?>" title="SDGs <?= $no ?>: <?= e($lang === 'en' ? $g[2] : $g[1]) ?> (<?= $cnt ?>)"<?= $sdgFilter === $no ? ' aria-current="true"' : '' ?>><?= $no ?><small><?= $cnt ?></small><span class="visually-hidden"> <?= e($lang === 'en' ? $g[2] : $g[1]) ?>, <?= $cnt ?> <?= $lang === 'en' ? 'news' : 'ข่าว' ?></span></a>
           <?php endforeach; ?>
         </div>
       </div>

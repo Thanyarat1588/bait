@@ -30,8 +30,9 @@ if (!$news) {
     exit;
 }
 
-// in SQL, so two readers at once both count; updated_at = updated_at keeps "last edited" (sitemap, dateModified) as it was
-$db->query('UPDATE news SET view_count = view_count + 1, updated_at = updated_at WHERE news_id = ?', [$newsId]);
+// in SQL, so two readers at once both count; updated_at = updated_at keeps "last edited" (sitemap, dateModified) as it was.
+// Bots are not readers (the same rule as the visit statistics), so "most read" matches the statistics page.
+if (!isBotRequest()) $db->query('UPDATE news SET view_count = view_count + 1, updated_at = updated_at WHERE news_id = ?', [$newsId]);
 $newsSdgs = newsSdgsMap([$newsId])[$newsId] ?? [];   // the SDGs this news is linked to
 
 $related = $db->fetchAll(

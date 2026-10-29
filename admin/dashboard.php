@@ -23,7 +23,7 @@ $stats = [
     'majors'      => $db->count('majors'),
     'campuses'    => $db->count('campuses'),
     'departments' => $db->count('departments'),
-    'forms'       => $db->count('forms'),
+    'forms'       => $db->count('forms', 'is_active = 1'),   // shown on the site, like the other cards
 ];
 
 // ── Latest news ──

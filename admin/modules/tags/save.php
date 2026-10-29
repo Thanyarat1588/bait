@@ -23,6 +23,8 @@ verifyCsrf();
 $name = postStr('name');
 if ($name === '') jsonError('กรุณากรอกชื่อแท็ก');
 if (mb_strlen($name, 'UTF-8') > 100) jsonError('ชื่อแท็กยาวเกินไป (ไม่เกิน 100 ตัวอักษร)');
+// news/articles keep their tags as "a, b, c": a comma inside one tag would split it into two tags there
+if (preg_match('/[,，]/u', $name)) jsonError('ชื่อแท็กมีเครื่องหมายจุลภาค (,) ไม่ได้ เพราะระบบใช้ , คั่นแต่ละแท็ก หากต้องการ 2 แท็กให้เพิ่มทีละแท็ก');
 
 $existing = $db->fetchOne("SELECT tag_id, name FROM tags WHERE name = ?", [$name]);
 if ($existing) {

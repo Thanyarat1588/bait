@@ -16,16 +16,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     verifyCsrf();   // delete is a POST with the CSRF token from the confirm dialog, never a plain link
     $id = (int)($_POST['id'] ?? 0);
     $p  = $db->fetchOne("SELECT * FROM programs WHERE program_id = ?", [$id]);
+    // a programme with recorded student numbers is never deleted (that would wipe real statistics): it is closed for
+    // applications instead (หลักสูตร > แก้ไข > สถานะการรับสมัคร) and stays on the site with the "ปิดรับสมัคร" badge
+    $studentRows = $p ? (int)($db->fetchOne('SELECT COUNT(*) AS c FROM student_counts WHERE program_id = ?', [$id])['c'] ?? 0) : 0;
+    if ($p && $studentRows) {
+        $_SESSION['flash_error'] = 'ลบหลักสูตร "' . $p['program_name'] . '" ไม่ได้ เพราะมีข้อมูลจำนวนนักศึกษาบันทึกไว้ ' . $studentRows
+            . ' รายการ (ใช้ในหน้าสถิติ) หากหลักสูตรนี้ไม่รับนักศึกษาแล้ว ให้แก้ไขหลักสูตรแล้วตั้งสถานะเป็น "ปิดรับสมัคร" แทน';
+        header('Location: index.php'); exit;
+    }
     if ($p) {
         fileQueueDelete($p['file']); fileQueueDelete($p['image']);   // the PDF and the cover image, deleted below once the row is really gone
-        // one transaction: if the programme itself cannot be deleted, its campuses and student counts are not lost either
+        // one transaction: if the programme itself cannot be deleted, its campuses are not lost either
         $db->beginTransaction();
         $db->delete('program_campuses','program_id = ?',[$id]);
-        // student_counts.program_id has a foreign key back to this table with
-        // no ON DELETE clause (defaults to RESTRICT) — deleting a program
-        // that still has recorded student counts throws an uncaught
-        // PDOException (fatal error / HTTP 500) unless those rows go first.
-        $db->delete('student_counts','program_id = ?',[$id]);
         $feeRows = hasTuition() ? (int)($db->fetchOne('SELECT COUNT(*) AS c FROM tuition_fees WHERE program_id = ?', [$id])['c'] ?? 0) : 0;   // removed with it (ON DELETE CASCADE)
         $db->delete('programs','program_id = ?',[$id]);
         $db->commit();
@@ -408,13 +411,19 @@ include BASE_PATH . '/admin/layout/header.php';
 </div>
 
 <script>
-// Separate from the shared confirmDelete() in footer.php — deleting a program
-// also silently wipes its student_counts rows (real recorded enrollment
-// numbers, not junk) with no FK block, so this warns about that data loss
-// specifically instead of the generic "cannot be undone" note.
+// Separate from the shared confirmDelete() in footer.php: a programme with recorded student numbers cannot be deleted
+// (the server refuses too) — the admin is pointed to "ปิดรับสมัคร" instead; its tuition rows go with it, so that is said.
 function confirmDeleteProgram(url, name, studentCountRows, tuitionRows) {
+  if (studentCountRows > 0) {
+    Swal.fire({
+      title: 'ลบหลักสูตรนี้ไม่ได้',
+      html: `<strong>${escapeHtml(name)}</strong> มีข้อมูลจำนวนนักศึกษาบันทึกไว้ ${studentCountRows} รายการ (ใช้ในหน้าสถิติ)<br><br>หากหลักสูตรนี้ไม่รับนักศึกษาแล้ว ให้กดแก้ไขหลักสูตร แล้วตั้ง <b>สถานะการรับสมัคร</b> เป็น <b>"ปิดรับสมัคร"</b> แทน หลักสูตรจะยังแสดงบนเว็บพร้อมป้ายปิดรับสมัคร และสถิติไม่หาย`,
+      icon: 'info',
+      confirmButtonText: 'เข้าใจแล้ว'
+    });
+    return;
+  }
   const lost = [];
-  if (studentCountRows > 0) lost.push(`ข้อมูลจำนวนนักศึกษาที่บันทึกไว้ ${studentCountRows} รายการ`);
   if (tuitionRows > 0) lost.push(`ค่าเทอม (หลักสูตร &gt; ค่าเทอม) ${tuitionRows} แถว`);
   const extra = lost.length
     ? `<br><br><span class="text-danger">คำเตือน: หลักสูตรนี้มี${lost.join(' และ')} ข้อมูลเหล่านี้จะถูกลบไปพร้อมกันด้วย</span>`

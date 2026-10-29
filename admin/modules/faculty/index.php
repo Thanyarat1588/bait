@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['logo']['name'])) {
             $up = uploadImage($_FILES['logo'], 'faculty');
             if (!$up) {
-                $_SESSION['flash_error'] = 'อัปโหลดโลโก้คณะไม่สำเร็จ (รองรับ JPG, PNG, WEBP, SVG ขนาดไม่เกิน 5MB) โลโก้เดิมยังใช้อยู่';
+                $_SESSION['flash_error'] = 'อัปโหลดโลโก้คณะไม่สำเร็จ (รองรับไฟล์รูปภาพ เช่น JPG, PNG, WEBP, SVG ขนาดไม่เกิน 5MB) โลโก้เดิมยังใช้อยู่';
                 header('Location: index.php'); exit;
             }
             fileTrackNew($up); fileQueueDelete($exists['logo'] ?? null);   // the old logo goes only once the change is saved

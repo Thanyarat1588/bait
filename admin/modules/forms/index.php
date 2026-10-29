@@ -121,7 +121,7 @@ $audLabel    = $audFilter === 'staff' ? 'บุคลากร' : 'นักศ�
 
 $where  = '1=1';
 $params = [];
-if ($search)    { $where .= ' AND f.form_name LIKE ?'; $params[] = "%$search%"; }
+if ($search)    { $where .= ' AND f.form_name LIKE ?'; $params[] = '%' . addcslashes($search, '%_\\') . '%'; }
 if ($catFilter) { $where .= ' AND f.category_id = ?';  $params[] = $catFilter; }
 $where .= ' AND f.audience = ?'; $params[] = $audFilter;
 

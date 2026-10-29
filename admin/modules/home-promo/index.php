@@ -74,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             if (!empty($_FILES['video_file']['name'])) {
                 $up = uploadMedia($_FILES['video_file'], 'promo', PROMO_MAX_VIDEO_MB);
+                if ($up) fileTrackNew($up['path']);   // first: an image refused below must not stay behind in uploads/
                 if (!$up || $up['type'] !== 'video') jsonError('อัปโหลดวิดีโอไม่สำเร็จ (รองรับ .mp4 / .webm ขนาดไม่เกิน ' . PROMO_MAX_VIDEO_MB . 'MB — คลิปยาวหรือไฟล์ใหญ่ให้อัปโหลดขึ้น YouTube แล้ววางลิงก์แทน)');
                 $newFiles[] = $up['path']; fileTrackNew($up['path']); $data['video_file'] = $up['path'];
                 if ($row && !empty($row['video_file'])) $oldFiles[] = $row['video_file'];
