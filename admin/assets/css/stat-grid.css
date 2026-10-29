@@ -1,0 +1,75 @@
+/* Admin statistics grid: one row per existing item, [now] [+/- change] [new total]. Mobile first: each row is a small card. */
+.statgrid-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.statgrid-table thead { display: none; }
+.statgrid-table tbody, .statgrid-table tr, .statgrid-table td, .statgrid-table th { display: block; }
+.statgrid-table tr[data-group-row] th { background: var(--ne-blue-soft, #E8EEFB); color: var(--ne-blue-deep, #162E93); font-weight: 700; padding: 10px 14px; margin-top: 10px; border-radius: 8px 8px 0 0; }
+.statgrid-table tr[data-group-row] small { font-weight: 400; color: var(--ne-ink-soft, #5b6480); }
+.statgrid-table tr[data-row] { display: grid; grid-template-columns: .8fr 1fr 1fr; gap: 2px 10px; padding: 10px 14px 12px; border: 1px solid var(--ne-line, #e3e6ee); border-top: 0; background: #fff; position: relative; }
+.statgrid-table tr[data-row] > .sg-name { grid-column: 1 / -1; }
+.statgrid-table tr[data-row]:last-of-type { border-radius: 0 0 8px 8px; }
+.statgrid-table tr[data-row].is-changed { background: #FFFBEB; box-shadow: inset 4px 0 0 #F59E0B; }
+.statgrid-table tr[data-row].is-invalid { background: #FEF2F2; box-shadow: inset 4px 0 0 #DC2626; }
+.statgrid-table td { padding: 2px 0; }
+.statgrid-table .sg-name { font-weight: 600; padding-right: 74px; }
+.statgrid-table .sg-name small { display: block; font-weight: 400; color: var(--ne-ink-soft, #5b6480); }
+.statgrid-table .sg-now { margin-top: 6px; }
+.statgrid-table .sg-now b { display: flex; align-items: center; min-height: 44px; color: var(--ne-ink, #1e2a45); font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.statgrid-table td.sg-delta, .statgrid-table td.sg-new { margin-top: 6px; }
+.statgrid-table td label { display: block; font-size: .78rem; color: var(--ne-ink-soft, #5b6480); margin: 0 0 2px; }
+.statgrid-table input[type=number] { width: 100%; min-height: 44px; text-align: right; font-variant-numeric: tabular-nums; font-size: 1rem; padding: 6px 10px; border: 1.5px solid var(--ne-line, #cfd5e5); border-radius: 8px; background: #fff; }
+.statgrid-table input[type=number]:focus { outline: 2px solid var(--ne-blue, #2C6BCF); outline-offset: 1px; }
+.statgrid-table tr.is-changed input[data-new] { border-color: #F59E0B; background: #FFF7E0; font-weight: 700; }
+.statgrid-table tr.is-invalid input { border-color: #DC2626; }
+.statgrid-table .sg-actions { position: absolute; top: 8px; right: 10px; display: flex; gap: 6px; }
+.statgrid-table .sg-undo { border: 1px solid var(--ne-line, #cfd5e5); background: #fff; border-radius: 8px; padding: 2px 8px; font-size: .78rem; min-height: 32px; cursor: pointer; color: var(--ne-blue-deep, #162E93); }
+.statgrid-table .sg-undo:hover { background: var(--ne-blue-soft, #E8EEFB); }
+.statgrid-table .sg-del { border: 0; background: transparent; color: #b4423b; min-width: 32px; min-height: 32px; border-radius: 8px; cursor: pointer; }
+.statgrid-table .sg-del:hover { background: #FDECEA; }
+.statgrid-grand { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px; margin-top: 12px; border-radius: 8px; background: var(--ne-blue-deep, #162E93); color: #fff; font-weight: 700; }
+.statgrid-grand span:last-child { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.statgrid-savebar { position: sticky; bottom: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 14px; margin-top: 14px; border-radius: 10px; background: #1e2a45; color: #fff; box-shadow: 0 -4px 18px rgba(20,32,58,.25); }
+.statgrid-savebar[hidden] { display: none; }
+.statgrid-savebar.has-error { background: #7f1d1d; }
+.statgrid-savebar [data-summary] { flex: 1 1 220px; font-weight: 600; }
+.statgrid-help { font-size: .85rem; color: var(--ne-ink-soft, #5b6480); margin: 0 0 12px; }
+@media (min-width: 900px) {
+  .statgrid-table thead { display: table-header-group; }
+  .statgrid-table thead tr { display: table-row; }
+  .statgrid-table thead th { display: table-cell; }
+  .statgrid-table thead th { padding: 8px 12px; text-align: left; font-size: .8rem; color: var(--ne-ink-soft, #5b6480); border-bottom: 2px solid var(--ne-line, #e3e6ee); }
+  .statgrid-table thead th:not(:first-child), .statgrid-table thead th.num { text-align: center; }
+  .statgrid-table tbody { display: table-row-group; }
+  .statgrid-table tr[data-row] { display: table-row; padding: 0; border: 0; }
+  .statgrid-table tr[data-row] > .sg-name { grid-column: auto; }
+  .statgrid-table tr[data-group-row] { display: table-row; }
+  .statgrid-table tr[data-group-row] th { display: table-cell; border-radius: 0; margin: 0; }
+  .statgrid-table td { display: table-cell; padding: 8px 12px; border-bottom: 1px solid var(--ne-line, #eceff6); vertical-align: middle; }
+  .statgrid-table .sg-name { padding-right: 12px; }
+  .statgrid-table .sg-now { margin: 0; text-align: center; width: 110px; }
+  .statgrid-table .sg-now b { display: inline; min-height: 0; font-size: 1.05rem; }
+  .statgrid-table td label { display: none; }
+  .statgrid-table td.sg-delta, .statgrid-table td.sg-new { margin-top: 0; }
+  .statgrid-table td.sg-delta, .statgrid-table td.sg-new { width: 130px; }
+  .statgrid-table td.sg-actions { display: table-cell; position: static; width: 130px; text-align: center; white-space: nowrap; }   /* a real cell, so the row line runs unbroken under it too */
+  .statgrid-table td.sg-delta input, .statgrid-table td.sg-new input { text-align: center; }
+  .statgrid-table .sg-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; vertical-align: middle; margin: 0 3px; }
+  .statgrid-table tr[data-row].is-changed { box-shadow: none; }
+  .statgrid-table tr[data-row].is-changed > td:first-child { box-shadow: inset 4px 0 0 #F59E0B; }
+  .statgrid-table tr[data-row].is-invalid > td:first-child { box-shadow: inset 4px 0 0 #DC2626; }
+}
+
+/* paging: rows outside the current page stay in the DOM (their edits are still saved) but are not shown */
+.statgrid-table .is-off { display: none !important; }
+.statgrid-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin-top: 12px; }
+.statgrid-pager[hidden] { display: none; }
+.statgrid-pager-info { font-size: .85rem; color: var(--ne-ink-soft, #5b6480); }
+.statgrid-pager-btns { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.statgrid-pager-btns button { min-width: 40px; min-height: 40px; padding: 0 10px; border: 1px solid var(--ne-line, #cfd5e5); border-radius: 8px; background: #fff; color: var(--ne-ink, #1e2a45); font: inherit; cursor: pointer; }
+.statgrid-pager-btns button:hover:not(:disabled) { background: var(--ne-blue-soft, #E8EEFB); }
+.statgrid-pager-btns button.is-current { background: var(--ne-blue-deep, #162E93); border-color: var(--ne-blue-deep, #162E93); color: #fff; font-weight: 700; }
+.statgrid-pager-btns button:disabled { opacity: .45; cursor: default; }
+.statgrid-pager-gap { padding: 0 2px; color: var(--ne-ink-soft, #5b6480); }
+
+/* a row somebody else saved first: its starting number was refreshed, the admin's typing was kept */
+.statgrid-table tr[data-row].is-conflict { background: #FDF2F8; box-shadow: inset 4px 0 0 #DB2777; }
+.statgrid-table tr[data-row].is-conflict input[data-new] { border-color: #DB2777; }

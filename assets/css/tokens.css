@@ -1,0 +1,101 @@
+/**
+ * BAIT Design System — Tokens
+ * Source of truth: Phase 2 UX/UI Design (approved).
+ * No framework dependency. Every component in components.css reads from these.
+ */
+
+:root{
+  /* ---- Brand ramps ---- */
+  /* The brand blue is #1558A6 (600). Every other step is graded from it: 50-500 lighter, 700-900 darker. */
+  --navy-50:#EAF2FD;  --navy-100:#CFE2FA; --navy-200:#9CC3F2; --navy-300:#66A3EA;
+  --navy-400:#3C86DE; --navy-500:#1A6BC8; --navy-600:#1558A6; --navy-700:#104584;
+  --navy-800:#0C3566; --navy-900:#08264A;
+
+  --blue-50:#EAF2FD; --blue-100:#CFE2FA; --blue-200:#9CC3F2; --blue-300:#66A3EA;
+  --blue-400:#3C86DE; --blue-500:#1A6BC8; --blue-600:#1558A6; --blue-700:#104584;
+
+  --orange-50:#FEF0E0; --orange-100:#FFC7A4; --orange-300:#FFAA75; --orange-500:#FF914D;
+  --orange-600:#B84E0C; --orange-700:#8F3B08;   /* 600/700 are dark enough to be used as text */
+
+  --sky-100:#D6EEFA; --sky-500:#31A7EC; --sky-700:#027AB1;
+
+  --success:#1F9D6F; --success-bg:#E7F6EF;
+  --warn:#C98A00;    --warn-bg:#FBF1DC;
+  --error:#D5473C;   --error-bg:#FBEAE8;
+  --success-text:#137A53; --error-text:#B3352B;   /* status colours safe to use as TEXT (4.5:1 on white / their tint) */
+
+  /* ---- Semantic tokens (light) ---- */
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-soft:#EEF3FA; --surface-raised:#FFFFFF;
+  --ink:#1B2032; --ink-soft:#5B6180; --ink-faint:#646B93;
+  --primary:var(--navy-600); --primary-strong:var(--navy-700); --primary-ink:#FFFFFF;
+  --secondary:var(--blue-500);
+  --accent:var(--orange-500); --accent-ink:#2A1000;
+  --info:var(--sky-500);
+  --border:#E2E5F1;
+  --overlay-dark: linear-gradient(180deg, rgba(11,15,51,.15) 0%, rgba(11,15,51,.55) 65%, rgba(11,15,51,.82) 100%);
+
+  /* ---- Radius / shadow / motion ---- */
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:22px; --radius-full:999px;
+  --shadow-sm:0 1px 2px rgba(15,23,60,.06), 0 1px 1px rgba(15,23,60,.04);
+  --shadow-md:0 6px 20px rgba(15,23,60,.10);
+  --shadow-lg:0 20px 48px rgba(15,23,60,.16);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+  --ease-emphasized:cubic-bezier(.2,0,0,1);
+  --dur-fast:120ms; --dur-base:200ms; --dur-slow:320ms; --dur-page:450ms;
+
+  /* ---- Type ---- */
+  --font-ui: "Kanit", -apple-system, "Segoe UI", "Leelawadee UI", "Noto Sans Thai", Roboto, Helvetica, Arial, sans-serif;
+  --font-editorial: "Kanit", Georgia, "Times New Roman", sans-serif;
+
+  /* ---- Layout ---- */
+  --container-pad: 80px;
+  --gutter: 24px;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"]{
+  --bg:#0F131D; --surface:#181E2C; --surface-soft:#1F2638; --surface-raised:#222A3D;
+  --ink:#EAEDF6; --ink-soft:#B0B8CE; --ink-faint:#939CBA;
+  --primary:#6397FB; --primary-strong:#8FB4FD; --primary-ink:#061A40;
+  --secondary:#5CACEB; --accent:#FF914D; --accent-ink:#2A1000; --info:#41B8D5;
+  --success:#3FD79A; --success-bg:#123729;
+  --warn:#E8B94D; --warn-bg:#3A2E10;
+  --error:#FF8478; --error-bg:#3A1A19;
+  --success-text:var(--success); --error-text:var(--error);
+  --border:#2E3752;
+  --overlay-dark: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.6) 65%, rgba(0,0,0,.86) 100%);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 8px 24px rgba(0,0,0,.45);
+  --shadow-lg:0 24px 56px rgba(0,0,0,.55);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F131D; --surface:#181E2C; --surface-soft:#1F2638; --surface-raised:#222A3D;
+    --ink:#EAEDF6; --ink-soft:#B0B8CE; --ink-faint:#939CBA;
+    --primary:#6397FB; --primary-strong:#8FB4FD; --primary-ink:#061A40;
+    --secondary:#5CACEB; --accent:#FF914D; --accent-ink:#2A1000; --info:#41B8D5;
+    --success:#3FD79A; --success-bg:#123729;
+    --warn:#E8B94D; --warn-bg:#3A2E10;
+    --error:#FF8478; --error-bg:#3A1A19;
+  --success-text:var(--success); --error-text:var(--error);
+    --border:#2E3752;
+    --overlay-dark: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.6) 65%, rgba(0,0,0,.86) 100%);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 8px 24px rgba(0,0,0,.45);
+    --shadow-lg:0 24px 56px rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+}
+
+/* Breakpoints (documented — used as literal values in media queries since
+   CSS custom properties can't be used inside @media conditions).
+   Mobile-first: every rule in the site targets a phone by default; wider
+   layouts are added with min-width, never removed with max-width. A
+   fourth min-width:1280px step exists in a couple of places purely to
+   let .container's side gutter reach its full --container-pad (80px) —
+   not a fourth tier to design for, just where the gutter stops growing.
+   .container itself has no max-width — it's full-bleed at every size. */
+/* mobile: 0+ (default, no query) · tablet: >=768px · desktop: >=1024px */

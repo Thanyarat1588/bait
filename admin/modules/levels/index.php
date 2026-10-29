@@ -1,0 +1,87 @@
+<?php
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/Database.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/Auth.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/helpers.php';
+if(!defined('BASE_PATH'))define('BASE_PATH',dirname(dirname(dirname(__DIR__))));
+$auth=new Auth();$auth->requireLogin();$db=Database::getInstance();
+if($_SERVER['REQUEST_METHOD']==='POST'){verifyCsrf();$a=$_POST['action']??'';
+  if($a==='save'){$id=(int)($_POST['level_id']??0);$name=postStr('level_name');$abbr=postStr('level_abbr');$ord=(int)($_POST['level_order']??0);if(!$name)jsonError('กรุณากรอกชื่อ');if(nameTaken($db,'education_levels','level_name','level_id',$name,$id))jsonError(dupMsg('ระดับการศึกษา', $name));$d=['level_name'=>$name,'level_abbr'=>$abbr?:null,'level_order'=>$ord];if($id){$db->update('education_levels',$d,'level_id=?',[$id]);jsonSuccess([],'แก้ไขแล้ว');}else{$db->insert('education_levels',$d);jsonSuccess([],'เพิ่มแล้ว');}}
+  if($a==='delete'){$id=(int)($_POST['level_id']??0);$c=$db->count('programs','level_id=?',[$id]);if($c)jsonError("มีหลักสูตร $c รายการ");$db->delete('education_levels','level_id=?',[$id]);jsonSuccess([],'ลบแล้ว');}
+}
+$rows=$db->fetchAll("SELECT l.*,(SELECT COUNT(*) FROM programs WHERE level_id=l.level_id) pc FROM education_levels l ORDER BY l.level_order,l.level_id");
+$pageTitle='ระดับการศึกษา';$activeMenu='levels';$breadcrumb=[['label'=>'ระดับการศึกษา']];
+$pageActions='';
+include BASE_PATH.'/admin/layout/header.php';?>
+
+<div class="ne">
+  <div class="ne-topbar">
+    <h1>ระดับการศึกษาทั้งหมด <span class="ne-count"><?=count($rows)?> ระดับ</span></h1>
+    <button type="button" class="ne-btn ne-btn-primary" style="margin-left:auto;" onclick="openModal(0)">
+      <i class="bi bi-plus-lg"></i>เพิ่มระดับ
+    </button>
+  </div>
+
+  <div class="ne-panel">
+    <div class="ne-panel-head"><span>ระดับการศึกษาทั้งหมด</span></div>
+    <?php if (!empty($rows)): ?>
+    <div class="table-responsive">
+      <table class="ne-table">
+        <thead>
+          <tr>
+            <th style="width:44px">#</th>
+            <th>ชื่อระดับ</th>
+            <th style="width:110px">ชื่อย่อ</th>
+            <th style="width:90px" class="text-center">ลำดับ</th>
+            <th style="width:100px" class="text-center">หลักสูตร</th>
+            <th style="width:100px">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach($rows as $i=>$r):?>
+          <tr>
+            <td class="ne-num"><?=$i+1?></td>
+            <td class="fw-500"><?=e($r['level_name'])?></td>
+            <td><span class="ne-abbr-code"><?=e($r['level_abbr']??'—')?></span></td>
+            <td class="text-center"><?=$r['level_order']?></td>
+            <td class="text-center"><span class="ne-badge-count"><?=$r['pc']?></span></td>
+            <td>
+              <div class="ne-actions">
+                <button class="ne-icon-btn ne-icon-edit" onclick="openModal(<?=$r['level_id']?>)" title="แก้ไข"><i class="bi bi-pencil"></i></button>
+                <button class="ne-icon-btn ne-icon-delete" onclick="del(<?=$r['level_id']?>,'<?=e(addslashes($r['level_name']))?>')" title="ลบ"><i class="bi bi-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <?php endforeach;?>
+        </tbody>
+      </table>
+    </div>
+    <?php else: ?>
+    <div class="ne-empty"><i class="bi bi-mortarboard"></i>ยังไม่มีข้อมูล</div>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="modal fade" id="modal" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content ne-modal-content ne">
+  <div class="modal-header ne-modal-header"><h5 class="modal-title" id="mt" style="font-family:'Kanit',serif;">ระดับการศึกษา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body" style="padding:20px;">
+    <input type="hidden" id="fId">
+    <div class="ne-field"><label for="fName">ชื่อระดับ <span style="color:var(--ne-danger)">*</span></label><input type="text" class="ne-input" id="fName"></div>
+    <div class="ne-field"><label for="fAbbr">ชื่อย่อ</label><input type="text" class="ne-input" id="fAbbr" placeholder="ปวช., ปวส., ป.ตรี"></div>
+    <div class="ne-field" style="margin-bottom:0;"><label for="fOrd">ลำดับ</label><input type="number" class="ne-input" id="fOrd" value="0" min="0"></div>
+  </div>
+  <div class="modal-footer" style="border-top:1px solid var(--ne-line);">
+    <button type="button" class="ne-btn ne-btn-ghost" data-bs-dismiss="modal">ยกเลิก</button>
+    <button type="button" class="ne-btn ne-btn-primary" onclick="save()">บันทึก</button>
+  </div>
+</div></div></div>
+<script id="dd" type="application/json"><?=json_encode($rows,JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)?></script>
+<?php $extraJs='<script>
+const dd=JSON.parse(document.getElementById("dd").textContent);const csrf="'.csrfToken().'";let mi;
+function openModal(id){const d=dd.find(x=>x.level_id==id);document.getElementById("fId").value=id;document.getElementById("fName").value=d?d.level_name:"";document.getElementById("fAbbr").value=d?d.level_abbr??"":"";document.getElementById("fOrd").value=d?d.level_order:0;document.getElementById("mt").textContent=id?"แก้ไข":"เพิ่ม";mi=new bootstrap.Modal(document.getElementById("modal"));mi.show();}
+async function save(){const fd=new FormData();fd.append("action","save");fd.append("level_id",document.getElementById("fId").value);fd.append("level_name",document.getElementById("fName").value);fd.append("level_abbr",document.getElementById("fAbbr").value);fd.append("level_order",document.getElementById("fOrd").value);fd.append("csrf_token",csrf);const r=await axios.post("",fd);if(r.data.status==="success"){mi.hide();showSuccess(r.data.message);setTimeout(()=>location.reload(),1300);}else showError(r.data.message);}
+async function del(id,name){
+  const d=dd.find(x=>x.level_id==id);const pc=d?Number(d.pc)||0:0;
+  if(pc>0){await Swal.fire({title:"ไม่สามารถลบได้",html:`ระดับการศึกษา <b>${escapeHtml(name)}</b> ยังมีหลักสูตร ${pc} รายการที่ผูกอยู่ กรุณาย้ายหรือลบข้อมูลที่เกี่ยวข้องก่อน`,icon:"warning",confirmButtonText:"เข้าใจแล้ว"});return;}
+  const r=await Swal.fire({title:"ลบ?",html:`ลบ <b>${escapeHtml(name)}</b>?`,icon:"warning",showCancelButton:true,confirmButtonColor:"#c1443d",confirmButtonText:"ลบ",cancelButtonText:"ยกเลิก"});if(!r.isConfirmed)return;const fd=new FormData();fd.append("action","delete");fd.append("level_id",id);fd.append("csrf_token",csrf);const res=await axios.post("",fd);if(res.data.status==="success"){showSuccess(res.data.message);setTimeout(()=>location.reload(),1300);}else showError(res.data.message);}
+</script>';
+include BASE_PATH.'/admin/layout/footer.php';?>

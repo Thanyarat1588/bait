@@ -1,0 +1,499 @@
+/**
+ * BAIT — Page-specific composition rules.
+ * Everything reusable lives in components.css; this file only holds
+ * layout tweaks specific to one or two pages.
+ */
+
+/* ---------- Info links (สารสนเทศ) — also reused as-is by forms.php's
+   audience -> category picker (ดาวน์โหลดแบบฟอร์ม), same icon-card look. ---------- */
+.info-link-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (min-width: 600px)  { .info-link-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px)  { .info-link-grid { grid-template-columns: repeat(4, 1fr); } }
+.info-link-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
+  padding: 28px 16px; background: var(--surface); border: 1px solid var(--secondary); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); text-decoration: none; color: var(--ink);
+  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard);
+}
+.info-link-card:hover, .info-link-card:focus-visible { transform: translateY(-4px); box-shadow: var(--shadow-md); background: var(--primary); border-color: var(--primary); text-decoration: none; color: var(--primary-ink); }   /* hover swaps the colours: filled card, light icon disc */
+.info-link-icon {
+  width: 56px; height: 56px; border-radius: var(--radius-full); background: var(--primary);
+  display: flex; align-items: center; justify-content: center; color: var(--primary-ink); flex-shrink: 0;
+  transition: background var(--dur-base) var(--ease-standard), color var(--dur-base) var(--ease-standard);
+}
+.info-link-card:hover .info-link-icon, .info-link-card:focus-visible .info-link-icon { background: var(--primary-ink); color: var(--primary); }
+.info-link-icon .icon { width: 1.6rem; height: 1.6rem; }
+.info-link-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: var(--radius-full); transition: filter var(--dur-base) var(--ease-standard); }
+/* uploaded icon images keep their own colours on either disc */
+.info-link-title { font-size: .88rem; font-weight: 600; line-height: 1.4; }
+
+/* ---------- Home ---------- */
+/* "จุดเด่นของคณะ" — image/video only, no title or caption text; the card
+   *is* the thumb (no .card-body), so the media fills it edge to edge.
+   Content is admin-managed via admin/modules/highlights; crop-fills like
+   news cards do (these are decorative photos/clips, not documents needing
+   the whole frame kept intact). The icon fallback (no media uploaded yet)
+   is sized up since it's now the only thing in the card.
+   The uploaded graphics turned out to be Canva-style exports: a rounded
+   "card" design centered on a transparent canvas with a visible margin
+   around it — object-fit:cover already fills the box pixel-for-pixel, but
+   that baked-in transparent margin still shows through as empty space
+   around the actual artwork. A modest zoom crops that margin away; the
+   hover micro-zoom (.card:hover, in components.css) multiplies on top of
+   this base scale instead of replacing it. */
+/* --crop-x/--crop-y come inline per-photo from highlightCard() (measured
+   at upload time — see admin/modules/highlights/index.php); 1.25 is the
+   fallback for older highlights saved before that existed. Non-uniform
+   scale because these Canva exports' transparent margin isn't symmetric —
+   noticeably thinner left/right than top/bottom — so a single flat zoom
+   big enough to hide the tallest margin cropped real content off the
+   sides of every photo whose margin was actually thinner. */
+.card-highlight .card-thumb img,
+.card-highlight .card-thumb video { object-fit: cover; transform: scale(var(--crop-x, 1.25), var(--crop-y, 1.25)); }
+.card-highlight.card:hover .card-thumb img,
+.card-highlight.card:hover .card-thumb video { transform: scale(calc(var(--crop-x, 1.25) * 1.032), calc(var(--crop-y, 1.25) * 1.032)); }
+.card-highlight .card-thumb-fallback .icon { width: 2.6rem; height: 2.6rem; }
+@media (min-width: 768px) {
+  .card-highlight .card-thumb-fallback .icon { width: 3rem; height: 3rem; }
+}
+
+.about-split { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: center; }
+@media (min-width: 1024px) { .about-split { grid-template-columns: 1fr 1fr; gap: 48px; } }
+.about-band-title { color: var(--primary); margin-block: .3em .6em; }
+/* Home "เกี่ยวกับคณะ" with a background photo (set in the admin, with a choice of tone). A layer goes over the photo (::after)
+   so the text stays readable over any photo:
+     light = grey photo under a white layer: the section keeps its white look and normal dark text;
+     blue  = grey, darker photo under the brand blue (like the footer), white text;
+     color = the photo in its own colours under a neutral dark layer, white text.
+   --about-dim (set in the admin, 0.30-0.90, default 0.74) = how strong that layer is.
+   The logo stands on the photo without a box. Without a photo the section stays plain white. */
+.about-band--photo { position: relative; isolation: isolate; background: var(--surface); }
+.about-band--photo::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--about-photo) center / cover no-repeat; filter: grayscale(1); }
+.about-band--photo::after { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, var(--about-dim, .74)); }
+.about-band--photo .about-logo-showcase { background: none; border: 0; box-shadow: none; }
+
+.about-band--blue::before { filter: grayscale(1) brightness(.62); }
+.about-band--blue::after { background: rgba(21, 88, 166, var(--about-dim, .74)); }   /* the brand blue (navy-600) */
+.about-band--color::before { filter: none; }
+.about-band--color::after { background: rgba(10, 18, 32, var(--about-dim, .74)); }
+/* white text for the two dark tones */
+.about-band--dark { background: var(--primary); color: #fff; }
+.about-band--dark .eyebrow { color: #FFC59E; }
+.about-band--dark .about-band-title,
+.about-band--dark .about-block h3 { color: #fff; }
+.about-band--dark .about-block .icon { color: #FF914D; }
+.about-band--dark .about-block p,
+.about-band--dark .text-muted { color: #E6EDF8; }
+.about-band--dark .about-logo-showcase img { filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 10px rgba(255, 255, 255, .55)); }
+.about-block { margin-bottom: 20px; }
+.about-block h3, .about-block h4 { font-size: 1.125rem; display: flex; align-items: center; gap: 8px; color: var(--primary); margin-bottom: 6px; }
+.about-img { width: 100%; border-radius: var(--radius-xl); aspect-ratio: 4/3; object-fit: contain; background: var(--surface-soft); }
+.about-img-fallback { display: flex; align-items: center; justify-content: center; background: var(--surface-soft); color: var(--navy-300); }
+.about-img-fallback .icon { width: 3rem; height: 3rem; }
+/* Logo is a small square-ish mark, not a photo — a box sized to match a
+   full photo frame (4/3, full column width) dwarfs it. Cap the box itself
+   to a modest size and center it in the column instead. */
+.about-logo-showcase {
+  width: 100%; max-width: 320px; aspect-ratio: 1/1; margin-inline: auto; border-radius: var(--radius-xl);
+  background: linear-gradient(160deg, var(--surface-soft), var(--surface));
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; padding: 14%;
+}
+.about-logo-showcase img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.partner-strip { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+.partner-tile {
+  width: 140px; height: 84px; padding: 12px; border-radius: var(--radius-md);
+  background: var(--surface); border: 1px solid var(--border); color: var(--ink-faint);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color var(--dur-base) var(--ease-standard), background-color var(--dur-base) var(--ease-standard);
+}
+/* Plain border/tint change on hover instead of box-shadow — a blurred
+   drop-shadow read as a stray dark smudge behind logos with transparent
+   backgrounds. */
+a.partner-tile:hover { border-color: var(--secondary); background: var(--surface-soft); text-decoration: none; }
+.partner-tile img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+/* ---------- About / Faculty ---------- */
+.value-card { display: flex; gap: 14px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; height: 100%; }
+.value-icon { width: 42px; height: 42px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: color-mix(in srgb, var(--value-color, var(--primary)) 15%, transparent); color: var(--value-color, var(--primary)); }
+.value-card h4 { color: var(--value-color, var(--primary)); font-size: .9rem; margin-bottom: 3px; }
+.value-card p { font-size: .82rem; color: var(--ink-soft); }
+
+/* ---------- Program / Info sidebar ---------- */
+.info-list { display: flex; flex-direction: column; }
+.info-row { display: flex; gap: 10px; padding-block: 12px; border-bottom: 1px solid var(--border); }
+.info-row:last-child { border-bottom: none; }
+.info-row .icon { color: var(--secondary); margin-top: 3px; flex-shrink: 0; }
+.info-row-label { font-size: .74rem; color: var(--ink-faint); display: block; }
+.info-row-value { font-weight: 700; font-size: .92rem; }
+
+/* "สนใจสมัครเรียน?" box on a programme page: brand orange (the same orange as the "สมัครเรียน" buttons on the home page),
+   dark text for contrast; its white button turns navy on hover (an orange hover would vanish into the box) */
+.apply-cta { background: #FF914D; color: #2A1000; border-radius: var(--radius-lg); padding: 22px; text-align: center; margin-bottom: 20px; }
+.apply-cta .icon { width: 2rem; height: 2rem; opacity: .85; }
+.apply-cta h4, .apply-cta h3 { color: #2A1000; margin-block: 8px 4px; }
+.apply-cta p { color: #3D1A00; font-size: .85rem; margin-bottom: 14px; }
+.apply-cta .btn-light { border-color: #fff; }
+.apply-cta .btn-light:hover, .apply-cta .btn-light:focus-visible { background: var(--navy-600); color: #fff; border-color: var(--navy-600); }
+
+/* ---------- Campuses ---------- */
+/* Campus names are long ("ศูนย์พระนครศรีอยุธยา วาสุกรี") — the default h2
+   size ran past the photo's width in the content column. Trimmed down a
+   notch, not drastically. */
+.campus-name-heading { font-size: clamp(1.15rem, 1rem + .6vw, 1.5rem); }
+/* top must clear the real site header height or this sticks partway
+   under the navbar instead of right below it. The navbar no longer changes
+   height on scroll (that caused a flicker loop), so this is its fixed
+   height. Same 768px breakpoint as .topbar for the taller header. */
+.campus-tab-bar { position: sticky; top: 73px; z-index: 100; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+@media (min-width: 768px) { .campus-tab-bar { top: 125px; } }
+.campus-tab-bar .container { display: flex; gap: 8px; padding-block: 10px; overflow-x: auto; scrollbar-width: none; }
+.campus-tab-bar .container::-webkit-scrollbar { display: none; }
+/* Long English campus names must keep one line and scroll sideways, not be squeezed into a tall 5-line pill. */
+.campus-tab-bar .tab-pill { flex: 0 0 auto; white-space: nowrap; }
+.campus-section { padding-block: 48px; }
+.campus-section:not(:first-child) { border-top: 1px solid var(--border); }
+/* A campus can have more than one รองคณบดี (e.g. the main campus, whose 3
+   deputy deans cover general faculty-wide duties rather than one campus
+   each) — stacking each as its own full card made the text column grow
+   taller than the campus photo beside it. Kept in one row instead, same
+   height as a single card, wrapping to a column only on narrow screens
+   where a 3-across row wouldn't fit. */
+.campus-head-row { display: flex; flex-direction: column; gap: 10px; margin-block: 14px; }
+@media (min-width: 480px) { .campus-head-row { flex-direction: row; flex-wrap: wrap; } }
+.campus-head-row .campus-head-card { margin-block: 0; flex: 1 1 200px; min-width: 0; }
+.campus-head-card { display: flex; gap: 12px; align-items: center; background: var(--surface-soft); border-radius: var(--radius-lg); padding: 14px; margin-block: 14px; }
+.campus-head-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.campus-head-avatar-fallback { width: 52px; height: 52px; border-radius: 50%; background: var(--primary); color: var(--primary-ink); display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+.mini-stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.mini-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; text-align: center; }
+.mini-stat .num { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.mini-stat .label { font-size: .74rem; color: var(--ink-soft); }
+/* aspect-ratio comes from an inline style set per-photo (see campuses.php),
+   matching that photo's own real proportions instead of forcing a fixed
+   max-height crop — object-fit:contain is just a safety net for the rare
+   case getimagesize() couldn't read the file and no inline ratio was set. */
+.campus-hero-img { width: 100%; aspect-ratio: 16/9; object-fit: contain; border-radius: var(--radius-xl); background: var(--surface-soft); }
+.campus-hero-fallback { height: 260px; border-radius: var(--radius-xl); background: var(--primary); color: var(--primary-ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.contact-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.contact-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; overflow-wrap: anywhere; padding: 7px 14px; border-radius: var(--radius-full); border: 1px solid var(--border); font-size: .8rem; color: var(--ink); transition: background var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard), color var(--dur-base) var(--ease-standard); }
+.contact-chip:hover { text-decoration: none; background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+
+/* ---------- Contact ---------- */
+/* Real campus photos, not designed graphics — safe to crop. Stacked as a
+   single-column list of wide, landscape-shaped cards (photo on the side,
+   not on top) rather than a narrow multi-column grid — narrow cards forced
+   the photo + name + address + several contact chips into a tall, awkward
+   "long card" shape instead of a comfortable, wide one. */
+.contact-campus-card { flex-direction: column; }
+.contact-campus-card .card-thumb { aspect-ratio: 16/9; }
+.contact-campus-card .card-thumb img { object-fit: cover; }
+@media (min-width: 768px) {
+  .contact-campus-card { flex-direction: row; align-items: stretch; }
+  .contact-campus-card .card-thumb { width: 300px; flex-shrink: 0; aspect-ratio: auto; }
+  .contact-campus-card .card-body { flex: 1; justify-content: center; }
+}
+.quick-info-box { background: var(--surface-soft); border-radius: var(--radius-lg); padding: 18px; margin-top: 24px; }
+
+/* ---------- Staff directory ---------- */
+.staff-group-heading { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; color: var(--primary); padding-bottom: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--surface-soft); }
+.staff-subgroup-heading { font-size: .86rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 12px; }
+.staff-cluster-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.staff-cluster-icon { width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--primary); color: var(--primary-ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* View switcher: big tabs instead of a <select> buried in a filter row —
+   makes it obvious there's more than one chart to look at here. */
+.view-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.view-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: var(--radius-full); font-weight: 700; font-size: .86rem;
+  background: var(--surface-soft); color: var(--primary); border: 2px solid transparent; text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+.view-tab:hover { border-color: var(--primary); text-decoration: none; }
+.view-tab.active { background: var(--primary); color: var(--primary-ink); }
+
+/* Campus → major drill-down: pick one, then the other, chart only shows
+   once both are chosen — not two independent dropdown filters. */
+.picker-hint { display: flex; align-items: center; gap: 8px; font-size: .86rem; color: var(--ink-soft); margin-bottom: 16px; }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.picker-tile {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  overflow: hidden; padding: 0; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border);
+  color: var(--ink); text-decoration: none; transition: box-shadow var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
+.picker-tile:hover { text-decoration: none; border-color: var(--secondary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+/* aspect-ratio:16/9 is only the fallback for tiles with no photo (the icon
+   fills it fine) — tiles with a photo get their own ratio inline so the
+   box fits the image exactly instead of cropping it to 16:9. */
+.picker-tile-media { width: 100%; aspect-ratio: 16/9; background: var(--surface-soft); overflow: hidden; }
+.picker-tile-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.picker-tile-ico { width: 100%; height: 100%; color: var(--primary); display: flex; align-items: center; justify-content: center; }
+.picker-tile-ico .icon { width: 28px; height: 28px; }
+.picker-tile-body { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 16px 18px; }
+.picker-tile-name { font-weight: 700; font-size: .92rem; }
+.picker-tile-count { font-size: .78rem; color: var(--ink-soft); }
+
+/* Drill-down breadcrumb */
+.drill-crumb { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--ink-soft); margin-bottom: 18px; }
+.drill-crumb a { color: var(--secondary); font-weight: 600; text-decoration: none; }
+.drill-crumb a:hover { text-decoration: underline; }
+.drill-crumb span { font-weight: 700; color: var(--ink); }
+.drill-crumb .icon { width: .8rem; height: .8rem; opacity: .6; }
+
+/* ---------- News detail ---------- */
+.article-cover { width: 100%; max-height: 420px; object-fit: contain; background: var(--surface-soft); }
+.article-meta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: .82rem; color: var(--ink-soft); }
+.article-meta-row .icon { color: var(--ink-faint); }
+.related-mini { display: flex; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; height: 84px; }
+.related-mini img, .related-mini .related-mini-fallback { width: 96px; height: 100%; object-fit: contain; background: var(--surface-soft); flex-shrink: 0; }
+.related-mini .related-mini-fallback { display: flex; align-items: center; justify-content: center; color: var(--ink-faint); }
+.related-mini-body { padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+
+/* ---------- 404 / Search empty ---------- */
+.status-hero { text-align: center; padding-block: 72px; }
+.status-code { max-width: 100%; overflow-wrap: anywhere; font-size: 6.5rem; line-height: 1; font-weight: 900; color: var(--surface-soft); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .status-code { color: #33405F; } }   /* the big decorative 404 shows about as clearly as on the light theme (was 1.2:1, near invisible) */
+.status-icon-badge { width: 76px; height: 76px; border-radius: var(--radius-xl); background: var(--primary); color: var(--primary-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: -38px auto 24px; }
+
+/* ---------- Statistics ---------- */
+.data-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.data-table thead th { text-align: left; background: var(--surface-soft); color: var(--ink-soft); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; padding: 10px 14px; }
+.data-table tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tfoot td { padding: 10px 14px; font-weight: 800; background: var(--surface-soft); }
+.data-table .num-cell { text-align: right; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.progress-track { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-soft); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; }
+.legend-row { display: flex; justify-content: space-between; align-items: center; padding-block: 7px; border-bottom: 1px solid var(--border); font-size: .85rem; }
+.legend-row:last-of-type { border-bottom: none; }
+.chart-card { padding: 24px; }
+.chart-card h3 { color: var(--primary); font-size: 1rem; margin-bottom: 16px; }
+.chart-box { position: relative; height: 200px; }
+.chart-box.is-compact { height: 170px; }
+
+/* ---------- Search page ---------- */
+.search-hero { text-align: center; padding-block: 44px; }
+.search-hero .search-panel { max-width: 640px; margin: 0 auto; }
+.search-results-group { margin-bottom: 40px; }
+.search-results-group h2 { color: var(--primary); font-size: 1.1rem; margin-bottom: 14px; }
+
+/* ---------- Campus map (campuses.php) — mobile-first ---------- */
+.cmap-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+.cmap-stage { position: relative; width: 100%; max-height: 560px; aspect-ratio: 440 / 560; margin-inline: auto; overflow: hidden; background: linear-gradient(160deg, #eaf3ff, #f7fbff); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.cmap-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cmap-label { position: absolute; transform: translate(-50%, -50%); font-size: .6875rem; color: #6C85B5; white-space: nowrap; pointer-events: none; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
+.cmap-label--hi { font-size: .8125rem; font-weight: 600; color: #4a6fb5; }
+.cmap-pin { position: absolute; transform: translate(-50%, -50%); width: 44px; height: 44px; display: block; }
+.cmap-pin::before, .cmap-pin::after { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--accent); animation: cmapRadar 2s ease-out infinite; }
+.cmap-pin::after { animation-delay: 1s; }
+@keyframes cmapRadar { 0% { opacity: 0; transform: scale(1); } 15% { opacity: 1; } 100% { opacity: 0; transform: scale(3.2); } }
+.cmap-dot { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--accent); border: 3px solid #fff; box-shadow: 0 2px 8px rgba(15,23,60,.35); transition: transform .2s var(--ease-standard), background .2s; }
+.cmap-pin:hover .cmap-dot, .cmap-pin:focus-visible .cmap-dot { transform: scale(1.25); }
+.cmap-pin.is-active .cmap-dot { background: var(--primary); transform: scale(1.35); }
+.cmap-pin.is-active::before, .cmap-pin.is-active::after { border-color: var(--primary); }
+.cmap-tip { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, 6px); white-space: nowrap; background: var(--primary); color: var(--primary-ink); font-size: .74rem; font-weight: 600; padding: 5px 10px; border-radius: 8px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .18s, transform .18s; }
+.cmap-tip::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--primary); }
+.cmap-pin:hover .cmap-tip, .cmap-pin:focus-visible .cmap-tip { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+.cmap-pin.is-active .cmap-tip { opacity: 0; visibility: hidden; }
+.cmap-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; }
+.cmap-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cmap-list a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--ink); text-decoration: none; transition: border-color .15s, background .15s, transform .15s; }
+.cmap-list a:hover { border-color: var(--secondary); transform: translateX(3px); }
+.cmap-list a.is-active { background: var(--surface-soft); border-color: var(--primary); }
+.cmap-list i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; }
+.cmap-list a.is-active i { background: var(--primary); }
+/* Info card anchored to the selected pin (Google-Maps-style). */
+.cmap-pop { position: absolute; z-index: 5; width: min(270px, calc(100% - 16px)); background: var(--surface); border-radius: 14px; box-shadow: 0 8px 28px rgba(15,23,60,.28); overflow: visible; animation: cmapPop .18s var(--ease-standard); }
+@keyframes cmapPop { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+.cmap-pop::after { content: ""; position: absolute; left: var(--arrow-x, 50%); top: 100%; margin-left: -8px; border: 8px solid transparent; border-top-color: var(--surface); }
+.cmap-pop.is-below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--surface); }
+.cmap-pop-photo { display: block; width: 100%; height: auto; object-fit: contain; border-radius: 14px 14px 0 0; background: var(--surface-soft); }
+.cmap-pop-close { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: var(--ink); font-size: 1.15rem; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(15,23,60,.3); }
+.cmap-pop-close:hover { background: #fff; }
+.cmap-pop-name { margin: 0; padding: 12px 14px 2px; font-size: .95rem; line-height: 1.35; color: var(--ink); }
+.cmap-pop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 14px 14px; }
+.cmap-pop-actions .btn { justify-content: center; white-space: nowrap; }
+.cmap-pop-actions .btn:only-child { grid-column: 1 / -1; }
+@media (min-width: 992px) {
+  .cmap-grid { grid-template-columns: 1.1fr 1fr; align-items: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmap-pin::before, .cmap-pin::after { animation: none; }
+}
+.cmap-credit { position: absolute; right: 6px; bottom: 4px; font-size: .6875rem; color: #5F77A6; pointer-events: none; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
+
+/* campus-detail.php: photo above the text on phones/tablets, side by side from 768px */
+/* minmax(0,…) so a long unbroken address/name can wrap instead of widening the track past the screen (375px EN overflow). */
+.layout-with-sidebar.campus-layout { grid-template-columns: minmax(0, 1fr); }
+.campus-layout > * { min-width: 0; overflow-wrap: anywhere; }
+@media (min-width: 768px) { .layout-with-sidebar.campus-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+
+/* ---------- Downloadable forms (forms.php): cards wrap in a flex row, so the right side is never left empty ---------- */
+.form-list { display: flex; flex-wrap: wrap; gap: 12px; }
+.form-file { display: flex; align-items: center; gap: 12px; flex: 1 1 100%; min-width: 0; padding: 12px 14px; text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); transition: border-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); }
+.form-file:hover, .form-file:focus-visible { text-decoration: none; border-color: var(--primary); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.form-file *, .form-file:hover * { text-decoration: none; }
+.form-file__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.form-file__name { color: var(--ink); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.form-file__meta { font-size: .78rem; color: var(--ink-soft); }
+@media (min-width: 640px)  { .form-file { flex-basis: calc(50% - 6px); } }
+@media (min-width: 1024px) { .form-file { flex-basis: calc(33.333% - 8px); } }
+@media (prefers-reduced-motion: reduce) { .form-file:hover { transform: none; } }
+
+/* ---------- Home page promo video (index.php): video + description, either side; the text block's sizes / alignment / colours come from the admin ---------- */
+.promo { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: stretch; }
+.promo > * { min-width: 0; }
+.promo-media { width: 100%; align-self: center; position: relative; aspect-ratio: 16/9; border-radius: var(--radius-xl); overflow: hidden; background: #0b0f1d; box-shadow: var(--shadow-md); }
+.promo-media iframe, .promo-media video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #000; }
+.promo-text { display: flex; flex-direction: column; justify-content: var(--promo-valign, center); text-align: var(--promo-align, left); min-width: 0; overflow-wrap: anywhere; color: var(--promo-fg, var(--ink)); }
+.promo.has-bg .promo-text { background: var(--promo-bg); border-radius: var(--radius-xl); padding: 22px; }
+.promo-heading { margin: 0 0 .5em; font-size: clamp(1.4rem, 2.2vw + .9rem, var(--promo-h, 32px)); line-height: 1.25; font-weight: 800; color: var(--primary) !important; }   /* always the faculty blue, like every other section heading */
+.promo.has-bg .promo-heading { color: #1558A6 !important; }   /* a custom light background must not meet the lighter dark-mode blue */
+.promo-body { margin: 0 0 .9em; font-size: clamp(.95rem, .6vw + .8rem, var(--promo-b, 18px)); line-height: 1.7; color: inherit; }
+.promo:not(.has-fg) .promo-body { color: var(--ink-soft); }
+.promo.has-bg:not(.has-fg) .promo-body { color: #4A5878; }
+.promo-action { margin: .4em 0 0; }
+.promo-text > :last-child { margin-bottom: 0; }
+@media (min-width: 900px) {
+  .promo { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .promo--solo { grid-template-columns: minmax(0, 860px); justify-content: center; }
+  .promo--video-right .promo-media { order: 2; }
+  .promo.has-bg .promo-text { padding: 32px; }
+}
+
+/* promo logo (above the heading): the picture's white background melts into the card's light colour; on a dark page with no custom card colour it gets a white plate instead */
+.promo-logo { margin: 0 0 .9em; text-align: var(--promo-align, left); line-height: 0; }
+.promo-logo img { display: inline-block; width: min(var(--promo-logo, 150px), 100%); height: auto; mix-blend-mode: multiply; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .promo:not(.has-bg) .promo-logo img { mix-blend-mode: normal; background: #fff; border-radius: var(--radius-md); padding: 8px; box-sizing: border-box; } }
+
+/* the faculty logo above the about text: keep its proportions whatever the column width (max-height alone could stretch it on iOS) */
+.about-logo { display: block; width: auto; height: auto; max-width: 100%; max-height: 110px; object-fit: contain; }
+
+/* ── Tuition fees (tuition.php) ── mobile first: each programme is a card; from 1200px (8 columns need the room) a table with a full grid ── */
+.tu-levels { margin-bottom: 16px; }
+.tu-filters { margin-bottom: 14px; }
+.tu-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .88rem; color: var(--ink-soft); margin-bottom: 12px; }
+.tu-meta b { color: var(--primary); }
+.tu-wrap { width: 100%; }
+.tu-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.tu-table thead { display: none; }
+.tu-table, .tu-table tbody, .tu-table tr, .tu-table th, .tu-table td { display: block; }
+.tu-table caption { display: none; }
+.tu-level th { background: var(--navy-700, #0C3566); color: #fff; font-weight: 700; font-size: 1.02rem; padding: 12px 14px; margin-top: 26px; border-radius: var(--radius-md) var(--radius-md) 0 0; text-align: left; }
+.tu-level + .tu-group th { margin-top: 0; border-radius: 0; }
+.tu-group th { background: var(--primary); color: var(--primary-ink); font-weight: 700; padding: 10px 14px; border-radius: var(--radius-md) var(--radius-md) 0 0; margin-top: 18px; text-align: left; }
+.tu-prog { background: var(--surface); border: 1px solid var(--border); border-top: 0; }
+.tu-group + .tu-prog { border-top: 0; }
+.tu-prog tr + tr { border-top: 2px solid var(--border); }
+.tu-name { padding: 12px 14px; text-align: left; font-weight: 400; background: var(--surface-soft); border-bottom: 1px solid var(--border); }
+.tu-name a { font-weight: 700; color: var(--primary); }
+.tu-camp { display: flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--ink-faint, #6B7590); margin-top: 4px; }
+.tu-tag { display: inline-block; font-size: .7rem; font-weight: 700; background: #FFF0E6; color: #A84300; border-radius: 6px; padding: 2px 6px; vertical-align: middle; }
+.tu-table td { display: flex; justify-content: space-between; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--border); text-align: right; }
+.tu-table td:last-child { border-bottom: 0; }
+.tu-table td::before { content: attr(data-label); color: var(--ink-soft); text-align: left; font-size: .82rem; flex: 0 0 auto; max-width: 48%; }
+.tu-table td.tu-ask { display: block; text-align: left; color: var(--ink-soft); }
+.tu-table td.tu-ask::before { content: none; }
+.tu-num { font-variant-numeric: tabular-nums; }
+.tu-total { font-weight: 700; color: var(--primary); }
+.tu-val { display: block; }
+.tu-only, .tu-note { display: block; font-size: .76rem; color: #A84300; }
+.tu-note { color: var(--ink-soft); }
+.tu-foot { margin-top: 22px; font-size: .9rem; color: var(--ink-soft); line-height: 1.75; }
+.tu-foot p { margin-bottom: 4px; }
+@media (min-width: 1200px) {
+  .tu-wrap { border-radius: var(--radius-md); }   /* no overflow here: it would stop the sticky column titles */
+  .tu-table { display: table; border: 1px solid #C9D3E3; background: var(--surface); }
+  .tu-table thead { display: table-header-group; }
+  .tu-table tbody { display: table-row-group; }
+  .tu-table tr { display: table-row; }
+  .tu-table th, .tu-table td { display: table-cell; border: 1px solid #C9D3E3; padding: 10px 12px; vertical-align: top; text-align: left; }
+  .tu-table thead th { background: var(--navy-700, #0C3566); color: #fff; font-weight: 600; vertical-align: bottom;
+    position: sticky; top: var(--tu-sticky-top, 0px); z-index: 3; box-shadow: inset 0 -1px 0 #C9D3E3; }   /* stays under the site header while scrolling */
+  .tu-level th { margin: 0; border-radius: 0; background: #0C3566; color: #fff; font-size: 1rem; }
+  .tu-table thead th, .tu-nw { white-space: nowrap; }   /* short Thai labels / values must not break inside a word */
+  .tu-table td::before { content: none; }
+  .tu-table td.tu-ask { display: table-cell; }
+  .tu-group th { border-radius: 0; margin: 0; background: #E3EDF9; color: var(--primary); }
+  .tu-prog { border: 0; }
+  .tu-prog tr + tr { border-top: 0; }
+  .tu-name { background: var(--surface); min-width: 280px; }
+  .tu-table tbody.tu-prog:nth-of-type(even) td { background: #FAFBFE; }
+  .tu-num { text-align: right !important; white-space: nowrap; }
+}
+
+/* home: the "ค่าเทอม" button — brand sky blue, darker with white text on hover (like the other buttons) */
+.btn-tuition { background: #31A7EC; color: #04243F; border: 1.5px solid #31A7EC; }
+.btn-tuition:hover, .btn-tuition:focus-visible { background: #027AB1; border-color: #027AB1; color: #fff; text-decoration: none; }
+
+/* programme page: its tuition figures (program-detail.php), a small table with a full grid */
+.tu-mini-wrap { overflow-x: auto; }
+.tu-mini { width: 100%; border-collapse: collapse; font-size: .88rem; min-width: 460px; }
+.tu-mini th, .tu-mini td { border: 1px solid #C9D3E3; padding: 8px 10px; text-align: left; vertical-align: top; }
+.tu-mini thead th { background: #E3EDF9; color: var(--primary); font-weight: 700; }
+.tu-mini small { color: var(--ink-soft); }
+/* =====================================================================
+   ข่าวไอทีวันนี้ — site theme (white cards, primary blue, soft tag).
+   news.php: navy sliding card (.itx); it-news.php: card grid (.itx-grid), 1 / 2 / 3 columns.
+   ===================================================================== */
+.itx-tag { display: inline-block; align-self: flex-start; font-size: .72rem; font-weight: 600; line-height: 1.6; padding: 0 9px; border-radius: 999px;
+  background: var(--surface-soft); color: var(--primary); white-space: nowrap; }
+/* IT NEWS card (news.php, full width above the news list and sidebar): a navy gradient card with an orange glow; a
+   header row (title, date, ‹ ›) and one headline at a time below it. */
+.itx { position: relative; margin-bottom: 24px; overflow: hidden; color: #fff; border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--navy-700), var(--navy-500)); box-shadow: 0 10px 28px rgba(16,69,132,.25); }
+.itx::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--orange-500) 35%, transparent), transparent 65%); }
+.itx-side, .itx-main { position: relative; z-index: 1; }
+.itx-side { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 16px; }
+.itx-side h2 { margin: 0 auto 0 0; color: #fff; font-size: 1.45rem; font-weight: 800; line-height: 1.2; letter-spacing: .01em; }
+.itx-side h2 span { color: var(--orange-500); margin-left: 6px; }
+.itx-date { font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); }
+.itx-nav { display: flex; gap: 6px; }
+.itx-nav button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff;
+  font: inherit; font-size: 1.15rem; line-height: 1; cursor: pointer; }
+.itx-nav button:hover { background: rgba(255,255,255,.2); }
+.itx-nav button:focus-visible, .itx-dot:focus-visible, .itx-sbody a:focus-visible { outline: 2px solid var(--orange-500); outline-offset: 2px; }
+.itx-main { min-width: 0; }
+.itx-view { position: relative; padding: 0 16px; }
+.itx-slide { position: absolute; inset: 0 16px auto 16px; display: flex; gap: 12px; align-items: flex-start; opacity: 0; visibility: hidden;
+  transform: translateX(14px); transition: opacity .45s ease, transform .45s ease, visibility .45s; }
+.itx-slide.is-on { position: relative; inset: auto; opacity: 1; visibility: visible; transform: none; }
+.itx-num { flex: 0 0 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; background: var(--orange-500); color: var(--accent-ink, #2A1000); }
+.itx-sbody { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.itx-sbody .itx-tag { background: color-mix(in srgb, var(--orange-500) 20%, transparent); color: #FFD2B5; border: 1px solid color-mix(in srgb, var(--orange-500) 50%, transparent); }
+.itx-sbody a, .itx-sbody a:hover, .itx-foot a, .itx-foot a:hover { text-decoration: none; }
+.itx-sbody a { color: #fff; }
+.itx-sbody a:hover { color: #FFD2B5; }
+.itx-sbody b { font-size: 1rem; font-weight: 600; line-height: 1.45; }
+@media (min-width: 1024px) { .itx-sbody b { font-size: 1.08rem; } }
+.itx-sbody small { font-size: .75rem; color: var(--navy-100); }
+.itx-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px 12px; font-size: .82rem; }
+.itx-foot a { color: #FFD2B5; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.itx-foot a:hover { color: #fff; }
+.itx-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.itx-dot { width: 8px; height: 8px; border-radius: 999px; border: 0; padding: 0; background: rgba(255,255,255,.3); cursor: pointer; transition: width .2s ease, background .2s ease; }
+.itx-dot.is-on { width: 20px; background: var(--orange-500); }
+@media (prefers-reduced-motion: reduce) { .itx-slide, .itx-dot { transition: none; } }
+@media (min-width: 768px) {
+  .itx-side { padding: 14px 20px 10px; }
+  .itx-side h2 { font-size: 1.75rem; }
+  .itx-view { padding: 0 20px; }
+  .itx-slide { inset: 0 20px auto 20px; }
+  .itx-foot { padding: 10px 20px 14px; }
+}
+
+.itx-day { margin: 28px 0 12px; font-size: 1rem; color: var(--primary); }
+.itx-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 640px)  { .itx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .itx-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.itx-card { display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--border, #E3E8F1); border-radius: var(--radius-lg);
+  padding: 16px; color: var(--ink); text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.itx-card:hover, .itx-card:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-md, 0 8px 24px rgba(16,24,40,.08)); border-color: var(--secondary); color: var(--ink); text-decoration: none; }
+.itx-card:hover b { color: var(--primary); }
+.itx-card b { font-size: .98rem; font-weight: 600; line-height: 1.5; }
+.itx-card p { margin: 0; font-size: .85rem; color: var(--ink-soft); line-height: 1.55; flex: 1 1 auto; }
+.itx-card small { font-size: .75rem; color: var(--ink-faint); }

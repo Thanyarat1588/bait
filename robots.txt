@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /includes/
+Disallow: /config/
+Disallow: /cache/
+Disallow: /uploads/
+
+Sitemap: BASE_URL_PLACEHOLDER/sitemap.xml.php

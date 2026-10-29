@@ -1,0 +1,1440 @@
+/**
+ * BAIT Design System — Components
+ * Navbar, Hero Slider, Cards, Buttons, Forms, News, Programs, Campus,
+ * Footer, Gallery, Timeline, Breadcrumb, Pagination, Search.
+ * Framework-free: every class here is bespoke, nothing depends on Bootstrap.
+ */
+
+/* =====================================================================
+   ICONS
+   ===================================================================== */
+.icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; }
+.icon-sm { width: .85em; height: .85em; }
+.icon-lg { width: 1.6em; height: 1.6em; }
+
+/* =====================================================================
+   BUTTONS
+   ===================================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: var(--radius-md);
+  font-weight: 700; font-size: .92rem;
+  padding: 12px 22px;
+  border: none; cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-1px); text-decoration: none; }
+.btn:active { transform: translateY(0); }
+/* Every button visibly changes colour when pointed at (and the same on keyboard focus), not just a faint shadow or tint;
+   the icon inside follows because the icons draw with currentColor. */
+.btn-primary { background: var(--primary); color: var(--primary-ink); box-shadow: var(--shadow-sm); }
+.btn-primary:hover, .btn-primary:focus-visible { background: var(--primary-strong); box-shadow: var(--shadow-md); }
+.btn-secondary { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+.btn-secondary:hover, .btn-secondary:focus-visible { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.btn-accent { background: var(--accent); color: var(--accent-ink); }
+.btn-accent:hover, .btn-accent:focus-visible { background: #F26B1D; box-shadow: var(--shadow-md); }   /* deeper orange on hover, never a faded one */
+.btn-ghost { background: transparent; color: var(--ink-soft); }
+.btn-ghost:hover, .btn-ghost:focus-visible { color: var(--ink); background: var(--surface-soft); }
+.btn-on-dark { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.4); }
+.btn-on-dark:hover, .btn-on-dark:focus-visible { background: #fff; color: var(--navy-600); border-color: #fff; }
+.btn-light { background: #fff; color: var(--navy-600); border: 1px solid #fff; }
+.btn-light:hover, .btn-light:focus-visible { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-sm { padding: 7px 15px; font-size: .8rem; }
+.btn-lg { padding: 15px 30px; font-size: 1rem; }
+.btn-block { width: 100%; }
+.btn-pill { border-radius: var(--radius-full); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; transform: none; pointer-events: none; }
+
+/* =====================================================================
+   SITE HEADER / NAVBAR
+   ===================================================================== */
+.site-header { position: sticky; top: 0; z-index: 200; }
+/* Hidden by default (mobile) — there's no room for a secondary utility
+   bar above the main nav on a phone; it reappears once there's width to
+   spare for it, starting at tablet. */
+.topbar {
+  display: none;
+  background: var(--primary); color: #E6EEFA; font-size: .78rem;
+  padding-block: 6px;
+}
+@media (min-width: 768px) { .topbar { display: block; } }
+.topbar .container { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.topbar a { color: #E6EEFA; }
+.topbar a:hover { color: #fff; text-decoration: none; }
+.topbar-links { display: flex; gap: 20px; align-items: center; }
+
+.navbar {
+  position: relative; /* containing block for .mega-menu's left:0;right:0 */
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-standard);
+}
+.navbar.is-scrolled { box-shadow: var(--shadow-md); }
+.navbar .container { display: flex; align-items: center; gap: 24px; padding-block: 12px; }
+/* The bar must NOT change height on scroll: the header is sticky and in flow,
+   so a height change moves the page, scroll anchoring nudges scrollY back
+   across the is-scrolled threshold, and the bar flickers in a loop. */
+
+.brand { display: flex; align-items: center; color: var(--ink); flex-shrink: 0; min-width: 0; }
+.brand:hover { text-decoration: none; }
+.brand img { height: 48px; width: auto; max-width: 100%; }
+.brand-name { font-weight: 800; color: var(--primary); font-size: 1.1rem; line-height: 1.1; }
+.brand-sub { font-size: .72rem; color: var(--ink-faint); }
+
+@media (min-width: 768px) {
+  .brand img { height: 64px; }
+}
+@media (min-width: 1024px) {
+  .brand img { height: 66px; }
+}
+
+/* The full horizontal link list + language switch are desktop-only —
+   phones and tablets get the hamburger/offcanvas nav instead (below),
+   since a row of 6+ nav links plus a mega menu simply doesn't fit next
+   to the logo below desktop width. */
+.nav-links { display: none; align-items: center; gap: 4px; margin-left: 8px; list-style: none; }
+.nav-link {
+  display: flex; align-items: center; gap: 4px;
+  padding: 10px 10px; border-radius: var(--radius-sm);   /* tight from 1200px (English labels are wider), roomier from 1366px */
+  font-weight: 600; font-size: .92rem; color: var(--ink-soft);
+  position: relative; white-space: nowrap;   /* a Thai menu label must never break onto 2 lines at 1200-1280px */
+}
+.nav-link:hover { color: var(--primary); text-decoration: none; background: var(--surface-soft); }
+.nav-link[aria-current="page"] { color: var(--primary); }
+.nav-link[aria-current="page"]::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: 2px; height: 2px; background: var(--accent);
+}
+@media (min-width: 1366px) {
+  .nav-link { padding-inline: 14px; }
+  .nav-link[aria-current="page"]::after { left: 14px; right: 14px; }
+}
+.nav-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.nav-actions .lang-switch { display: none; }
+
+/* Mega menu — a compact anchored dropdown, not a full-width bar. A menu
+   spanning the entire navbar looked cavernous/empty with only a handful of
+   real links in it; anchoring it to its own trigger with a capped width
+   reads as a normal, considered dropdown regardless of how much content
+   is inside. Only ever reachable at desktop width (.nav-links is hidden
+   below that), so it needs no small-screen handling of its own. */
+.has-mega { position: relative; }
+.mega-menu {
+  position: absolute; left: 0; top: calc(100% + 8px);
+  width: max-content; min-width: 340px; max-width: min(620px, 90vw);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  padding: 20px;
+  /* Every current .mega-menu has exactly 2 .mega-col children — pinned
+     rather than auto-fit, which (combined with width:max-content above)
+     could size an extra, empty 150px track once a column's content got
+     wide enough to make the menu approach its max-width, without actually
+     needing a 3rd column. */
+  display: grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 20px;
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity var(--dur-slow) var(--ease-emphasized), transform var(--dur-slow) var(--ease-emphasized), visibility var(--dur-slow);
+}
+.has-mega:hover .mega-menu,
+.has-mega:focus-within .mega-menu,
+.has-mega.is-open .mega-menu {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) { .mega-menu { transition: opacity var(--dur-fast); } }
+/* a menu the pointer has just left for another one: gone immediately, no fade, even if its link still has focus */
+.has-mega.is-yielding .mega-menu { opacity: 0; visibility: hidden; transform: translateY(8px); transition-duration: 0s; }
+.mega-col h5 { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--secondary); margin-bottom: 10px; }
+.mega-col a { display: block; padding: 6px 0; font-size: .88rem; color: var(--ink-soft); }
+.mega-col a:hover { color: var(--primary); text-decoration: none; }
+.mega-empty { font-size: .82rem; color: var(--ink-faint); }
+.mega-footer { grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* "สารสนเทศ" dropdown — just 2 plain links (นักศึกษา/บุคลากร), not a 2-col
+   card grid, so the base .mega-menu's 2-column grid and wider min-width
+   would leave an empty phantom column here. Narrow, single column instead. */
+.mega-menu--info { grid-template-columns: 1fr; min-width: 180px; width: max-content; }
+/* ดาวน์โหลด dropdown (desktop): each audience opens a fly-out to its right listing that audience's form categories.
+   The fly-out sits past the menu's own padding; a transparent strip bridges the gap so the pointer never leaves the hover area. */
+.mega-sub { position: relative; }
+.mega-sub > a { display: flex; align-items: center; gap: 6px; }
+.mega-sub-arrow { margin-left: auto; display: inline-flex; opacity: .6; }
+.mega-sub-menu {
+  position: absolute; left: calc(100% + 20px); top: -21px; width: max-content; min-width: 200px; max-width: 300px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 16px 20px;
+  opacity: 0; visibility: hidden; transform: translateX(-6px);
+  transition: opacity var(--dur-base) var(--ease-standard), transform var(--dur-base) var(--ease-standard), visibility var(--dur-base);
+}
+.mega-sub-menu::before { content: ''; position: absolute; left: -24px; top: 0; bottom: 0; width: 24px; }
+.mega-sub:hover > .mega-sub-menu, .mega-sub:focus-within > .mega-sub-menu { opacity: 1; visibility: visible; transform: none; }
+.mega-sub:hover > a, .mega-sub:focus-within > a { color: var(--primary); }
+.mega-sub-menu h5 { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--secondary); margin: 0 0 6px; }
+@media (prefers-reduced-motion: reduce) { .mega-sub-menu { transition: opacity var(--dur-fast); transform: none; } }
+
+
+/* Mobile/tablet toggle + offcanvas — visible by default, swapped out for
+   the real nav once desktop width takes over below. */
+.nav-toggle { display: inline-flex; padding: 8px; border-radius: var(--radius-sm); color: var(--ink); }
+.nav-toggle:hover { background: var(--surface-soft); }
+.lang-switch { display: flex; gap: 4px; border: 1px solid var(--border); border-radius: var(--radius-full); padding: 2px; }
+.lang-switch a { padding: 5px 12px; border-radius: var(--radius-full); font-size: .8125rem; font-weight: 700; color: var(--ink-soft); }
+.lang-switch a[aria-current="true"] { background: var(--primary); color: var(--primary-ink); }
+.lang-switch a:hover { text-decoration: none; }
+.search-toggle { color: var(--ink-soft); padding: 8px; border-radius: var(--radius-full); }
+.search-toggle:hover { color: var(--primary); background: var(--surface-soft); }
+@media (min-width: 1200px) {
+  .nav-links { display: flex; }
+  .nav-actions .lang-switch { display: flex; }
+  .nav-toggle { display: none; }
+}
+
+.offcanvas-nav {
+  position: fixed; inset: 0 0 0 auto; width: min(340px, 88vw); z-index: 300;
+  background: var(--surface); box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  transition: transform var(--dur-slow) var(--ease-emphasized);
+  overflow-y: auto; padding: 20px;
+  visibility: hidden;
+}
+.offcanvas-nav.is-open { transform: translateX(0); visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .offcanvas-nav { transition: none; } }
+.offcanvas-backdrop {
+  position: fixed; inset: 0; background: rgba(11,15,51,.5); z-index: 299;
+  opacity: 0; visibility: hidden; transition: opacity var(--dur-base) var(--ease-standard);
+}
+.offcanvas-backdrop.is-open { opacity: 1; visibility: visible; }
+.offcanvas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.offcanvas-nav .nav-link { display: block; padding: 12px 10px; font-size: 1rem; }
+.offcanvas-accordion summary { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; font-weight: 600; color: var(--ink-soft); cursor: pointer; list-style: none; }
+.offcanvas-accordion summary::-webkit-details-marker { display: none; }
+.offcanvas-accordion[open] summary .icon { transform: rotate(180deg); }
+.offcanvas-accordion .mega-col { padding: 0 10px 10px 20px; }
+
+/* =====================================================================
+   HERO SLIDER
+   ===================================================================== */
+.hero { position: relative; min-height: 62vh; display: flex; align-items: flex-end; overflow: hidden; color: #fff; }
+@media (min-width: 1024px) { .hero { min-height: 72vh; } }
+
+/* Banner-only mode: the image IS the complete creative (headline, dates,
+   QR codes already baked in by whoever designed it) with text spread across
+   the full 16:5 width. object-fit:cover on a boxier phone aspect-ratio was
+   zooming into the center of the banner and cropping that edge text clean
+   off — so banner-only images use object-fit:contain instead (never crops,
+   only letterboxes against the navy background) and the box ratio steps
+   from a taller 16:9 on phones up to the native 16:5 on desktop, keeping
+   the letterbox bars small while guaranteeing nothing gets cut off. */
+.hero.hero-banner-only { min-height: 0; aspect-ratio: 16 / 9; background: var(--navy-900); align-items: stretch; }
+@media (min-width: 768px)  { .hero.hero-banner-only { aspect-ratio: 16 / 6; } }
+@media (min-width: 1024px) { .hero.hero-banner-only { aspect-ratio: 16 / 5; } }
+.hero.hero-banner-only .hero-slide img { object-fit: contain; }
+.hero-banner-only + .container .stat-strip { margin-top: 28px; }
+.hero-track { position: absolute; inset: 0; }
+.hero-slide {
+  position: absolute; inset: 0; opacity: 0; transition: opacity var(--dur-page) var(--ease-standard);
+}
+.hero-slide.is-active { opacity: 1; z-index: 1; }
+.hero-slide img { width: 100%; height: 100%; object-fit: cover; }
+.hero-fallback { width: 100%; height: 100%; background: linear-gradient(120deg, var(--navy-700), var(--navy-600) 55%, var(--navy-500)); }
+.hero-overlay { position: absolute; inset: 0; z-index: 1; background: var(--overlay-dark); pointer-events: none; }
+.hero-content { position: relative; z-index: 2; padding-block: 56px; width: 100%; }
+.hero-eyebrow { color: #AFC0FF; }
+.hero h1 { color: #fff; max-width: 16ch; font-size: clamp(1.9rem, 1.3rem + 3vw, 3.1rem); margin-block: .3em .4em; }
+.hero p { color: #D7DEFB; max-width: 46ch; font-size: 1.05rem; }
+.hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+.hero-stats { display: flex; gap: 32px; margin-top: 36px; border-top: 1px solid rgba(255,255,255,.2); padding-top: 18px; flex-wrap: wrap; }
+.hero-stat b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.hero-stat span { font-size: .74rem; color: #AFC0FF; }
+
+.hero-dots { position: absolute; z-index: 3; left: 50%; transform: translateX(-50%); bottom: 18px; display: flex; gap: 8px; }
+.hero-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.45); transition: background var(--dur-base), width var(--dur-base); }
+.hero-dot.is-active { background: #fff; width: 26px; border-radius: 5px; }
+/* Hidden on phones — the prev/next arrows crowd a narrow banner and swipe
+   gestures cover the same job there; they earn their space back once the
+   hero is wide enough (tablet) for them to sit clear of the content. */
+.hero-arrow {
+  display: none;
+  position: absolute; z-index: 3; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%; background: rgba(11,15,51,.4); color: #fff;
+  align-items: center; justify-content: center; backdrop-filter: blur(2px);
+}
+@media (min-width: 768px) { .hero-arrow { display: flex; } }
+.hero-arrow:hover { background: rgba(11,15,51,.65); }
+.hero-arrow-prev { left: 20px; } .hero-arrow-next { right: 20px; }
+.hero-pause {
+  position: absolute; z-index: 3; right: 20px; bottom: 20px;
+  width: 34px; height: 34px; border-radius: 50%; background: rgba(11,15,51,.4); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* =====================================================================
+   PAGE HERO (interior pages)
+   ===================================================================== */
+.page-hero {
+  /* Lighter than the frame (top bar / footer use the primary #1558A6 itself): the band starts one step lighter, where the text is, and
+     fades lighter still towards the empty right-hand side. Phones get a gentler fade because the text fills their whole width. */
+  background: linear-gradient(120deg, var(--navy-500) 0%, var(--navy-500) 60%, color-mix(in srgb, var(--navy-500) 55%, var(--navy-400)) 100%);
+  text-shadow: 0 1px 3px rgba(8, 38, 74, .35);   /* keeps white text readable where the fade gets light */
+  color: #fff; padding-block: 40px 44px;
+}
+@media (min-width: 768px) {
+  .page-hero { background: linear-gradient(120deg, var(--navy-500) 0%, var(--navy-500) 30%, var(--navy-400) 75%, var(--navy-300) 100%); }
+}
+.page-hero h1 { color: #fff; margin-bottom: 10px; font-size: clamp(1.4rem, 1.1rem + 1.6vw, 2rem); }
+.page-hero .breadcrumb { --bc-color: #fff; --bc-current: #fff; }   /* white on the lighter band: 5.3:1, a translucent white would drop under 4.5:1 */
+.page-hero p, .page-hero .text-faint { color: rgba(255,255,255,.88); }   /* sub-line under the title: the grey "faint" text melted into the navy */
+
+/* =====================================================================
+   BREADCRUMB
+   ===================================================================== */
+.breadcrumb ol { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-size: .84rem; }
+.breadcrumb li { display: flex; align-items: center; gap: 8px; }
+.breadcrumb a { color: var(--bc-color, var(--ink-soft)); display: inline-block; padding-block: 10px; }
+.breadcrumb a:hover { text-decoration: underline; }
+.crumb-current { color: var(--bc-current, var(--ink)); font-weight: 700; }
+.crumb-sep { color: var(--bc-color, var(--ink-faint)); opacity: .7; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .page-hero { background: linear-gradient(120deg, var(--navy-700), var(--navy-600) 60%, var(--navy-500)); text-shadow: none; }
+}
+
+/* =====================================================================
+   SECTIONS / STAT STRIP
+   ===================================================================== */
+.stat-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: -32px; position: relative; z-index: 5; }
+@media (min-width: 768px) { .stat-strip { grid-template-columns: repeat(4, 1fr); margin-top: -56px; } }
+.stat-tile {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); padding: 18px 20px; text-align: center;
+}
+.stat-tile .num { font-size: 1.7rem; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+.stat-tile .label { font-size: .78rem; color: var(--ink-soft); margin-top: 2px; }
+/* Always 2 columns (2x2 for four tiles), phone included — the tiles are small. */
+.stat-mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.stat-mini { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 10px 16px; text-align: center; }
+a.stat-mini { display: block; text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+a.stat-mini:hover { border-color: var(--secondary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+/* Icon inside a ring that spins one full turn on hover/focus. */
+.stat-mini-icon { position: relative; width: 68px; height: 68px; margin: 0 auto 10px; display: grid; place-items: center; color: var(--primary); }
+.stat-mini-icon::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 5px solid var(--sky-500); border-right-color: var(--secondary); border-bottom-color: var(--navy-200); transition: transform .8s var(--ease-emphasized); }
+a.stat-mini:hover .stat-mini-icon::before, a.stat-mini:focus-visible .stat-mini-icon::before { transform: rotate(362deg); }
+/* Non-link tiles (statistics pages) get the same hover as the linked ones. */
+div.stat-mini { transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+div.stat-mini:hover { border-color: var(--secondary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+div.stat-mini:hover .stat-mini-icon::before { transform: rotate(362deg); }
+.stat-mini-icon .icon { width: 1.6rem; height: 1.6rem; }
+.stat-mini-num { font-size: 1.6rem; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat-mini-label { font-size: .8rem; color: var(--ink-soft); margin-top: 2px; }
+@media (min-width: 768px) { .stat-mini { padding: 24px 12px 20px; } .stat-mini-icon { width: 76px; height: 76px; } .stat-mini-num { font-size: 1.8rem; } }
+@media (prefers-reduced-motion: reduce) { .stat-mini-icon::before { transition: none; } }
+
+/* =====================================================================
+   CARDS
+   ===================================================================== */
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--dur-base) var(--ease-standard), transform var(--dur-base) var(--ease-standard);
+  height: 100%; display: flex; flex-direction: column;
+}
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); }
+@media (prefers-reduced-motion: reduce) { .card:hover { transform: none; } }
+
+/* object-fit: contain (not cover) — content images here are frequently
+   designed announcement/promo graphics (dates, phone numbers, QR codes
+   placed near the edges), same as the hero banners. Cropping to fill the
+   box loses that information, so the whole image always shows, scaled to
+   fit the card's box, letterboxed on whichever axis doesn't match. */
+.card-thumb { position: relative; aspect-ratio: 4/3; background: var(--surface-soft); overflow: hidden; }
+.card-thumb img, .card-thumb video { width: 100%; height: 100%; object-fit: contain; transition: transform var(--dur-slow) var(--ease-standard); }
+/* Campus cards specifically: the 4/3 default above is overridden inline,
+   per card, with that photo's own real aspect ratio (see campusCard() in
+   includes/components.php) instead of forcing every photo into a fixed
+   box — these photos are often designed graphics (logo, address text near
+   the edges), so cropping any of that off to fill a fixed box loses real
+   information. Cards in the same row may come out different heights as a
+   result; showing the whole photo intact was chosen over uniform card
+   height. The 4/3 default here only still applies to the icon fallback
+   (no photo uploaded) and stays object-fit:contain from the base rule
+   above — computing a real ratio needs a real file, so there's nothing to
+   override it with in that case. */
+.card:hover .card-thumb img, .card:hover .card-thumb video { transform: scale(1.03); }
+/* News and article cards (both use .card-news — newsCard() in
+   includes/components.php, and articles.php's own markup) deliberately
+   crop to fill the fixed 4/3 box instead of the base rule's contain: many
+   contributors upload whatever size image they happen to have, so a
+   letterboxed, per-photo-ratio box (campusCard()'s treatment) makes a row
+   of them look uneven. A uniform, fully-filled card wins over showing
+   every photo's full composition here. */
+.card-news .card-thumb img { object-fit: cover; object-position: center top; transform-origin: center top; }   /* crop from the bottom: the picture always starts at its top edge (headline, faces), never centred */
+.card-thumb-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--navy-300); background: var(--navy-50); }
+.card-thumb-fallback .icon { width: 2.4rem; height: 2.4rem; }
+/* Program cards specifically: a level-tinted gradient + fine dot texture
+   instead of the flat generic placeholder above, since programs have no
+   image column yet and this fallback is the norm, not an edge case.
+   Applied as an *additional* class, .thumb-level-N, only by programCard() —
+   the plain .card-thumb-fallback above still covers news/campus/etc. */
+.thumb-level-1, .thumb-level-2, .thumb-level-3, .thumb-level-4, .thumb-level-5 {
+  color: rgba(255,255,255,.92);
+  background-size: 16px 16px, cover;
+}
+.thumb-level-1 .icon, .thumb-level-2 .icon, .thumb-level-3 .icon, .thumb-level-4 .icon, .thumb-level-5 .icon {
+  width: 2.6rem; height: 2.6rem; filter: drop-shadow(0 2px 6px rgba(0,0,0,.18));
+}
+.thumb-level-1 { background-image: radial-gradient(rgba(255,255,255,.22) 1px, transparent 1.6px), linear-gradient(135deg, var(--sky-500), var(--blue-400)); }
+.thumb-level-2 { background-image: radial-gradient(rgba(255,255,255,.22) 1px, transparent 1.6px), linear-gradient(135deg, var(--blue-400), var(--blue-600)); }
+.thumb-level-3 { background-image: radial-gradient(rgba(255,255,255,.22) 1px, transparent 1.6px), linear-gradient(135deg, var(--navy-500), var(--navy-700)); }
+.thumb-level-4 { background-image: radial-gradient(rgba(255,255,255,.22) 1px, transparent 1.6px), linear-gradient(135deg, var(--navy-700), var(--navy-900)); }
+.thumb-level-5 { background-image: radial-gradient(rgba(255,255,255,.22) 1px, transparent 1.6px), linear-gradient(135deg, var(--navy-800), #05070F); }
+.card-thumb-link { display: block; }
+.card-thumb-cta {
+  position: absolute; left: 14px; bottom: 14px; z-index: 2;
+  background: #fff; color: var(--navy-600); font-size: .78rem; font-weight: 700;
+  padding: 7px 14px; border-radius: var(--radius-full); display: inline-flex; gap: 6px; align-items: center;
+}
+.card-badge {
+  position: absolute; top: 12px; left: 12px; z-index: 2;
+  background: var(--badge-color, var(--primary)); color: var(--badge-ink, #fff);
+  font-size: .75rem; font-weight: 800; padding: 4px 11px; border-radius: var(--radius-full);
+}
+.card-badge-level { background: var(--secondary); color: var(--primary-ink); left: auto; right: 12px; }
+/* a programme that is not taking applications now: still listed, marked on its picture (top left, the level badge is top right) */
+.card-badge-closed { background: #5b6480; color: #fff; }
+.card-program.is-closed .card-thumb img, .card-program.is-closed .card-thumb-fallback { filter: grayscale(.6); opacity: .85; }
+.program-closed-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--radius-full); background: #eef0f5; color: #5b6480; font-size: .72em; font-weight: 700; white-space: nowrap; vertical-align: middle; }
+/* News category: the same dark navy for every category (the colour of the "Faculty of Business Administration ..." box in
+   the logo), a slightly rounded box, and the category's own colour as a stripe on the left (a thin light line beside it
+   keeps the stripe visible even when a category colour is close to the navy). */
+.card-badge-news {
+  background: #343C60; color: #fff;
+  border-radius: 4px; border-left: 4px solid var(--badge-color, #1558A6);
+  box-shadow: inset 1px 0 0 rgba(255,255,255,.55), 0 1px 3px rgba(8,20,60,.25);
+  padding: 4px 10px 4px 8px; line-height: 1.35; white-space: nowrap; text-decoration: none;
+}
+a.card-badge-news:hover, a.card-badge-news:focus-visible { background: #262C48; color: #fff; }
+/* in the card's date line (in front of the date) instead of on top of the photo */
+.card-badge-inline { position: static; flex: 0 0 auto; font-size: .72rem; }
+
+.card-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; row-gap: 6px; font-size: .8125rem; color: var(--ink-faint); }
+.card-meta .icon { color: var(--ink-faint); }
+.dot-sep { opacity: .6; }
+.card-title { font-size: .98rem; line-height: 1.45; font-weight: 700; }
+.card-title a { color: var(--ink); }
+.card-title a:hover { color: var(--primary); text-decoration: none; }
+.card-excerpt { font-size: .84rem; color: var(--ink-soft); flex: 1; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-chip {
+  display: inline-flex; align-items: center; gap: 5px; font-size: .75rem; font-weight: 600;
+  background: var(--surface-soft); color: var(--ink-soft); padding: 6px 12px; border-radius: var(--radius-full);
+  transition: background-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+/* hashtag sidebar: the most used tags first, the rest behind "ดูแท็กทั้งหมด" in a search box + a scroll box of fixed
+   height, so 150+ tags never make the sidebar long (articles.php) */
+.tag-panel { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border, #e3e8f1); }
+.tag-panel[hidden], .tag-chip[hidden], .tag-search[hidden], .tag-note[hidden] { display: none; }
+.tag-search { display: block; width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 8px 14px; border: 1px solid var(--border, #e3e8f1);
+  border-radius: var(--radius-full); background: var(--surface, #fff); color: var(--ink); font: inherit; font-size: .85rem; }
+.tag-search:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+.tag-box { position: relative; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.tag-box.is-more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent); }
+.tag-note { margin: 8px 0 0; font-size: .78rem; color: var(--ink-faint); }
+.tag-more { display: block; width: 100%; margin-top: 12px; padding: 8px 12px; border: 1px dashed var(--border, #cdd6e8); border-radius: var(--radius-full);
+  background: var(--surface-soft); color: var(--primary); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.tag-more:hover { background: color-mix(in srgb, var(--primary) 8%, var(--surface-soft)); }
+.tag-more:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tag-more[hidden] { display: none; }
+a.tag-chip:hover { text-decoration: none; background: var(--primary); color: var(--primary-ink); }
+a.tag-chip:hover .badge-soft { background: rgba(255,255,255,.25); color: #fff; }
+.tag-chip.is-active { background: var(--primary); color: var(--primary-ink); }
+.tag-chip.is-active .badge-soft { background: rgba(255,255,255,.25); color: #fff; }
+/* SDGs (helpers.php sdgBadges()): the official colour of each goal, text colour picked for contrast (--sdg-ink) */
+.card-sdgs { display: flex; flex-wrap: wrap; gap: 5px; }
+.sdg-chip { display: inline-flex; align-items: center; font-size: .7rem; font-weight: 700; letter-spacing: .02em; line-height: 1;
+  padding: 5px 8px; border-radius: 6px; background: var(--sdg); color: var(--sdg-ink); }
+.sdg-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.sdg-badge { display: inline-flex; align-items: stretch; min-height: 44px; border-radius: 10px; overflow: hidden; border: 2px solid var(--sdg);
+  background: var(--surface); color: var(--ink); font-size: .85rem; font-weight: 600; max-width: 100%;
+  transition: background-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard); }
+.sdg-badge .sdg-num { display: flex; align-items: center; justify-content: center; min-width: 44px; padding: 0 8px; background: var(--sdg); color: var(--sdg-ink); font-size: 1.15rem; font-weight: 800; }
+.sdg-badge .sdg-name { display: flex; align-items: center; padding: 6px 12px; line-height: 1.35; }
+.sdg-badge:hover, .sdg-badge:focus-visible { text-decoration: none; background: var(--sdg); color: var(--sdg-ink); }
+/* news list sidebar: 17 goal tiles to filter by */
+.sdg-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.sdg-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 44px; border-radius: 8px;
+  background: var(--sdg); color: var(--sdg-ink); font-weight: 800; font-size: .95rem; line-height: 1.1; border: 2px solid transparent; }
+.sdg-tile small { font-size: .62rem; font-weight: 600; opacity: .9; }
+.sdg-tile:hover { text-decoration: none; filter: brightness(.92); }
+.sdg-tile.is-active { border-color: var(--ink); box-shadow: 0 0 0 2px var(--surface) inset; }
+.sdg-tile.is-empty { opacity: .35; }
+.card-readmore { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 700; color: var(--secondary); margin-top: auto; }
+.card-readmore:hover { text-decoration: none; gap: 9px; }
+.card-readmore .icon { transition: transform var(--dur-fast) var(--ease-standard); }
+.card-readmore:hover .icon { transform: translateX(2px); }
+
+/* Staff card — large portrait photo + name/position, matching the faculty's
+   existing site (grouped into rank-tier grids via .grid.grid-4, see staff.php). */
+.card-staff { align-items: center; text-align: center; padding: 18px 16px; gap: 8px; }
+.staff-avatar { width: 100%; aspect-ratio: 3/4; max-width: 220px; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 4px; }
+.staff-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.staff-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--primary); color: var(--primary-ink); font-weight: 800; font-size: 2.4rem; }
+/* word-break:keep-all stops the browser's Thai line-breaker from treating
+   a prefix+first-name run like "มณฑาทิพย์" as two breakable "words" just
+   because it can identify a dictionary boundary inside it — with no
+   explicit space there, that read as the name itself splitting mid-word.
+   keep-all still allows the one real word boundary (the space before the
+   surname) to wrap normally. */
+.staff-name { font-size: .94rem; font-weight: 700; word-break: keep-all; overflow-wrap: normal; }
+.staff-position { font-size: .8rem; color: var(--secondary); }
+.staff-nw { white-space: nowrap; }
+.staff-responsibility { font-size: .72rem; color: var(--ink-soft); font-style: italic; }
+.staff-profile-link { font-size: .8125rem; padding-block: 10px; font-weight: 600; color: var(--secondary); display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; }
+.staff-profile-link:hover { text-decoration: none; color: var(--primary); }
+
+/* Explicit "หัวหน้าสาขา" marker — a deliberate badge instead of relying on
+   whatever text happens to be in position/responsibility, which looked
+   inconsistent across cards in the same department group. */
+.staff-head-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .72rem; font-weight: 700; color: var(--primary-ink, #fff);
+  background: var(--primary); padding: 2px 10px; border-radius: var(--radius-full); margin-top: 2px;
+}
+.staff-head-badge .icon { width: .68rem; height: .68rem; }
+
+/* Horizontal card carousel — e.g. the "ผู้บริหาร" row on about.php. Mobile
+   shows one card at a time (with room to peek the next), scaling up to
+   exactly 4 per view at desktop width, matching the old .grid.grid-4's
+   column count instead of wrapping the rest onto a second row. */
+.exec-scroll-wrap { position: relative; }
+.exec-scroll {
+  display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; padding: 4px; margin: -4px;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.exec-scroll::-webkit-scrollbar { display: none; }
+/* min-width:0 overrides flexbox's default min-width:auto — without it, a
+   card whose name has no break opportunity (word-break:keep-all on
+   .staff-name) refuses to shrink below that text's own width, so that one
+   card alone renders wider than its siblings instead of sharing the same
+   flex-basis.
+   height:auto overrides .card's own height:100% — that percentage can't
+   resolve against this flex row's indefinite height, but CSS still treats
+   a non-auto height as opting out of align-items:stretch, so without this
+   override a card with less text (no .staff-responsibility line, e.g. the
+   dean vs. the vice deans) renders visibly shorter than its siblings
+   instead of stretching to match. */
+.exec-scroll > .card-staff { flex: 0 0 78%; min-width: 0; height: auto; scroll-snap-align: start; }
+@media (min-width: 600px)  { .exec-scroll > .card-staff { flex-basis: calc(50% - 10px); } }
+@media (min-width: 900px)  { .exec-scroll > .card-staff { flex-basis: calc(33.333% - 14px); } }
+@media (min-width: 1150px) { .exec-scroll > .card-staff { flex-basis: calc(25% - 15px); } }
+.exec-scroll-btn {
+  position: absolute; top: 40%; transform: translateY(-50%); z-index: 2;
+  width: 38px; height: 38px; border-radius: var(--radius-full); border: 1px solid var(--border);
+  background: var(--surface); box-shadow: var(--shadow-md); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background .15s ease, opacity .15s ease;
+}
+.exec-scroll-btn:hover { background: var(--surface-soft); }
+.exec-scroll-btn:disabled { opacity: 0; pointer-events: none; }
+.exec-scroll-btn.is-prev { left: -6px; }
+.exec-scroll-btn.is-next { right: -6px; }
+@media (min-width: 640px) { .exec-scroll-btn.is-prev { left: -18px; } .exec-scroll-btn.is-next { right: -18px; } }
+
+/* Staff directory hybrid tree (staff.php) — same pattern as
+   admin/modules/org-chart, reusing the large photo card instead of a
+   compact box. Real direct reports (supervisor_id) with their own reports
+   get a branch (card + a grid of everyone under them, sized to a roughly
+   square shape); anyone with no reports of their own is bundled into one
+   connected vertical chain instead of a separate empty branch each.
+   justify-content:safe center centers the tree when it fits, but falls
+   back to start-alignment (scrollable, nothing unreachable) when it's
+   wider than the container — verified against this exact failure mode
+   on the admin org-chart before reusing the pattern here. */
+/* The scrollbar itself used to be hidden entirely — but since
+   staff-tree-scale.js now shrinks the chart to fit whenever it can, the
+   only time this ever actually scrolls is the rare oversized chart that
+   hit the scale-down floor, and with no visible scrollbar a visitor on a
+   small screen had no way to know swiping was even possible. A visible,
+   deliberately styled thin scrollbar now does that job — it only ever
+   renders when the browser decides the content actually overflows. */
+.staff-tree-scroll {
+  position: relative;
+  overflow-x: auto; padding: 20px 0 20px; display: flex; justify-content: safe center;
+  scrollbar-width: thin; scrollbar-color: var(--ink-faint) transparent;
+}
+.staff-tree-scroll::-webkit-scrollbar { height: 8px; }
+.staff-tree-scroll::-webkit-scrollbar-track { background: transparent; }
+.staff-tree-scroll::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: var(--radius-full); }
+.staff-tree-scroll::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+/* Swipe-hint arrows — invisible by default (most trees fit and never
+   scroll), toggled on briefly by staff-tree-scale.js only for the rare
+   chart still wide enough to need it after hitting the scale-down floor,
+   timed to a couple of auto-scroll "peeks" so a visitor on a small screen
+   sees, rather than has to guess, that there's more to the chart. */
+.staff-scroll-hint {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(11,15,51,.55); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; z-index: 4;
+  transition: opacity var(--dur-slow) var(--ease-standard);
+}
+.staff-scroll-hint.is-visible { opacity: 1; }
+.staff-scroll-hint-left { left: 6px; }
+.staff-scroll-hint-right { right: 6px; }
+.staff-scroll-hint .icon { width: 1rem; height: 1rem; }
+/* overflow-x:auto forces overflow-y to compute as auto too (can't mix
+   'auto' with 'visible' per spec), which would clip the hover-zoomed card
+   above — switch to overflow:visible only while a card inside is actually
+   hovered, so the horizontal scrollbar still works normally the rest of
+   the time. */
+.staff-tree-scroll:has(.card-staff:hover) { overflow: visible; }
+.staff-tree, .staff-tree-children { display: flex; align-items: flex-start; list-style: none; margin: 0; padding: 0; position: relative; }
+/* "Spread across the screen" cuts both ways: staff-tree-scale.js already
+   shrinks a tree that's too WIDE for the viewport, but a small tree (a
+   handful of direct reports) has no width rule pushing it the other way,
+   so it just renders at its own shrink-to-fit size and sits centered with
+   a lot of dead space on both sides — nowhere near "fills the screen".
+   Stretching .staff-tree-children to the full available width and letting
+   space-between push its children out to that width's edges covers the
+   common case (the root's direct-report row); .staff-tree > li gets
+   flex:1 so the lone root card also spans that width instead of shrinking
+   to its own content size (harmless if there's ever more than one root —
+   flex:1 just shares the width evenly rather than each claiming 100% and
+   overlapping). Only this top fan-out row spreads — a branch's own
+   descendant grid (renderStaffBranch) sizes to its own content as before,
+   since stretching a small 2x2/3x3 group across the whole page would just
+   leave its cards looking sparse and lost. */
+.staff-tree > li { flex: 1 1 0; }
+.staff-tree-children { width: 100%; justify-content: space-between; }
+/* flex-shrink defaults to 1 — without pinning it back to 0, a wide child
+   (a branch's descendant grid, mainly) can get compressed to help the row
+   fit, or opportunistically stretch back out as more width frees up,
+   instead of just sitting at its own natural
+   size with the leftover space going into the gaps between siblings. */
+.staff-tree-children > li { flex: 0 0 auto; }
+.staff-tree > li, .staff-tree-children > li {
+  /* padding-top reserves the same height as the connector's own vertical
+     drop below, so the card renders below the line instead of under it —
+     the connector is a position:absolute pseudo-element and never pushes
+     real content down on its own. Horizontal padding gives each branch
+     visible breathing room now that the cards themselves are small. */
+  position: relative; padding: 26px 24px 0; display: flex; flex-direction: column; align-items: center;
+}
+.staff-tree > li::before, .staff-tree > li::after,
+.staff-tree-children > li::before, .staff-tree-children > li::after {
+  content: ''; position: absolute; top: 0; width: 50%; height: 26px; border-top: 2px solid var(--ink-faint);
+}
+.staff-tree > li::before, .staff-tree-children > li::before { right: 50%; }
+.staff-tree > li::after,  .staff-tree-children > li::after  { left: 50%; border-left: 2px solid var(--ink-faint); }
+.staff-tree > li:only-child::before, .staff-tree > li:only-child::after,
+.staff-tree-children > li:only-child::before, .staff-tree-children > li:only-child::after { display: none; }
+.staff-tree > li:first-child::before, .staff-tree-children > li:first-child::before { border-top-color: transparent; }
+.staff-tree > li:last-child::after,  .staff-tree-children > li:last-child::after  { border-top-color: transparent; }
+.staff-tree-children { padding-top: 26px; }
+.staff-tree-children::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--ink-faint); height: 26px; }
+
+.staff-branch { display: flex; flex-direction: column; align-items: center; }
+.staff-branch-grid { display: grid; align-items: start; gap: 12px; justify-content: center; }
+/* Only push the grid down when it follows a head card — a headless branch
+   (nobody assigned as department head yet) has nothing above it to clear. */
+.staff-branch > .card-staff + .staff-branch-grid { margin-top: 16px; }
+.staff-branch-grid .card-staff { height: auto; }
+
+/* The ประจำสาขา pyramid (one head + everyone else) is its own single group,
+   not several branches sharing a row — capping it at a fixed few columns
+   left a tight little cluster of cards stranded in the middle of a much
+   wider page. Letting it use the full available width and add as many
+   columns as fit means it actually fills the space instead of huddling
+   in the center.
+   Column count used to be a fixed repeat(N,1fr) set inline by PHP based
+   only on member count, blind to viewport width — on a phone that forced
+   the same 5 tracks as desktop, so every card and its Thai name/position
+   text got squeezed down to ~70px instead of ever dropping to fewer
+   columns. Mobile-first tiers instead: 1 column on phones, 2 from tablet,
+   then auto-fit with a minmax floor from desktop up — auto-fit's own
+   column-count math is driven by the minmax *max* when it's a definite
+   length, so a definite max (e.g. minmax(140px,220px)) picks its track
+   count as if every track were already 220px wide, collapsing a 343px
+   phone screen to a single column instead of two; using 1fr as the max
+   keeps the fit math anchored to the 140px floor, and .card-staff's own
+   max-width still caps how big any one card actually renders. */
+.staff-branch.is-wide { width: 100%; max-width: 1200px; margin-inline: auto; }
+/* justify-items:center (not stretch) — .card-staff caps at max-width:220px,
+   so on the single-column mobile tier the grid track is the full row width
+   while the card itself is much narrower; stretch left it flush against
+   the track's start edge instead of centered, visibly out of line with the
+   head card above it (which centers via .staff-branch's flex). */
+/* Cards size to their text (a long title like "เจ้าหน้าที่บริหการงานทั่วไป ชำนาญการ" widens its card instead of
+   wrapping), so the rows are a centred flex-wrap rather than equal grid tracks. Phones: one card per row, text may
+   wrap but only at spaces (.staff-nw). From 600px each line stays on one line. */
+.staff-branch-grid.is-wide {
+  display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center;
+  width: 100%; gap: 16px;
+}
+@media (min-width: 768px)  { .staff-branch-grid.is-wide { gap: 20px; } }
+@media (min-width: 1024px) { .staff-branch-grid.is-wide { gap: 24px; } }
+.staff-branch.is-wide .card-staff { flex: 0 1 auto; width: auto; min-width: min(200px, 100%); max-width: 100%; padding: 20px 18px; }
+@media (min-width: 600px) {
+  .staff-branch.is-wide .staff-name, .staff-branch.is-wide .staff-position, .staff-branch.is-wide .staff-responsibility { white-space: nowrap; }
+}
+.staff-branch.is-wide .staff-avatar { width: 100%; max-width: 150px; aspect-ratio: 1/1; }
+.staff-branch.is-wide .staff-avatar-fallback { font-size: 2rem; }
+.staff-branch.is-wide .staff-name { font-size: 1rem; }
+.staff-branch.is-wide .staff-position { font-size: .84rem; }
+.staff-branch.is-wide .staff-responsibility { font-size: .76rem; }
+.staff-branch.is-wide .staff-profile-link { font-size: .78rem; }
+.staff-branch.is-wide .staff-head-badge { font-size: .78rem; padding: 3px 12px; }
+
+
+/* Force a consistent card width across every context (root card, branch
+   head, branch grid members, chain members, and the ประจำสาขาวิชา pyramid's
+   head+grid which sits outside .staff-tree entirely) — without this, cards
+   outside a fixed-width grid column just shrink to their own text's natural
+   width, making the root card and the "no reports" chain look smaller than
+   the grid branches next to them. */
+.staff-tree .card-staff, .staff-tree-children .card-staff, .staff-branch .card-staff { width: 150px; padding: 10px 6px; }
+.staff-tree .staff-name, .staff-tree-children .staff-name, .staff-branch .staff-name { font-size: .74rem; }
+.staff-tree .staff-position, .staff-tree-children .staff-position, .staff-branch .staff-position { font-size: .64rem; }
+.staff-tree .staff-responsibility, .staff-tree-children .staff-responsibility, .staff-branch .staff-responsibility { font-size: .6rem; }
+.staff-tree .staff-profile-link, .staff-tree-children .staff-profile-link, .staff-branch .staff-profile-link { font-size: .62rem; }
+.staff-tree .staff-head-badge, .staff-tree-children .staff-head-badge, .staff-branch .staff-head-badge { font-size: .58rem; padding: 1px 8px; }
+.staff-tree .staff-name, .staff-tree-children .staff-name, .staff-branch .staff-name,
+.staff-tree .staff-position, .staff-tree-children .staff-position, .staff-branch .staff-position,
+.staff-tree .staff-responsibility, .staff-tree-children .staff-responsibility, .staff-branch .staff-responsibility {
+  /* Thai script has no spaces between words, so a name/title like
+     "มณฑาทิพย์ เดือนสุกแสง" or "หัวหน้าสาขาวิชา" is really just one or two
+     unbroken runs of characters with no in-word break points — keep-all
+     wraps only at real word boundaries (the space between prefix+first
+     name and surname is one; a title with no space in it is a single
+     unit). overflow-wrap must stay 'normal' (the default) rather than
+     break-word/anywhere: those exist specifically to fracture a run mid-
+     character as a last resort when it doesn't fit, which is exactly the
+     "name split across two lines mid-word" look this must never do —
+     better to let a too-long single name overflow its 150px card than
+     chop it apart. */
+  word-break: keep-all; overflow-wrap: normal;
+}
+
+/* Round avatar (matches admin/org-chart's .board-avatar) instead of the
+   large 3:4 portrait used elsewhere on the site — the tree/pyramid cards
+   are compact chart nodes, not profile cards. */
+.staff-tree .staff-avatar, .staff-tree-children .staff-avatar, .staff-branch .staff-avatar {
+  width: 64px; aspect-ratio: 1/1; max-width: 64px; border-radius: 50%; margin: 0 auto 4px;
+  transition: width var(--dur-base, .18s) var(--ease-standard, ease);
+}
+.staff-tree .staff-avatar-fallback, .staff-tree-children .staff-avatar-fallback, .staff-branch .staff-avatar-fallback { font-size: 1.3rem; }
+
+/* Hover zoom: the base card is already sized to wrap names cleanly at
+   real word boundaries (see keep-all above), so hover doesn't need to
+   re-flow anything — a plain transform:scale enlarges the whole card
+   (photo, name, position) as one unit, floating above neighbours via
+   z-index. */
+.staff-tree .card-staff, .staff-tree-children .card-staff, .staff-branch .card-staff {
+  transition: transform var(--dur-base, .18s) var(--ease-standard, ease), box-shadow var(--dur-base, .18s) ease;
+}
+.staff-tree .card-staff:hover, .staff-tree-children .card-staff:hover, .staff-branch .card-staff:hover {
+  position: relative; z-index: 30; transform: scale(1.35);
+  box-shadow: var(--shadow-lg, 0 14px 34px rgba(20,30,60,.25));
+}
+
+/* =====================================================================
+   EXECUTIVE ORG CHART (ผังผู้บริหาร) — collapsible list
+   Separate from .staff-tree/.staff-branch above (still used by the
+   campus/major staff drill-down) — a different visual pattern for the
+   same supervisor_id tree data: instead of connector-line boxes, anyone
+   with reports becomes a collapsible unit; anyone without is a plain
+   info row. Recursion is handled entirely in PHP (renderExecUnits() in
+   staff.php / admin's org-chart), so .ex-units nests inside its own
+   .ex-unit__body at any depth using these same rules. The first tier
+   under the apex (.ex-unit--division) gets a bigger, accented treatment;
+   everything deeper stays the compact row.
+   Mobile-first: base rules below are the phone layout (tight indent,
+   wrapped division row, no divider); min-width:768px/1024px layer on
+   the tablet/desktop spacing and the single-row division layout. ──── */
+.ex-search { margin-bottom: 20px; position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 8px; }
+.ex-search__input {
+  width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; outline: none;
+}
+.ex-search__input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent); }
+
+/* ── Apex (ผู้บริหารสูงสุด) ── */
+.ex-apex { text-align: center; padding-bottom: 8px; }
+.ex-apex__label { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 12px; }
+.ex-apex__card {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md); padding: 14px 20px; max-width: 300px;
+}
+.ex-apex__name { font-weight: 800; font-size: 1.05rem; margin: 2px 0 0; }
+.ex-apex__role { color: var(--ink-soft); font-size: .82rem; margin: 0; }
+.ex-apex__stem { width: 2px; height: 26px; background: var(--border); margin: 0 auto; }
+
+/* ── Units / connector lines — indented further than the division tier
+   itself so an expanded unit's own reports read as clearly one level
+   deeper, not just stacked directly underneath. Indent/connector offsets
+   scale up with each breakpoint since a fixed desktop-sized indent eats
+   too much of a phone's width. ── */
+.ex-units { position: relative; padding-left: 22px; }
+.ex-units.is-top { padding-left: 0; }
+.ex-units::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 1.75rem; width: 2px; background: var(--border); }
+.ex-units.is-top::before { display: none; }
+
+.ex-unit { position: relative; margin-bottom: 10px; }
+.ex-units:not(.is-top) > .ex-unit::before {
+  content: ''; position: absolute; left: -15px; top: 26px; width: 15px; height: 2px; background: var(--border);
+}
+.ex-units:not(.is-top) > .ex-unit::after {
+  content: ''; position: absolute; left: -19px; top: 21px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--surface); border: 2px solid var(--primary);
+}
+
+.ex-unit__toggle {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: inherit;
+  color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 10px 12px; cursor: pointer; transition: border-color var(--dur-fast);
+}
+.ex-unit__toggle:hover { border-color: var(--primary); }
+.ex-unit__toggle--leaf { cursor: default; }
+.ex-unit__toggle--leaf:hover { border-color: var(--border); }
+.ex-unit__info { flex: 1 1 auto; min-width: 0; }
+.ex-unit__name { display: block; font-weight: 700; font-size: .96rem; line-height: 1.4; }
+.ex-unit__role { display: block; color: var(--ink-soft); font-size: .82rem; margin-top: 2px; }
+.ex-unit__resp { display: block; color: var(--ink-faint); font-size: .76rem; font-style: italic; margin-top: 3px; }
+.ex-unit__profile {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; padding-block: 10px; font-size: .8125rem;
+  font-weight: 700; color: var(--primary);
+}
+.ex-unit__profile:hover { text-decoration: underline; }
+.ex-unit__badge { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--ink-soft); align-self: flex-start; margin-top: 2px; }
+.ex-unit__chev {
+  width: 9px; height: 9px; border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint);
+  transform: rotate(45deg); transition: transform var(--dur-fast) var(--ease-standard);
+}
+.ex-unit__toggle[aria-expanded="true"] .ex-unit__chev { transform: rotate(-135deg); }
+.ex-unit__body { padding-top: 10px; }
+.ex-unit__body[hidden] { display: none; }
+
+/* ── Division tier (first level under the apex) — bigger, accented, and
+   read left-to-right as a kicker (their ด้านที่รับผิดชอบ, or หน่วยงาน as a
+   fallback) first, the actual person's info after it, matching the
+   reference layout. One fixed accent color for every division card (not
+   cycled). Phones get the wrapped, divider-less stack; the side-by-side
+   kicker | divider | person row only kicks in from tablet up, once
+   there's enough width for both halves side by side. ── */
+.ex-unit--division { --ex-tone: var(--primary); margin-bottom: 14px; }
+.ex-unit--division > .ex-unit__toggle {
+  border-left: 4px solid var(--ex-tone); border-radius: var(--radius-lg);
+  padding: 14px 16px; gap: 12px; box-shadow: var(--shadow-sm); flex-wrap: wrap;
+}
+.ex-unit--division .ex-unit__kicker-block { flex: 1 1 100%; display: flex; flex-direction: column; gap: 4px; }
+.ex-unit--division .ex-unit__kicker {
+  font-size: .96rem; font-weight: 700; letter-spacing: .02em; color: var(--ex-tone); line-height: 1.3;
+}
+.ex-unit--division .ex-unit__kicker-count { font-size: .76rem; color: var(--ink-soft); }
+.ex-unit--division .ex-unit__divider { display: none; }
+.ex-unit--division > .ex-unit__toggle .ex-unit__name { font-size: 1rem; }
+.ex-unit--division > .ex-unit__toggle .ex-unit__role { font-size: .84rem; }
+.ex-unit--division > .ex-unit__toggle > .ex-unit__chev { margin-left: auto; }
+
+.ex-avatar {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--surface-soft);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary);
+  font-weight: 700; font-size: .84rem; letter-spacing: .02em;
+}
+.ex-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ex-avatar--lg { width: 58px; height: 58px; font-size: 1.02rem; }
+.ex-avatar--xl { width: 56px; height: 56px; font-size: .96rem; }
+
+@media (min-width: 768px) {
+  .ex-apex__card { padding: 20px 32px; }
+  .ex-units { padding-left: 36px; }
+  .ex-units:not(.is-top) > .ex-unit::before { left: -27px; top: 28px; width: 27px; }
+  .ex-units:not(.is-top) > .ex-unit::after { left: -32px; top: 22px; }
+  .ex-unit__toggle { gap: 12px; padding: 12px 16px; }
+  .ex-unit__name { font-size: 1rem; }
+  .ex-unit__role { font-size: .85rem; }
+  .ex-unit--division > .ex-unit__toggle { padding: 16px 20px; gap: 16px; flex-wrap: nowrap; }
+  /* The kicker column has one fixed width, so the divider always sits at the same distance from the card's left edge ... */
+  .ex-unit--division { --ex-kicker-w: 200px; }
+  .ex-unit--division .ex-unit__kicker-block { flex: 0 0 var(--ex-kicker-w); width: var(--ex-kicker-w); max-width: none; }
+  /* ... and the people under that division are indented until their tree line (the 2px line 7px into .ex-units, centre = indent + 8)
+     lies exactly on it. Divider centre = 4 (accent border) + 20 (padding) + kicker width + 16 (gap) + 0.5 from the card's left edge. */
+  .ex-unit--division > .ex-unit__body > .ex-units { margin-left: calc(var(--ex-kicker-w) + 32.5px); }
+  .ex-unit--division .ex-unit__divider { display: block; flex: 0 0 auto; align-self: stretch; width: 1px; background: var(--border); }
+  .ex-unit--division > .ex-unit__toggle .ex-unit__name { font-size: 1.08rem; }
+  .ex-unit--division > .ex-unit__toggle .ex-unit__role { font-size: .9rem; }
+  .ex-avatar { width: 48px; height: 48px; }
+  .ex-avatar--lg { width: 66px; height: 66px; }
+  .ex-avatar--xl { width: 60px; height: 60px; }
+}
+
+@media (min-width: 1024px) {
+  .ex-units { padding-left: 48px; }
+  .ex-units:not(.is-top) > .ex-unit::before { left: -39px; top: 30px; width: 39px; }
+  .ex-units:not(.is-top) > .ex-unit::after { left: -44px; top: 24px; width: 11px; height: 11px; }
+  .ex-unit__toggle { gap: 14px; padding: 14px 18px; }
+  .ex-unit--division > .ex-unit__toggle { padding: 18px 22px; gap: 18px; }
+  .ex-unit--division > .ex-unit__body > .ex-units { margin-left: calc(var(--ex-kicker-w) + 36.5px); }   /* this size has 22px padding and an 18px gap: 4px more */
+  .ex-avatar { width: 52px; height: 52px; font-size: .92rem; }
+  .ex-avatar--lg { width: 72px; height: 72px; font-size: 1.15rem; }
+  .ex-avatar--xl { width: 64px; height: 64px; font-size: 1.05rem; }
+}
+
+/* =====================================================================
+   FORMS
+   ===================================================================== */
+.field { margin-bottom: 18px; }
+.field-label { display: block; font-size: .82rem; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
+.field-required { color: var(--error-text); }
+.field-input, .field-textarea, .field-select {
+  width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 11px 14px; font-size: .95rem; background: var(--surface); color: var(--ink); font-family: inherit;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.field-input:focus, .field-textarea:focus, .field-select:focus {
+  outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 22%, transparent);
+}
+.field-textarea { resize: vertical; min-height: 120px; }
+.field.has-error .field-input, .field.has-error .field-textarea { border-color: var(--error); }
+.field-help { font-size: .76rem; margin-top: 5px; color: var(--ink-faint); }
+.field.has-error .field-help { color: var(--error-text); }
+.field.has-success .field-help { color: var(--success-text); }
+
+.alert { border-radius: var(--radius-md); padding: 16px 18px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-start; }
+.alert-success { background: var(--success-bg); color: var(--success-text); }
+.alert-error { background: var(--error-bg); color: var(--error-text); }
+.alert .icon { flex-shrink: 0; margin-top: 2px; }
+
+/* =====================================================================
+   FILTER BAR / TABS / SELECT PILLS
+   ===================================================================== */
+.filter-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 24px;
+}
+.filter-label { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px; font-size: .88rem; }
+.filter-bar select.field-select { width: auto; min-width: 160px; padding: 8px 12px; font-size: .86rem; }
+.filter-count { margin-left: auto; font-size: .82rem; color: var(--ink-soft); }
+
+.tab-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.tab-pill {
+  padding: 7px 16px; border-radius: var(--radius-full); font-size: .82rem; font-weight: 700;
+  border: 1.5px solid var(--border); color: var(--ink-soft); background: var(--surface);
+}
+.tab-pill:hover { text-decoration: none; border-color: var(--secondary); color: var(--secondary); }
+.tab-pill.is-active { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+
+/* Second filter row (e.g. category, alongside an audience/type row above) —
+   distinct accent so the two independent filter groups read as separate. */
+.tab-pill-alt:hover { border-color: var(--accent); color: var(--accent-ink); }
+.tab-pill-alt.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* =====================================================================
+   PAGINATION
+   ===================================================================== */
+.pagination ul { display: flex; gap: 6px; align-items: center; justify-content: center; }
+.page-btn {
+  min-width: 38px; height: 38px; padding: 0 8px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
+  font-weight: 700; font-size: .86rem; display: flex; align-items: center; justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.page-btn:hover { text-decoration: none; border-color: var(--secondary); color: var(--secondary); }
+.page-btn.is-active { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.page-btn[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+.page-ellipsis { color: var(--ink-faint); padding: 0 4px; }
+
+/* =====================================================================
+   FOOTER
+   ===================================================================== */
+.site-footer {
+  /* The faculty buildings as a faint picture behind the footer: the photo (already grey and tone-limited) shows through a tint of
+     the brand blue, so the text on top keeps its contrast (checked pixel by pixel: 4.6:1 or better). Change --footer-tint to make the
+     picture more or less visible (smaller % = more picture; below ~72% the text contrast starts to suffer).
+     Phones get the tall picture, from 1024px up the wide one. */
+  --footer-tint: rgba(21, 88, 166, .74);   /* = the brand blue (navy-600) at 74%, for browsers without color-mix() (iOS <= 16.1, Chrome <= 110) */
+  --footer-photo: url("../img/footer-building-tall.jpg?v=2");
+  background: linear-gradient(var(--footer-tint), var(--footer-tint)), var(--footer-photo) center / cover no-repeat, var(--primary);
+  background-color: var(--primary);   /* kept on its own: if the line above is ever dropped, the white text still sits on blue */
+  color: #E6EEFA; margin-top: 80px;
+}
+@supports (color: color-mix(in srgb, red 50%, blue)) { .site-footer { --footer-tint: color-mix(in srgb, var(--primary) 74%, transparent); } }
+@media (min-width: 1024px) { .site-footer { --footer-photo: url("../img/footer-building-wide.jpg"); } }
+.footer-main { padding-block: 48px; }
+.footer-grid { display: grid; grid-template-columns: 1fr; gap: 32px; }
+@media (min-width: 768px)  { .footer-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; } }
+.footer-brand { display: flex; align-items: center; margin-bottom: 14px; }
+/* The full-lockup logo has dark navy text baked into it, unreadable
+   straight on the dark footer background — a white card behind it (sized
+   to the image, not fixed like the old square icon) keeps it legible. */
+.footer-brand img { height: 56px; width: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 10px; padding: 8px 12px; }
+
+@media (min-width: 768px) {
+  .footer-brand img { height: 76px; }
+}
+@media (min-width: 1024px) {
+  .footer-brand img { height: 92px; }
+}
+.footer-desc { color: #E6EEFA; font-size: .84rem; max-width: 34ch; line-height: 1.8; }
+.footer-social { display: flex; gap: 8px; margin-top: 16px; }
+.footer-social a { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.08); color: #fff; display: flex; align-items: center; justify-content: center; }
+.footer-social a:hover { background: var(--accent); text-decoration: none; }
+.footer-heading { color: #fff; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.footer-links li { margin-bottom: 4px; }
+.footer-links a, .footer-links span { color: #E6EEFA; font-size: .86rem; display: flex; align-items: center; gap: 8px; padding-block: 3px; }
+.footer-links a:hover { color: #fff; text-decoration: none; }
+/* visit counters under the footer logo: big number, small "+" marker, small caps label, hairline dividers */
+.footer-visits-heading { margin: 24px 0 0; }
+.footer-visits { list-style: none; margin: 6px 0 0; padding: 0; max-width: 340px; display: grid; grid-template-columns: repeat(2, 1fr); }
+.footer-visits li { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 14px 8px; border-left: 1px solid rgba(255,255,255,.14); border-top: 1px solid rgba(255,255,255,.14); }
+.footer-visits li:nth-child(odd)  { border-left: 0; }
+.footer-visits li:nth-child(-n+2) { border-top: 0; }
+.footer-visits__num { position: relative; display: block; font-size: 1.875rem; font-weight: 600; line-height: 1.1; color: #fff; font-variant-numeric: tabular-nums; }
+.footer-visits__num sup { position: absolute; right: 100%; top: -.15em; margin-right: .12em; font-size: .6em; font-weight: 500; line-height: 1; color: #DCE8F8; }
+.footer-visits__label { font-size: .6875rem; letter-spacing: .08em; text-transform: uppercase; color: #DCE8F8; }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,.12); padding-block: 16px; }
+.footer-bottom .container { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: .8125rem; color: #DCE8F8; }
+.footer-bottom a { color: #DCE8F8; }
+
+.back-to-top {
+  position: fixed; right: 20px; bottom: 20px; z-index: 150;
+  width: 46px; height: 46px; border-radius: 50%; background: var(--primary); color: var(--primary-ink);
+  display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-lg);
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity var(--dur-base), transform var(--dur-base), visibility var(--dur-base);
+}
+.back-to-top.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+
+/* Sits in the back-to-top's spot (bottom:20px) until back-to-top fades in on
+   scroll, then shifts up to stack above it instead of overlapping. */
+.baitrus-float {
+  position: fixed; right: 20px; bottom: 20px; z-index: 149;
+  width: 46px; height: 46px; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; box-shadow: var(--shadow-lg);
+  transition: bottom var(--dur-base);
+}
+.baitrus-float img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.baitrus-float:hover img { transform: scale(1.08); }
+.baitrus-float.is-shifted { bottom: 76px; }
+
+/* =====================================================================
+   GALLERY
+   ===================================================================== */
+/* First photo big (2x2), the rest small in a 2/4-column grid — only the
+   very FIRST item ever gets the big treatment. Using :nth-child(4n+1)
+   here used to also re-trigger it on item 5, 9, ... whenever there were
+   enough photos, producing a second big tile partway through the grid
+   that broke the "one clear lead photo" rhythm the layout is going for. */
+.gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 120px; gap: 10px; }
+.gallery-grid .gallery-item:first-child { grid-row: span 2; grid-column: span 2; }
+@media (min-width: 768px) { .gallery-grid { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 160px; } }
+/* object-fit: contain — same reasoning as .card-thumb above: these are
+   activity/announcement photos that are often full designed graphics
+   (posters, event banners) with text near the edges, so cropping to fill
+   the grid cell loses information. */
+.gallery-item { position: relative; border-radius: var(--radius-md); overflow: hidden; background: var(--surface-soft); }
+.gallery-item img { width: 100%; height: 100%; object-fit: contain; transition: transform var(--dur-slow) var(--ease-standard); }
+.gallery-item:hover img { transform: scale(1.03); }
+.gallery-item::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(11,15,51,.55) 100%); opacity: 0; transition: opacity var(--dur-base); }
+.gallery-item:hover::after { opacity: 1; }
+
+/* =====================================================================
+   TIMELINE
+   ===================================================================== */
+.timeline { position: relative; padding-left: 30px; }
+.timeline::before { content: ""; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+.timeline-item { position: relative; padding-bottom: 26px; }
+.timeline-item::before {
+  content: ""; position: absolute; left: -30px; top: 3px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--primary); border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--primary);
+}
+.timeline-year { color: var(--primary); font-weight: 800; font-variant-numeric: tabular-nums; display: block; margin-bottom: 2px; }
+
+/* =====================================================================
+   SEARCH
+   ===================================================================== */
+.search-box {
+  display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--border); border-radius: var(--radius-full);
+  padding: 10px 18px; background: var(--surface);
+}
+.search-box:focus-within { border-color: var(--secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 20%, transparent); }
+.search-box input { border: none; outline: none; background: transparent; flex: 1; min-width: 0; width: 100%; font-size: .95rem; color: var(--ink); font-family: inherit; }
+.search-box--grow { flex: 1 1 220px; min-width: 0; }   /* shrinks with the screen / enlarged text instead of forcing a sideways scroll */
+.search-box .icon { color: var(--ink-faint); }
+
+.search-panel { position: relative; }
+.search-suggestions {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 250;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg); padding: 8px; display: none; max-height: 60vh; overflow-y: auto;
+}
+.search-suggestions.is-open { display: block; }
+.suggest-group-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); padding: 8px 10px 4px; }
+.suggest-item { display: block; padding: 9px 10px; border-radius: var(--radius-sm); font-size: .87rem; color: var(--ink-soft); }
+.suggest-item:hover, .suggest-item.is-active { background: var(--surface-soft); color: var(--ink); text-decoration: none; }
+.suggest-item mark { background: transparent; color: var(--primary); font-weight: 700; }
+.suggest-empty { padding: 14px 10px; font-size: .85rem; color: var(--ink-faint); text-align: center; }
+
+/* Mirrors .nav-toggle's breakpoint — the search icon lives in the same
+   compact mobile/tablet navbar, replaced by the full inline search box
+   once the desktop nav has room for it. */
+.search-nav-toggle { display: inline-flex; }
+@media (min-width: 1024px) { .search-nav-toggle { display: none; } }
+
+.nav-search-panel {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 220;
+  background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-md);
+  padding: 16px var(--container-pad);
+  display: none;
+}
+.nav-search-panel.is-open { display: block; }
+.nav-search-panel .search-box { max-width: 640px; margin-inline: auto; }
+.nav-search-panel .search-panel { max-width: 640px; margin-inline: auto; position: relative; }
+
+/* =====================================================================
+   TWO-COLUMN CONTENT + SIDEBAR LAYOUT
+   ===================================================================== */
+.layout-with-sidebar { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: start; }
+@media (min-width: 1024px) { .layout-with-sidebar { grid-template-columns: 2fr 1fr; } }
+/* page numbers under a list (news, articles): on a phone they follow the list, before the sidebar; beside a sidebar they
+   get a row of their own under the list, so the sidebar ends level with the last row of cards */
+.layout-with-sidebar:has(> .layout-with-sidebar__foot) > aside { order: 2; }
+.layout-with-sidebar__foot { order: 1; }
+@media (min-width: 1024px) {
+  .layout-with-sidebar:has(> .layout-with-sidebar__foot) > :first-child { grid-row: 1; grid-column: 1; }
+  .layout-with-sidebar:has(> .layout-with-sidebar__foot) > aside { grid-row: 1; grid-column: 2; align-self: stretch; }
+  .layout-with-sidebar__foot { grid-row: 2; grid-column: 1; }
+}
+
+/* =====================================================================
+   SIDEBAR / EMPTY STATE / MISC
+   ===================================================================== */
+/* Sticky only once the sidebar actually sits beside the content (desktop,
+   see .layout-with-sidebar above) — on a stacked mobile/tablet layout it's
+   below the main content instead, where "sticking" mid-page reads as a
+   glitch rather than a helpful pinned panel. */
+.sidebar-sticky { position: static; }
+@media (min-width: 1024px) { .sidebar-sticky { position: sticky; top: 96px; } }
+.sidebar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
+.sidebar-card:last-child { margin-bottom: 0; }   /* the last box ends level with the content beside it (the page numbers) */
+.sidebar-card h4, .sidebar-card h3 { color: var(--primary); margin-bottom: 14px; font-size: 1rem; }
+.side-list-item { display: flex; gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--border); }
+.side-list-item:last-child { border-bottom: none; padding-bottom: 0; }
+.side-list-thumb { width: 60px; height: 50px; border-radius: 8px; object-fit: cover; object-position: center top; flex-shrink: 0; background: var(--surface-soft); }
+/* line-height set explicitly (not just inherited) so min-height's 2-line
+   math actually matches — reserves space for 2 lines always, so a short
+   one-line title doesn't collapse shorter than its 2-line neighbors and
+   throw off the rhythm of the whole list. */
+.side-list-title { font-size: .83rem; font-weight: 600; line-height: 1.4; min-height: calc(1.4em * 2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.side-rank { font-weight: 800; font-size: 1.2rem; color: var(--ink-faint); min-width: 1.6rem; font-variant-numeric: tabular-nums; }
+.side-rank.rank-1 { color: #E0A100; }
+.side-rank.rank-2 { color: var(--ink-faint); }
+.side-rank.rank-3 { color: var(--orange-600); }
+
+.empty-state { text-align: center; padding: 64px 16px; color: var(--ink-faint); }
+.empty-state .icon { width: 3rem; height: 3rem; margin-bottom: 14px; opacity: .5; }
+
+.cta-band { background: var(--navy-600); color: #fff; padding-block: 56px; text-align: center; }   /* a fixed deep blue in both themes: the white buttons and text on it never flip */
+.cta-band h2 { color: #fff; margin-bottom: 10px; }
+.cta-band p { color: #CBDAF4; margin-bottom: 24px; }
+/* The three CTA buttons each have their own colour. Pointing at one keeps its colour family, so the three stay easy
+   to tell apart. Text contrast 5.9:1 or better on every state. */
+.cta-btn { border: 1.5px solid transparent; }
+.cta-btn--apply   { background: #FF914D; color: #2A1000; border-color: #FF914D; }   /* apply: the main action, brand orange */
+.cta-btn--apply:hover,   .cta-btn--apply:focus-visible   { background: #F26B1D; border-color: #F26B1D; color: #2A1000; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.cta-btn--contact { background: #FFFFFF; color: #1558A6; border-color: #FFFFFF; }   /* contact: white */
+.cta-btn--contact:hover, .cta-btn--contact:focus-visible { background: #0C3566; border-color: #FFFFFF; color: #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,.25); }   /* deeper than the band itself, so it never melts into it */
+.cta-btn--visit   { background: #31A7EC; color: #04243F; border-color: #31A7EC; }   /* visit: the brand sky blue (--sky-500) */
+.cta-btn--visit:hover,   .cta-btn--visit:focus-visible   { background: #027AB1; border-color: #FFFFFF; color: #FFFFFF; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+
+/* Solid brand-colored pills instead of thin muted outlines — the outline
+   version read as low-priority secondary chrome and got missed entirely;
+   each platform's own recognizable color makes the row impossible to miss
+   and doubles as an affordance for which icon does what. */
+.share-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.share-row > .text-muted { font-size: .82rem !important; }
+.share-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 13px; border-radius: var(--radius-full);
+  border: none; font-size: .76rem; font-weight: 700; color: #fff; background: var(--ink-soft);
+  box-shadow: var(--shadow-sm); transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+.share-btn .icon { width: 13px; height: 13px; }
+.share-btn:hover { text-decoration: none; color: #fff; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.share-btn[href*="facebook.com"] { background: #1565D8; }
+.share-btn[href*="line.me"] { background: #047A36; }
+.share-btn[data-copy-link] { background: var(--primary); }
+.share-btn[data-copy-link], .share-btn[data-copy-link]:hover { color: var(--primary-ink); }
+
+.badge-soft { display: inline-block; background: var(--surface-soft); color: var(--primary); font-size: .72rem; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-full); }
+
+/* Prose (rendered content areas: news body, program overview) */
+.prose { line-height: 1.9; font-size: 1rem; }
+.prose img { max-width: 100%; height: auto; border-radius: var(--radius-md); margin-block: 1rem; }
+.prose h2, .prose h3 { color: var(--primary); margin-top: 1.6em; margin-bottom: .5em; }
+.prose p { margin-bottom: 1em; }
+/* base.css resets every <ol>/<ul> site-wide to list-style:none — restore
+   real markers here since .prose is the one place actual list content
+   (e.g. about_sections' "list" format, which renders as <ol class="prose">
+   directly rather than nested inside a separate .prose wrapper) needs to
+   look like a list. Covers both "prose ol" (nested) and "ol.prose" (the
+   list itself carrying the class). */
+.prose ol, ol.prose { list-style: decimal; padding-left: 1.3em; margin-bottom: 1em; }
+.prose ul, ul.prose { list-style: disc; padding-left: 1.3em; margin-bottom: 1em; }
+.prose ol li, .prose ul li, ol.prose li, ul.prose li { margin-bottom: .5em; }
+.prose blockquote { border-left: 4px solid var(--accent); padding: 1rem 1.5rem; background: var(--surface-soft); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.prose table { margin-block: 1rem; }
+.prose table th, .prose table td { border: 1px solid var(--border); padding: .5rem .75rem; }
+.prose table th { background: var(--primary); color: var(--primary-ink); }
+
+/* =====================================================================
+   POPUP AD (homepage announcement, admin/modules/popups)
+   ===================================================================== */
+/* max-width/max-height in viewport units, not a fixed px box, so this
+   always fits inside the screen — mobile phone or wide desktop alike —
+   without the image ever overflowing off either edge. */
+.popup-ad-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(11,15,51,.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; visibility: hidden;
+  transition: opacity var(--dur-base) var(--ease-standard), visibility var(--dur-base);
+}
+.popup-ad-overlay.is-visible { opacity: 1; visibility: visible; }
+.popup-ad-box { position: relative; max-width: min(480px, 92vw); max-height: 90vh; }
+.popup-ad-img { display: block; width: 100%; height: auto; max-height: 90vh; object-fit: contain; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); background: var(--surface); }
+.popup-ad-close {
+  position: absolute; top: -14px; right: -14px; width: 44px; height: 44px; border-radius: 50%;
+  background: #fff; color: var(--ink); border: none; font-size: 22px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.popup-ad-close:hover { transform: scale(1.1); }
+
+/* ---------- History timeline (about.php) ---------- */
+.tl-view { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; }
+.tl-panel + .tl-panel { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.tl-panel .tl-year { font-size: 2rem; font-weight: 700; color: var(--secondary); line-height: 1; }
+.tl-panel h3 { margin: 6px 0; color: var(--primary); font-size: 1.1rem; }
+.tl-panel p { margin: 0 0 8px; color: var(--ink-soft); font-size: .95rem; }
+.tl-panel p:last-child { margin-bottom: 0; }
+.tl-strip { display: none; align-items: center; margin-top: 18px; }
+.timeline.is-ready .tl-strip { display: flex; }
+/* All panels share one grid cell, so the box is as tall as the longest one and the line below never moves; the text sits at the top and slides in from the side of the year that was picked. */
+.timeline.is-ready .tl-view { display: grid; overflow: hidden; }
+.timeline.is-ready .tl-panel { grid-area: 1 / 1; align-self: start; margin: 0; padding: 0; border: 0; }
+.timeline.is-ready .tl-panel[hidden] { display: block; visibility: hidden; pointer-events: none; }
+.timeline.is-ready .tl-panel.is-from-right { animation: tlSlideR .45s var(--ease-standard); }
+.timeline.is-ready .tl-panel.is-from-left { animation: tlSlideL .45s var(--ease-standard); }
+@keyframes tlSlideR { from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: none; } }
+@keyframes tlSlideL { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: none; } }
+@keyframes tlFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.tl-track { position: relative; flex: 1; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; }
+.tl-track::-webkit-scrollbar { display: none; }
+.tl-track ul { display: flex; list-style: none; margin: 0; padding: 4px 6px; position: relative; min-width: 100%; width: max-content; }
+.tl-track ul::before { content: ""; position: absolute; left: 0; right: 0; top: 45px; height: 4px; background: var(--border); }
+.tl-track li { flex: 1 0 96px; text-align: center; position: relative; }
+.tl-track button { font: inherit; background: none; border: 0; cursor: pointer; padding: 0; width: 100%; color: var(--ink-soft); display: flex; flex-direction: column; align-items: center; }
+.tl-track button::before { content: ""; display: block; width: 14px; height: 14px; margin: 8px 0 0; flex: none; border-radius: 50%; background: var(--surface); border: 3px solid var(--navy-200); position: relative; z-index: 1; transition: transform .2s, border-color .2s, background .2s; }
+.tl-track button span { order: -1; height: 28px; line-height: 28px; font-size: .95rem; font-weight: 500; white-space: nowrap; transition: transform .2s, color .2s; }
+.tl-track button:hover span { transform: translateY(-3px); color: var(--secondary); }
+.tl-track button.is-active { color: var(--primary); }
+.tl-track button.is-active::before { background: var(--primary); border-color: var(--primary); transform: scale(1.3); }
+.tl-track button.is-active span { color: var(--primary); font-weight: 700; }
+.tl-arrow { flex: none; width: 40px; height: 40px; border: 0; border-radius: 6px; background: var(--border); cursor: pointer; font-size: 1.1rem; color: var(--ink-soft); transition: background .2s, color .2s; }
+.tl-arrow:hover { background: var(--primary); color: var(--primary-ink); }
+@media (min-width: 768px) { .tl-view { padding: 28px; } .tl-panel .tl-year { font-size: 2.4rem; } }
+@media (prefers-reduced-motion: reduce) { .timeline.is-ready .tl-panel.is-from-right, .timeline.is-ready .tl-panel.is-from-left { animation: none; } }
+
+/* ---------- Expandable rows in the statistics tables ---------- */
+.stat-row { transition: background .15s ease; }
+.stat-hint { font-size: .82rem; color: var(--ink-soft); margin: -6px 0 12px; }
+
+/* ---------- Toast (e.g. "link copied") ---------- */
+.toast-msg { position: fixed; left: 50%; bottom: 24px; z-index: 1200; transform: translate(-50%, 20px); max-width: calc(100vw - 32px); padding: 10px 18px; border-radius: 999px; background: var(--navy-900, #0d1440); color: #fff; font-size: .9rem; box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,.25)); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+.toast-msg.is-visible { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .toast-msg { transition: none; } }
+
+/* long words */
+.prose { overflow-wrap: anywhere; }
+
+/* ---------- Card slider (about: พันธกิจ / ค่านิยม) ---------- */
+.cs { width: 100%; }
+.cs-head { margin-bottom: 16px; }
+.cs-card { position: relative; overflow: hidden; background: var(--surface-soft, #f1f3fb); border: 1px solid var(--border); border-radius: var(--radius-xl, 24px); padding: 24px 20px 20px; }
+/* all slides sit in the same grid cell, so the card is as tall as the longest one and never jumps */
+.cs-slides { display: grid; position: relative; z-index: 1; }
+.cs-slide { display: flex; flex-direction: column; gap: 18px; }
+.cs.is-ready .cs-slide { grid-area: 1 / 1; opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity .45s ease, transform .45s ease, visibility 0s linear .45s; }
+.cs.is-ready .cs-slide.is-active { opacity: 1; visibility: visible; transform: none; transition: opacity .45s ease, transform .45s ease, visibility 0s; }
+.cs--slide.is-ready .cs-slide { transform: translateX(var(--cs-dx, 36px)); }
+.cs--slide.is-ready .cs-slide.is-active { transform: none; }
+.cs:not(.is-ready) .cs-slide + .cs-slide { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--border); }
+.cs-text { min-width: 0; }
+.cs-count { margin: 0 0 6px; font-size: .8rem; font-weight: 600; letter-spacing: .08em; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.cs-title { margin: 0 0 10px; font-size: clamp(1.3rem, 1.1rem + 1.1vw, 1.9rem); line-height: 1.25; color: var(--ink); }
+.cs-body { margin: 0; font-size: 1.02rem; line-height: 1.8; color: var(--ink-soft); }
+.cs-badge { order: -1; flex: none; width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: var(--cs-color); color: var(--cs-ink); font-size: 2rem; font-weight: 700; line-height: 1; box-shadow: 0 8px 22px rgba(30, 42, 120, .16); }
+.cs-nav { display: none; gap: 10px; margin-top: 22px; position: relative; z-index: 1; }
+.cs.is-ready .cs-nav { display: flex; }
+.cs-btn { width: 48px; height: 48px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface, #fff); color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: transform .15s ease, background .15s ease, color .15s ease; }
+.cs-btn .icon { width: 1.2rem; height: 1.2rem; }
+.cs-btn--prev { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.cs-btn--prev .icon { transform: scaleX(-1); }
+.cs-btn:hover { transform: translateY(-2px); }
+.cs-btn:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px; }
+/* faint oversized icon in the corner, like the watermark in the reference */
+.cs--nomark .cs-mark { display: none; }
+.cs-badge--icon .icon { width: 52%; height: 52%; }
+.cs-mark { position: absolute; right: -30px; bottom: -40px; width: 220px; height: 220px; color: var(--cs-color); opacity: .07; pointer-events: none; }
+.cs-mark .icon { width: 100%; height: 100%; }
+@media (min-width: 768px) {
+  .cs-card { padding: 36px 40px 32px; border-radius: var(--radius-xl, 24px) 999px 999px var(--radius-xl, 24px); }
+  .cs--rounded .cs-card { border-radius: var(--radius-xl, 24px); }
+  .cs-slide { flex-direction: row; align-items: center; justify-content: space-between; gap: 40px; }
+  .cs-badge { order: 0; width: 150px; height: 150px; font-size: 3.6rem; margin-right: 24px; }
+  .cs-text { max-width: 720px; }
+  .cs-mark { width: 300px; height: 300px; right: 120px; bottom: -60px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs.is-ready .cs-slide, .cs.is-ready .cs-slide.is-active { transition: opacity .01s; transform: none; }
+  .cs-btn:hover { transform: none; }
+}
+
+/* ---------- Statement block (about: วิสัยทัศน์) ---------- */
+.stmt { background: var(--stmt-color); color: var(--stmt-ink); border-radius: var(--radius-xl, 24px); padding: 44px 24px; text-align: center; }
+.stmt-label { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 999px; font-size: .95rem; font-weight: 500; color: var(--stmt-ink); border: 1px solid color-mix(in srgb, var(--stmt-ink) 38%, transparent); }
+.stmt-label .icon { width: 1.15rem; height: 1.15rem; }
+.stmt-text { margin: 22px auto 0; max-width: 24em; font-size: clamp(1.5rem, 1.1rem + 2vw, 2.5rem); line-height: 1.4; font-weight: 600; color: var(--stmt-ink); text-wrap: balance; overflow-wrap: anywhere; }
+.stmt--long .stmt-text { max-width: 36em; font-size: clamp(1.15rem, 1rem + 1vw, 1.7rem); font-weight: 500; line-height: 1.6; }
+@media (min-width: 768px) { .stmt { padding: 72px 48px; } }
+
+/* ---------- Keyword marquee (under the home hero) ----------
+   Colours, speed (--mq-dur), direction (--mq-dir) are set inline from the admin options.
+   Two identical groups side by side; the track slides by exactly one group, then loops. */
+.marquee { background: var(--mq-bg, #0A0A0A); color: var(--mq-fg, #FFFFFF); overflow: hidden; padding-block: 7px; }
+.marquee-track { display: flex; width: max-content; animation: marquee-slide var(--mq-dur, 40s) linear infinite; animation-direction: var(--mq-dir, normal); }
+.marquee.mq-pause:hover .marquee-track { animation-play-state: paused; }
+.marquee-group { display: flex; flex-shrink: 0; margin: 0; padding: 0; list-style: none; }
+.marquee-group li {
+  display: flex; align-items: center; white-space: nowrap;
+  font-size: .8125rem; font-weight: 600; letter-spacing: .04em;
+}
+.marquee-group li::after {
+  content: ""; width: 5px; height: 5px; margin-inline: 16px;
+  background: var(--mq-mark, var(--accent)); transform: rotate(45deg); flex-shrink: 0;
+}
+.mq-mk-dot li::after { border-radius: 50%; transform: none; width: 6px; height: 6px; }
+.mq-mk-star li::after { content: "\2726"; width: auto; height: auto; background: none; transform: none; color: var(--mq-mark); font-size: 1em; line-height: 1; }
+.mq-mk-slash li::after { content: "/"; width: auto; height: auto; background: none; transform: none; color: var(--mq-mark); font-size: 1em; line-height: 1; }
+.mq-mk-none li::after { background: none; width: 0; margin-inline: 14px; }
+.marquee--md { padding-block: 10px; }
+.marquee--md .marquee-group li { font-size: 1rem; }
+.marquee--lg { padding-block: 12px; }
+.marquee--lg .marquee-group li { font-size: 1.25rem; }
+@keyframes marquee-slide { to { transform: translateX(-50%); } }
+@media (min-width: 768px) {
+  .marquee { padding-block: 9px; }
+  .marquee-group li { font-size: .9375rem; }
+  .marquee-group li::after { width: 6px; height: 6px; margin-inline: 24px; }
+  .mq-mk-dot li::after { width: 7px; height: 7px; }
+  .mq-mk-star li::after, .mq-mk-slash li::after { width: auto; height: auto; }
+  .mq-mk-none li::after { width: 0; margin-inline: 20px; }
+  .marquee--md { padding-block: 12px; }
+  .marquee--md .marquee-group li { font-size: 1.125rem; }
+  .marquee--lg { padding-block: 16px; }
+  .marquee--lg .marquee-group li { font-size: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; width: auto; flex-wrap: wrap; justify-content: center; }
+  .marquee-group[aria-hidden="true"], .marquee-group li.is-dup { display: none; }
+  .marquee-group { flex-wrap: wrap; justify-content: center; row-gap: 8px; }
+}
+
+/* ---------- Touch targets (>= 44px to tap) and minimum text size ---------- */
+.nav-toggle, .search-toggle, [data-nav-close] { min-width: 44px; min-height: 44px; }   /* no display here: the desktop rules that hide the hamburger must keep winning */
+.lang-switch a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 36px; }
+.hero-dot { position: relative; }
+.hero-dot::before { content: ""; position: absolute; inset: -18px -8px; }   /* the dot stays small; the tappable area does not: 25 x 45 px or more, never overlapping the next dot (16px gap) */
+.hero-dots { gap: 16px; }
+.footer-links a { min-height: 40px; }
+.footer-bottom a { display: inline-block; padding-block: 12px; }
+.card-readmore { padding-block: 11px; }
+.card-title a { display: inline-block; padding-block: 2px; }
+.footer-bottom small { font-size: inherit; }   /* <small> would otherwise shrink the 13px footer text to ~10px */
+
+
+/* ---------- Dark theme extras: things that were designed for a white page ---------- */
+@media (prefers-color-scheme: dark) {
+  /* the logos are dark-on-transparent artwork: give them a light plate so they stay readable */
+  :root:not([data-theme="light"]) .brand img { background: #fff; border-radius: 10px; padding: 3px 8px; box-sizing: content-box; }
+  :root:not([data-theme="light"]) .partner-tile { background: #fff; border-color: transparent; }
+  :root:not([data-theme="light"]) a.partner-tile:hover { background: #F4F6FC; border-color: var(--secondary); }
+  :root:not([data-theme="light"]) .about-img { background: #fff; padding: 14px; }
+  :root:not([data-theme="light"]) .about-logo-showcase { background: #fff; border-color: transparent; }
+  /* section titles carry the colour the admin picked; it was darkened for a white page, so lighten it again here */
+  :root:not([data-theme="light"]) .about-sec-title { color: color-mix(in srgb, var(--tc, #6397FB) 52%, #fff) !important; }
+  :root:not([data-theme="light"]) .about-logo { background: #fff; padding: 8px 14px; border-radius: 12px; }
+  /* top bar and footer: the deep brand blue (the dark-theme counterpart of the light theme's primary), darker than the page-hero band so the same top-to-bottom grading holds */
+  :root:not([data-theme="light"]) .topbar { background: var(--navy-800); }
+  :root:not([data-theme="light"]) .site-footer { --footer-tint: rgba(12, 53, 102, .78); background: linear-gradient(var(--footer-tint), var(--footer-tint)), var(--footer-photo) center / cover no-repeat, var(--navy-800); background-color: var(--navy-800); }
+  @supports (color: color-mix(in srgb, red 50%, blue)) { :root:not([data-theme="light"]) .site-footer { --footer-tint: color-mix(in srgb, var(--navy-800) 78%, transparent); } }
+  :root:not([data-theme="light"]) .section-alt { background: #131826; }
+}
+
+/* ===== Statistics pages: summary cards (icon left, text right), filter bar, selected rows ===== */
+.stat-mini--row { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; align-items: center; justify-content: center; column-gap: 16px; text-align: left; padding: 16px 18px; }
+.stat-mini--row .stat-mini-icon { grid-row: 1 / span 2; width: 60px; height: 60px; margin: 0; }
+.stat-mini--row .stat-mini-num { align-self: end; }
+.stat-mini--row .stat-mini-label { align-self: start; margin-top: 0; }
+@media (min-width: 768px) { .stat-mini--row { padding: 20px 24px; } .stat-mini--row .stat-mini-icon { width: 68px; height: 68px; } }
+
+.stat-filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 14px; margin: 0 0 20px; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius-lg); background: var(--surface); }
+.stat-filterbar[hidden] { display: none; }
+.stat-filterbar-title { font-weight: 700; color: var(--primary); font-size: .88rem; }
+.stat-filterbar [data-chips] { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 auto; }
+.stat-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; border: 1.5px solid var(--chip, var(--primary)); background: color-mix(in srgb, var(--chip, var(--primary)) 12%, var(--surface)); color: var(--ink); font: inherit; font-size: .82rem; cursor: pointer; min-height: 32px; }
+.stat-chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--chip, var(--primary)); }
+.stat-chip:hover { background: color-mix(in srgb, var(--chip, var(--primary)) 22%, var(--surface)); }
+.stat-row.is-selected { background: color-mix(in srgb, var(--primary) 9%, var(--surface)); }
+.stat-row.is-selected > td:first-child { box-shadow: inset 4px 0 0 var(--accent); font-weight: 700; }
+.stat-none { text-align: center; color: var(--ink-soft); padding: 24px 12px; }
+.chart-box.is-empty::after { content: attr(data-empty); position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--ink-soft); font-size: .9rem; }
+
+/* Thai phrase wrapping (assets/js/thai-wrap.js): a space-separated phrase stays on one line; if it is longer than the line it wraps inside itself */
+.ph { display: inline-block; max-width: 100%; vertical-align: top; overflow-wrap: break-word; }
+.promo-body, .section-header p, .hero-content p, .page-hero p { text-wrap: pretty; }   /* no one-word last line where the browser supports it */
+
+/* phone menu: form categories nested under นักศึกษา / บุคลากร */
+.offcanvas-sub { display: grid; margin: 0 0 6px 30px; padding-left: 10px; border-left: 2px solid var(--border); }
+.offcanvas-sub a { padding: 8px 10px; font-size: .88rem; color: var(--ink-soft); }
+
+/* size helpers: a heading can sit at the right level of the outline and still look like the old h3 / h4 */
+.fs-h3 { font-size: clamp(1.15rem, 1.02rem + .6vw, 1.5rem); }
+.fs-h4 { font-size: 1.125rem; }
+
+
+/* Mourning mode (admin: ตั้งค่าเว็บไซต์ > ไว้อาลัย): the grey filter itself is written into the page by layout/header.php; these are the optional extras */
+.mourning-ribbon { position: fixed; top: 0; left: 0; width: 96px; height: 96px; overflow: hidden; z-index: 2000; pointer-events: none; }
+.mourning-ribbon::before { content: ""; position: absolute; top: 20px; left: -40px; width: 160px; height: 24px; background: #111; transform: rotate(-45deg); box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.mourning-ribbon__icon { position: absolute; left: 22px; top: 14px; width: 36px; height: 36px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #111, 0 1px 4px rgba(0,0,0,.4); display: grid; place-items: center; }   /* the white badge with the ribbon sits on the middle of the band */
+.mourning-ribbon__icon img { display: block; height: 24px; width: auto; max-width: 26px; object-fit: contain; }
+/* pop-up picture shown when the site is opened (see assets/js/mourning.js) */
+.mourning-popup { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,.78); display: flex; align-items: center; justify-content: center; padding: 20px; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }   /* above the home-page announcement (9999): the mourning one is always seen first */
+.mourning-popup[hidden] { display: none; }
+.mourning-popup__box { position: relative; max-width: 100%; max-height: 100%; }
+/* phone first: the picture never exceeds the visible screen (dvh = without the browser bars), leaving room around it for the close button */
+.mourning-popup__img { display: block; width: auto; height: auto; max-width: calc(100vw - 40px); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.6); background: #000; object-fit: contain; }
+.mourning-popup__close { position: absolute; top: -12px; right: -12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; color: #111; font-size: 26px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.mourning-popup__close:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+@media (min-width: 768px) { .mourning-popup__img { max-width: min(92vw, 640px); max-height: 86vh; max-height: 86dvh; } }
+html.has-mourning-popup { overflow: hidden; }
+.mourning-ribbon { transform: scale(.67); transform-origin: 0 0; }   /* phones: a smaller corner band (64px) and the logo moves right, so the band never covers it */
+[data-mourning-ribbon] .site-header .brand { margin-left: 40px; }
+@media (min-width: 768px) { .mourning-ribbon { transform: none; } [data-mourning-ribbon] .site-header .brand { margin-left: 64px; } [data-mourning-ribbon] .topbar .container > span { margin-left: 64px; } }   /* the thin top bar shows from tablet width: its first words sit right under the band */
+@media (min-width: 1280px) { [data-mourning-ribbon] .site-header .brand, [data-mourning-ribbon] .topbar .container > span { margin-left: 0; } }   /* the page gutter is 80px here: the logo is already clear of the 96px band */
+@media print { .mourning-ribbon { display: none; } }

@@ -1,0 +1,34 @@
+# Secrets and per-machine settings — never commit
+config/database.host.php
+config/local.php
+.env
+
+# Runtime cache (visit statistics, login counters, IT-news state, translation files)
+cache/*
+!cache/.htaccess
+
+# Design mock-ups and working files (may contain real names)
+mockup/
+AUDIT_PROMPT.md
+.claude/
+
+# Database dumps (real data) — only the empty structure is published
+*.sql
+!database/schema.sql
+
+# Upload packages, backups and leftovers
+_deploy_check.php
+_deploy_manifest.txt
+*.bak
+*.orig
+*.pre
+*.pre_*
+*.log
+*.zip
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

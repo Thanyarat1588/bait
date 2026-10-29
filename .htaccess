@@ -1,0 +1,88 @@
+Options -Indexes
+ServerSignature Off
+
+# Friendly 404 page for mistyped / old URLs (shows the site menu and a way back)
+ErrorDocument 404 /bait/404.php
+
+# ── URL Rewrite ──
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /bait/
+
+    # Block direct access to sensitive directories
+    RewriteRule ^cache/          - [F,L]
+    RewriteRule ^includes/       - [F,L]
+    RewriteRule ^config/         - [F,L]
+    RewriteRule ^layout/         - [F,L]
+    RewriteRule ^admin/layout/   - [F,L]
+    # Design mock-ups and QA/SEO reports are working files, never public (in case a folder upload carries them to the host)
+    RewriteRule ^(mockup|mockups|_qa|_reports)/ - [F,L]
+
+    # Never serve dot-files / dot-folders (.claude, .git, .env ...) — except /.well-known
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # robots.txt is generated (real domain in the Sitemap line); /sitemap.xml is the conventional URL
+    RewriteRule ^robots\.txt$ robots.php [L]
+    RewriteRule ^sitemap\.xml$ sitemap.xml.php [L]
+
+    # Force trailing slash removal
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{THE_REQUEST} \s/+(.*)/+\s [NC]
+    RewriteRule ^ /%1 [R=301,L]
+</IfModule>
+
+# ── Security Headers ──
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # the site uses none of these browser features: switch them off so an injected script cannot ask for them either
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    # A minimal policy that cannot break any page (no script/style/image rules): only this site may frame it, an injected
+    # <base> cannot redirect the relative links, and plugins (<object>/<embed>) are off — the site uses neither.
+    # Not on PDFs: the browser's built-in PDF viewer counts as a plugin, and the curriculum documents must keep opening.
+    SetEnvIfNoCase Request_URI "\.pdf$" bait_no_csp
+    Header always set Content-Security-Policy "frame-ancestors 'self'; base-uri 'self'; object-src 'none'" env=!bait_no_csp
+    Header always unset X-Powered-By
+</IfModule>
+
+# ── Protect sensitive files ──
+# (Apache 2.4 "Require" + 2.2 "Order/Deny", so it works with or without mod_access_compat; any letter case)
+<FilesMatch "(?i)\.(sql|log|env|ini|sh|bak|git|md|json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ── PHP settings ──
+<IfModule mod_php.c>
+    php_value upload_max_filesize 60M
+    php_value post_max_size 65M
+    php_value max_execution_time 180
+    php_value memory_limit 256M
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
+
+# ── Cache static assets ──
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png  "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType text/css   "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# ── Compress text responses (HTML/CSS/JS/JSON/SVG) ──
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/javascript text/javascript application/json image/svg+xml
+</IfModule>

@@ -1,0 +1,9 @@
+# Nothing in this folder is ever opened from a browser (PHP includes / cache files only). Blocked here as well as by the
+# RewriteRule in the main .htaccess, so it stays closed on a host without mod_rewrite. Apache 2.4 + 2.2 syntax.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order Allow,Deny
+    Deny from all
+</IfModule>

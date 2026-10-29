@@ -1,0 +1,29 @@
+# Uploaded files are only ever shown or downloaded — never run. Even if a script got in with an image name, it cannot execute here.
+Options -Indexes
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+# Any script-like name (any letter case: .php .PHP .pHp5 ...) is refused. Written for Apache 2.4 (Require) and 2.2 (Order/Deny),
+# so it still works on a host without mod_access_compat; nginx / other servers need the same rule in their own config.
+<FilesMatch "(?i)\.(php\d?|phtml|phar|pl|py|cgi|sh|shtml)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# A file that a browser could run script from (SVG, HTML, XML ...) opened directly must not be able to (an SVG is normally only
+# used inside <img>, where scripts never run; the site never uploads HTML, this is only a second line of defence).
+# PDFs are left out on purpose: Chrome's PDF viewer shows a blank page under a sandbox policy.
+<IfModule mod_headers.c>
+    <FilesMatch "(?i)\.(svg|svgz|html?|xhtml|xht|xml|shtml|mht|mhtml)$">
+        Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+    </FilesMatch>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
