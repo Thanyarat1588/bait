@@ -478,6 +478,7 @@ include BASE_PATH . '/admin/layout/header.php';
                 <input type="text" id="tagPickerInput" class="ne-input" placeholder="พิมพ์เพื่อค้นหาหรือเพิ่มแท็กใหม่..." autocomplete="off">
                 <div class="ne-tag-dropdown d-none" id="tagDropdown"></div>
               </div>
+              <p class="ne-hint">ไม่ต้องพิมพ์เครื่องหมาย # ระบบจะเพิ่มให้อัตโนมัติ พิมพ์เฉพาะคำที่ต้องการ</p>
               <input type="hidden" id="tagsInput" name="tags" value="<?= e($news['tags'] ?? '') ?>">
             </div>
           </div>
