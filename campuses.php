@@ -125,6 +125,7 @@ $breadcrumbItems = [
         <li><a href="<?= e($m['detail']) ?>" data-campus-id="<?= (int)$m['id'] ?>"><i></i><span><?= e($m['name']) ?></span></a></li>
         <?php endforeach; ?>
       </ul>
+      <a href="https://vrtour.rmutsb.ac.th/" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px"><?= icon('globe', 'icon-sm') ?> <?= $t('สำรวจมหาวิทยาลัยแบบ 360°') ?> <?= icon('external-link', 'icon-sm') ?></a>
     </aside>
 
   </div>

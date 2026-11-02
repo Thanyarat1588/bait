@@ -133,7 +133,7 @@ bait/
 ├── admin/                    # หลังบ้าน
 │   ├── layout/               # header (เมนู) / footer (สคริปต์) / stat_grid
 │   ├── modules/              # 1 โฟลเดอร์ต่อ 1 เมนู: news, categories, it-news, articles, forms, form-categories,
-│   │                         #   info-links, programs, tuition, majors, levels, faculty, campus, campus-contacts,
+│   │                         #   info-links, programs, tuition, majors, levels, faculty, campus,
 │   │                         #   departments, staff, staff-units, positions, staff-types, org-chart, committee,
 │   │                         #   student-counts, staff-counts, banners, popups, partners, home-promo, statistics,
 │   │                         #   settings, users, tags

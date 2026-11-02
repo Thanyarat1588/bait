@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $type  = trim(is_string($cTypes[$i] ?? null) ? $cTypes[$i] : '');
         $label = trim(is_string($cLabels[$i] ?? null) ? $cLabels[$i] : '');
         if ($value === '' || !isset($contactTypeLabels[$type])) continue;
+        if ($label === '') $errors[] = 'กรุณากรอกชื่อแสดงของช่องทางติดต่อ "' . $value . '"';
         $submittedContacts[] = ['contact_type' => $type, 'contact_value' => $value, 'display_label' => $label ?: null];
     }
 
@@ -377,7 +378,7 @@ function contactRowHtml(type, value, label) {
   return `<div class="ne-contact-row">
     <select class="ne-select" name="contact_type[]">${opts}</select>
     <input type="text" class="ne-input" name="contact_value[]" maxlength="255" placeholder="เบอร์โทร / URL / @username" value="${value.replace(/"/g,"&quot;")}">
-    <input type="text" class="ne-input" name="display_label[]" maxlength="100" placeholder="ชื่อแสดง (ไม่บังคับ)" value="${label.replace(/"/g,"&quot;")}">
+    <input type="text" class="ne-input" name="display_label[]" maxlength="100" required placeholder="ชื่อแสดง (บังคับกรอก)" value="${label.replace(/"/g,"&quot;")}">
     <button type="button" class="ne-contact-remove" onclick="this.closest(\'.ne-contact-row\').remove()"><i class="bi bi-trash"></i></button>
   </div>`;
 }

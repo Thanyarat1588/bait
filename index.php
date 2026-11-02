@@ -300,6 +300,9 @@ if ($mqOpt['enabled'] && $mq['items']):
     <div class="grid grid-4">
       <?php foreach ($campuses as $c): echo campusCard($c, $lang); endforeach; ?>
     </div>
+    <div style="text-align:center;margin-top:32px" class="reveal">
+      <a href="https://vrtour.rmutsb.ac.th/" target="_blank" rel="noopener" class="btn btn-primary"><?= icon('globe', 'icon-sm') ?> <?= $t('สำรวจมหาวิทยาลัยแบบ 360°') ?> <?= icon('external-link', 'icon-sm') ?></a>
+    </div>
   </div>
 </section>
 

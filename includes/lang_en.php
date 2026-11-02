@@ -164,6 +164,7 @@ return [
 
     // --- campuses ---
     'ศูนย์พื้นที่' => 'Campuses',
+    'สำรวจมหาวิทยาลัยแบบ 360°' => 'Explore the University in 360°',
     'ศูนย์พื้นที่ของเรา' => 'Our Campuses',
     'รายละเอียดศูนย์' => 'Campus Details',
     'เลือกศูนย์บนแผนที่เพื่อดูข้อมูลเบื้องต้น' => 'Select a campus on the map to see a summary',
