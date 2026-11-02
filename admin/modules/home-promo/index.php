@@ -149,7 +149,8 @@ $choice = function (string $name, array $opts, string $cur) {
 @media (min-width: 900px) { .promo-cols { grid-template-columns: 1fr 1fr; } }
 .promo-preview-grid { display: grid; grid-template-columns: 1fr; gap: 14px; border-radius: 12px; padding: 14px; background: var(--ne-paper, #f5f6fa); }
 @media (min-width: 700px) { .promo-preview-grid { grid-template-columns: 1fr 1fr; } }
-.promo-preview-video { aspect-ratio: 16/9; border-radius: 10px; background: #0b0f1d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: .85rem; }
+/* align-self: center as on the home page: a stretched aspect-ratio box fixed the row height on Safari and the text ran out of the frame */
+.promo-preview-video { align-self: center; width: 100%; aspect-ratio: 16/9; border-radius: 10px; background: #0b0f1d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: .85rem; }
 .promo-preview-video i { font-size: 2.2rem; }
 .promo-preview-text { display: flex; flex-direction: column; border-radius: 10px; padding: 10px; min-width: 0; overflow-wrap: anywhere; }
 .promo-preview-text h3 { margin: 0 0 .4em; line-height: 1.25; font-weight: 700; }
