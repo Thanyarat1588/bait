@@ -218,14 +218,22 @@
    QR codes already baked in by whoever designed it) with text spread across
    the full 16:5 width. object-fit:cover on a boxier phone aspect-ratio was
    zooming into the center of the banner and cropping that edge text clean
-   off — so banner-only images use object-fit:contain instead (never crops,
-   only letterboxes against the navy background) and the box ratio steps
-   from a taller 16:9 on phones up to the native 16:5 on desktop, keeping
-   the letterbox bars small while guaranteeing nothing gets cut off. */
-.hero.hero-banner-only { min-height: 0; aspect-ratio: 16 / 9; background: var(--navy-900); align-items: stretch; }
-@media (min-width: 768px)  { .hero.hero-banner-only { aspect-ratio: 16 / 6; } }
-@media (min-width: 1024px) { .hero.hero-banner-only { aspect-ratio: 16 / 5; } }
+   off — so banner-only images use object-fit:contain instead (never crops).
+   Admin only accepts 1920×600 (16:5) banners, so the box is 16:5 at every
+   width: the picture fills it exactly, with no navy bars above or below on
+   phones and tablets. Small dots on a phone so they don't cover the picture. */
+.hero.hero-banner-only { min-height: 0; aspect-ratio: 16 / 5; background: var(--navy-900); align-items: stretch; }
 .hero.hero-banner-only .hero-slide img { object-fit: contain; }
+.hero.hero-banner-only .hero-dots { bottom: 8px; }
+.hero.hero-banner-only .hero-dot { width: 6px; height: 6px; }
+.hero.hero-banner-only .hero-dot.is-active { width: 16px; }
+.hero.hero-banner-only .hero-pause { right: 8px; bottom: 6px; width: 30px; height: 30px; }
+@media (min-width: 768px) {
+  .hero.hero-banner-only .hero-dots { bottom: 18px; }
+  .hero.hero-banner-only .hero-dot { width: 9px; height: 9px; }
+  .hero.hero-banner-only .hero-dot.is-active { width: 26px; }
+  .hero.hero-banner-only .hero-pause { right: 20px; bottom: 20px; width: 34px; height: 34px; }
+}
 .hero-banner-only + .container .stat-strip { margin-top: 28px; }
 .hero-track { position: absolute; inset: 0; }
 .hero-slide {
