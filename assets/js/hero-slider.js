@@ -64,9 +64,11 @@ export function initHeroSlider() {
   nextBtn?.addEventListener('click', () => { next(); resume(); });
   pauseBtn?.addEventListener('click', () => { if (playing) { userPaused = true; stop(); } else { userPaused = false; play(); } });
 
-  root.addEventListener('mouseenter', stop);
-  root.addEventListener('mouseleave', resume);
-  root.addEventListener('focusin', stop);
+  // hover pause only for a real mouse: a finger tap on a phone/tablet fires mouseenter but never mouseleave, which stopped the slideshow for good
+  root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') stop(); });
+  root.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') resume(); });
+  // keyboard focus only (:focus-visible): a tapped dot or banner link also takes focus, and on touch nothing moves it away again
+  root.addEventListener('focusin', (e) => { let kb = true; try { kb = e.target.matches(':focus-visible'); } catch (err) { /* old browser */ } if (kb) stop(); });
   root.addEventListener('focusout', resume);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop(); else resume();
