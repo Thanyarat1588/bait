@@ -190,7 +190,7 @@ $pageTitle = $displayTitle;
 $search  = getStr('search');
 $tagFilter = getStr('tag');
 $page    = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 10;
+$perPage = 12;   // 3 cards a row on desktop, so whole rows
 
 $where = "status='เผยแพร่'"; $params = [];
 if ($search) { $where .= ' AND title LIKE ?'; $params[] = '%' . addcslashes($search, '%_\\') . '%'; }   // a typed % or _ searches for that character (as in search.php)
@@ -288,27 +288,30 @@ $breadcrumbItems = [
       <?php endif; ?>
 
       <h2 class="visually-hidden"><?= $t('รายการบทความ') ?></h2>
-      <div class="grid grid-2">
+      <div class="grid article-grid">
         <?php foreach ($articles as $a):
           $aTitle = $t($a['title']);
           // Cut the Thai text first, then translate the short piece: translating the whole article just for a 100-char excerpt means dozens of API calls per card.
           $aExcerpt = mb_strimwidth($t(mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags($a['content'] ?? ''))), 0, 160, 'UTF-8')), 0, 100, '...', 'UTF-8');
+          $aAuthor = translateFixed($a['author'], $lang);
+          $aTag = trim(explode(',', (string)$a['tags'])[0]);
         ?>
         <article class="card card-news reveal">
           <a href="?id=<?= (int)$a['article_id'] ?>&lang=<?= e($lang) ?>" class="card-thumb-link" aria-hidden="true" tabindex="-1">
             <div class="card-thumb">
               <?php if ($a['image']): ?><img src="<?= UPLOAD_URL . '/' . e($a['image']) ?>" alt="<?= e($aTitle) ?>" loading="lazy" decoding="async">
               <?php else: ?><div class="card-thumb-fallback"><?= icon('book') ?></div><?php endif; ?>
+              <?php if ($aTag !== ''): ?><span class="card-badge card-badge-news">#<?= e($t($aTag)) ?></span><?php endif; ?>
             </div>
           </a>
           <div class="card-body">
             <h3 class="card-title"><a href="?id=<?= (int)$a['article_id'] ?>&lang=<?= e($lang) ?>"><?= e($aTitle) ?></a></h3>
             <p class="card-excerpt"><?= e($aExcerpt) ?></p>
-            <div class="card-meta">
-              <span><?= thaiDate($a['created_at']) ?></span>
-              <span class="dot-sep" aria-hidden="true">&middot;</span>
-              <span><?= icon('eye', 'icon-sm') ?> <?= number_format($a['view_count']) ?></span>
-            </div>
+            <div class="card-meta"><span><?= thaiDate($a['created_at']) ?></span></div>
+          </div>
+          <div class="article-card-foot">
+            <span class="article-author"><span class="article-author-badge"><?= icon('pen') ?></span><span class="visually-hidden"><?= $t('ผู้เขียน') ?> </span><span><?= e($aAuthor) ?></span></span>
+            <span class="article-views"><?= icon('eye', 'icon-sm') ?> <?= number_format($a['view_count']) ?><span class="visually-hidden"> <?= $t('ครั้ง') ?></span></span>
           </div>
         </article>
         <?php endforeach; ?>

@@ -21,7 +21,7 @@ $tagFilter = getStr('tag');
 $sdgFilter = (int)getStr('sdg');   // one of the 17 SDGs (news_sdgs), 0 = all
 if (!isset(sdgList()[$sdgFilter]) || !hasNewsSdgs()) $sdgFilter = 0;
 $page    = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 10;
+$perPage = 12;   // 3 cards a row on desktop, so whole rows
 
 // Each filter as its own [sql, param], so the counts beside the category pills and on the SDG tiles can follow all the
 // OTHER filters (search word, tag, ...) — "(3)" then means "3 items if you click this", not the site-wide total.
@@ -164,8 +164,8 @@ $breadcrumbItems = [
       <?php endif; ?>
 
       <h2 class="visually-hidden"><?= $t('รายการข่าวสาร') ?></h2>
-      <div class="grid grid-2">
-        <?php foreach ($newsList as $n): echo newsCard($n, $lang); endforeach; ?>
+      <div class="grid article-grid">
+        <?php foreach ($newsList as $n): echo newsCard($n, $lang, false); endforeach; ?>
         <?php if (empty($newsList)): ?>
         <div class="empty-state" style="grid-column:1/-1">
           <?= icon('newspaper') ?>

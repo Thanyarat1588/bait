@@ -70,6 +70,7 @@ return [
     'อีก {n} แท็ก · เลื่อนในกล่องเพื่อดูเพิ่ม' => '{n} more tags · scroll the box to see more',
     'คน' => 'people',
     'ครั้ง' => 'views',
+    'ผู้เขียน' => 'Author',
     'สัดส่วน' => 'Proportion',
     'สถานะ' => 'Status',
     'ระดับ' => 'Level',

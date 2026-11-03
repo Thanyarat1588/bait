@@ -122,9 +122,9 @@ function tx(string $text, string $lang): string {
 
 /**
  * News card. Expects: news_id, title, image, created_at, view_count,
- * category_name, color, tags (optional).
+ * category_name, color, tags (optional). $showTags = false leaves the tag chips out (news.php's list).
  */
-function newsCard(array $n, string $lang): string {
+function newsCard(array $n, string $lang, bool $showTags = true): string {
     $url   = BASE_URL . '/news-detail.php?id=' . (int)$n['news_id'] . '&lang=' . e($lang);
     $title = e(tx($n['title'], $lang));
     $cat   = e(tx($n['category_name'], $lang));
@@ -142,7 +142,7 @@ function newsCard(array $n, string $lang): string {
         : '<div class="card-thumb-fallback">' . icon('newspaper') . '</div>';
 
     $tagsHtml = '';
-    if (!empty($n['tags'])) {
+    if ($showTags && !empty($n['tags'])) {
         $tags = array_slice(array_filter(array_map('trim', explode(',', $n['tags']))), 0, 3);
         if ($tags) {
             $tagsHtml = '<div class="card-tags">' . implode('', array_map(
