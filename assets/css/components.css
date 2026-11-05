@@ -1244,8 +1244,10 @@ a.tag-chip:hover .badge-soft { background: rgba(255,255,255,.25); color: #fff; }
 .tl-track { position: relative; flex: 1; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; }
 .tl-track::-webkit-scrollbar { display: none; }
 .tl-track ul { display: flex; list-style: none; margin: 0; padding: 4px 6px; position: relative; min-width: 100%; width: max-content; }
-.tl-track ul::before { content: ""; position: absolute; left: 0; right: 0; top: 45px; height: 4px; background: var(--border); }
+/* the line is drawn by each year's own cell, not once across the <ul>: iOS Safari sized the <ul> to the visible width only,
+   so a line on it ended halfway once the strip scrolled to the last year */
 .tl-track li { flex: 1 0 96px; text-align: center; position: relative; }
+.tl-track li::before { content: ""; position: absolute; left: 0; right: 0; top: 41px; height: 4px; background: var(--border); }
 .tl-track button { font: inherit; background: none; border: 0; cursor: pointer; padding: 0; width: 100%; color: var(--ink-soft); display: flex; flex-direction: column; align-items: center; }
 .tl-track button::before { content: ""; display: block; width: 14px; height: 14px; margin: 8px 0 0; flex: none; border-radius: 50%; background: var(--surface); border: 3px solid var(--navy-200); position: relative; z-index: 1; transition: transform .2s, border-color .2s, background .2s; }
 .tl-track button span { order: -1; height: 28px; line-height: 28px; font-size: .95rem; font-weight: 500; white-space: nowrap; transition: transform .2s, color .2s; }
