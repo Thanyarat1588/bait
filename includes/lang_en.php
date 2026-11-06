@@ -71,6 +71,7 @@ return [
     'คน' => 'people',
     'ครั้ง' => 'views',
     'ผู้เขียน' => 'Author',
+    'ดูภาพขนาดใหญ่' => 'View full size',
     'สัดส่วน' => 'Proportion',
     'สถานะ' => 'Status',
     'ระดับ' => 'Level',

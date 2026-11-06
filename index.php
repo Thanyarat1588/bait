@@ -97,7 +97,9 @@ include __DIR__ . '/layout/header.php';
       <img src="<?= UPLOAD_URL . '/' . e($popup['image']) ?>" alt="<?= e($popup['title'] ? $t($popup['title']) : '') ?>" class="popup-ad-img"<?= imgSizeAttrs($popup['image']) ?>>
     </a>
     <?php else: ?>
-    <img src="<?= UPLOAD_URL . '/' . e($popup['image']) ?>" alt="<?= e($popup['title'] ? $t($popup['title']) : '') ?>" class="popup-ad-img"<?= imgSizeAttrs($popup['image']) ?>>
+    <button type="button" class="img-zoom" data-zoom="<?= UPLOAD_URL . '/' . e($popup['image']) ?>" aria-label="<?= $t('ดูภาพขนาดใหญ่') ?>">
+      <img src="<?= UPLOAD_URL . '/' . e($popup['image']) ?>" alt="<?= e($popup['title'] ? $t($popup['title']) : '') ?>" class="popup-ad-img"<?= imgSizeAttrs($popup['image']) ?>>
+    </button>
     <?php endif; ?>
   </div>
 </div>
@@ -115,7 +117,9 @@ include __DIR__ . '/layout/header.php';
         <img src="<?= UPLOAD_URL . '/' . e($b['image']) ?>" alt="<?= e(!empty($b['title']) ? $t($b['title']) : 'Banner ' . $b['display_order']) ?>" loading="<?= $i === 0 ? 'eager' : 'lazy' ?>" decoding="async"<?= imgSizeAttrs($b['image']) ?><?= $i === 0 ? ' fetchpriority="high"' : '' ?>>
       </a>
       <?php else: ?>
-      <img src="<?= UPLOAD_URL . '/' . e($b['image']) ?>" alt="<?= e(!empty($b['title']) ? $t($b['title']) : 'Banner ' . $b['display_order']) ?>" loading="<?= $i === 0 ? 'eager' : 'lazy' ?>" decoding="async"<?= imgSizeAttrs($b['image']) ?><?= $i === 0 ? ' fetchpriority="high"' : '' ?>>
+      <button type="button" class="img-zoom" data-zoom="<?= UPLOAD_URL . '/' . e($b['image']) ?>" aria-label="<?= $t('ดูภาพขนาดใหญ่') ?>">
+        <img src="<?= UPLOAD_URL . '/' . e($b['image']) ?>" alt="<?= e(!empty($b['title']) ? $t($b['title']) : 'Banner ' . $b['display_order']) ?>" loading="<?= $i === 0 ? 'eager' : 'lazy' ?>" decoding="async"<?= imgSizeAttrs($b['image']) ?><?= $i === 0 ? ' fetchpriority="high"' : '' ?>>
+      </button>
       <?php endif; ?>
     </div>
     <?php endforeach; elseif ($heroFallbackImg): ?>
