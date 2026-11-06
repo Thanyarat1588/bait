@@ -311,6 +311,7 @@ require_once BASE_PATH . '/includes/asset-version.php';
           </div>
         </li>
 
+        <li><a class="nav-link" href="<?= BASE_URL ?>/ebidding.php?lang=<?= e($lang) ?>" <?= $activePage === 'ebidding' ? 'aria-current="page"' : '' ?>>E-Bidding</a></li>
         <li><a class="nav-link" href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>" <?= $activePage === 'contact' ? 'aria-current="page"' : '' ?>><?= $t('ติดต่อ') ?></a></li>
       </ul>
 
@@ -412,6 +413,7 @@ require_once BASE_PATH . '/includes/asset-version.php';
         </div>
       </details>
     </li>
+    <li><a class="nav-link" href="<?= BASE_URL ?>/ebidding.php?lang=<?= e($lang) ?>">E-Bidding</a></li>
     <li><a class="nav-link" href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>"><?= $t('ติดต่อ') ?></a></li>
     <li><a class="nav-link" href="<?= BASE_URL ?>/search.php?lang=<?= e($lang) ?>"><?= icon('search', 'icon-sm') ?> <?= $t('ค้นหา') ?></a></li>
   </ul>

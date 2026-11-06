@@ -1770,6 +1770,15 @@ function loginAttemptsFile(): ?string {
 // Only the headline, a short excerpt and the link are kept: the article itself stays on the source site.
 // ============================================================
 /** True once migration step 17 added the it_news table. */
+/** The E-Bidding table exists (migration 20): the page and admin menu stay usable on a host that has not run it yet. */
+function hasEbidding(): bool {
+    static $has = null;
+    if ($has === null) {
+        try { $has = (bool)Database::getInstance()->fetchOne("SHOW TABLES LIKE 'ebidding'"); } catch (Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
 function hasItNews(): bool {
     static $has = null;
     if ($has === null) {

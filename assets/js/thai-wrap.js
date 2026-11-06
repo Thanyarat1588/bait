@@ -9,7 +9,7 @@
  *     so a line never ends on one of them and a line may start with "และ..." instead.
  * Only plain text nodes inside the listed containers are touched; English text and everything else is left alone.
  */
-const TARGETS = '.promo-text, .hero-content, .section-header, .page-hero, .stmt-text, .tu-name';
+const TARGETS = '.promo-text, .hero-content, .section-header, .page-hero, .stmt-text, .tu-name, .bid-title, .bid-intro';
 const SKIP = 'a.btn, .btn, button, script, style, textarea, [data-no-phrase], .hero-ctas, .ph, .tu-camp';
 const THAI = /[฀-๿]/;
 const WJ = '⁠';

@@ -40,6 +40,7 @@ $menu = [
             'info-student' => ['icon' => 'bi-mortarboard',  'label' => 'สำหรับนักศึกษา', 'url' => '/admin/modules/info-links/index.php?audience=student'],
             'info-staff'   => ['icon' => 'bi-person-badge', 'label' => 'สำหรับบุคลากร',  'url' => '/admin/modules/info-links/index.php?audience=staff'],
         ]],
+    'ebidding'    => ['icon' => 'bi-hammer',              'label' => 'E-Bidding',         'url' => '/admin/modules/ebidding/index.php',   'role' => 'all'],
     'programs'    => ['icon' => 'bi-book',                'label' => 'หลักสูตร',          'url' => '/admin/modules/programs/index.php',   'role' => 'all',
         'children' => [
             'programs-list'    => ['icon' => 'bi-journal-text', 'label' => 'หลักสูตร', 'url' => '/admin/modules/programs/index.php'],
