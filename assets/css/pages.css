@@ -514,9 +514,9 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 
 /* E-Bidding (ebidding.php): numbered list, the long procurement titles read in full. Phones: number on the left, title, date
    and document button stacked beside it. Wide screens: one row each, the date and button in their own columns on the right.
-   The status (ประกาศ / ร่างประกาศ) is a pill floating in the top left of each row. */
+   The type (ร่างประกาศ / ประกาศ) and its status (เปิด-ปิดรับฟังความคิดเห็น / เปิด-ปิดประมูล) are pills floating in the top left. */
 .bid-intro { margin: 0 0 16px; color: var(--ink-soft); line-height: 1.7; }
-/* search + year / status filters: the search box has its own line until the desktop row */
+/* search + fiscal-year / status filters: the search box has its own line until the desktop row */
 .bid-filter .search-box { flex: 1 1 100%; }
 .bid-filter select.field-select { flex: 1 1 140px; min-width: 0; }
 @media (min-width: 1024px) {
@@ -524,16 +524,22 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
   .bid-filter select.field-select { flex: 0 0 auto; }
 }
 .bid-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
-.bid-item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "no title" "no date" "no doc"; column-gap: 14px; row-gap: 8px; padding: 46px 16px 18px; }
+.bid-item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "fy title" "fy date" "fy doc"; column-gap: 14px; row-gap: 8px; padding: 46px 16px 18px; }
 .bid-item + .bid-item { border-top: 1px solid var(--border); }
-.bid-no { grid-area: no; min-width: 28px; font-size: 1.25rem; font-weight: 700; line-height: 1.4; color: var(--primary); font-variant-numeric: tabular-nums; }
+/* the fiscal year in the place of a running number: a small label over the year */
+.bid-fy { grid-area: fy; display: flex; flex-direction: column; align-items: center; min-width: 64px; font-size: 1.25rem; font-weight: 700; line-height: 1.2; color: var(--primary); font-variant-numeric: tabular-nums; }
+.bid-fy small { font-size: .7rem; font-weight: 600; color: var(--ink-faint); margin-bottom: 2px; white-space: nowrap; }
 .bid-title { grid-area: title; margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); }
-.bid-badge { position: absolute; top: 14px; left: 16px; padding: 2px 12px; border-radius: var(--radius-full); background: var(--warn-bg); color: var(--ink); border: 1px solid var(--warn); font-size: .75rem; font-weight: 700; line-height: 1.5; }
+.bid-badges { position: absolute; top: 14px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; gap: 6px; }
+.bid-badge { padding: 2px 12px; border-radius: var(--radius-full); color: var(--ink); border: 1px solid; font-size: .75rem; font-weight: 700; line-height: 1.5; }
 .bid-badge.is-open { background: var(--success-bg); border-color: var(--success); }
+.bid-badge.is-closed { background: var(--surface-soft); border-color: var(--ink-faint); color: var(--ink-soft); }
+.bid-badge.is-draft { background: var(--warn-bg); border-color: var(--warn); }
+.bid-badge.is-announce { background: var(--surface-soft); border-color: var(--primary); color: var(--primary); }
 .bid-date { grid-area: date; display: inline-flex; align-items: center; gap: 5px; font-size: .85rem; color: var(--ink-faint); white-space: nowrap; }
 .bid-doc { grid-area: doc; justify-self: start; white-space: normal; text-align: left; }
-@media (min-width: 768px) { .bid-item { padding: 48px 24px 20px; column-gap: 18px; } .bid-badge { left: 24px; } .bid-no { min-width: 34px; font-size: 1.4rem; } }
+@media (min-width: 768px) { .bid-item { padding: 48px 24px 20px; column-gap: 18px; } .bid-badges { left: 24px; right: 24px; } .bid-fy { min-width: 72px; font-size: 1.4rem; } }
 @media (min-width: 1024px) {
-  .bid-item { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "no title date doc"; align-items: center; column-gap: 24px; }
+  .bid-item { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "fy title date doc"; align-items: center; column-gap: 24px; }
   .bid-doc { justify-self: end; white-space: nowrap; }
 }

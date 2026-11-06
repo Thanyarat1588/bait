@@ -16,25 +16,35 @@ $_SESSION['lang'] = $lang;
 $t = fn(string $s) => $lang === 'en' ? translateText($s, 'en') : $s;
 
 $search = getStr('search');
-$year   = (int)getStr('year');   // Gregorian year (the list shows it as a Buddhist-era year on Thai pages)
-$status = in_array(getStr('status'), ['open', 'draft'], true) ? getStr('status') : '';   // open = ประกาศ, draft = ร่างประกาศ
+$fy     = (int)getStr('fy');   // ปีงบประมาณ, Buddhist era as stored (2570); English pages show it as FY 2027
+// Every bid goes up first as a ร่างประกาศ (เปิด / ปิดรับฟังความคิดเห็น), then as the ประกาศ itself (เปิด / ปิดประมูล):
+// the four statuses are is_draft x is_closed. [filter value => [is_draft, is_closed, label]]
+$statuses = [
+    'hearing-open'   => [1, 0, 'เปิดรับฟังความคิดเห็น'],
+    'hearing-closed' => [1, 1, 'ปิดรับฟังความคิดเห็น'],
+    'bid-open'       => [0, 0, 'เปิดประมูล'],
+    'bid-closed'     => [0, 1, 'ปิดประมูล'],
+];
+$st     = isset($statuses[getStr('st')]) ? getStr('st') : '';
 $page   = max(1, (int)getStr('page'));
-$filtered = $search !== '' || $year || $status !== '';
+$filtered = $search !== '' || $fy || $st !== '';
 $rows = []; $years = []; $total = 0;
 $pager = paginate(0, 20, 1);
 if (hasEbidding()) {
-    $years = [];   // [year => number of announcements], for the year drop-down
-    foreach ($db->fetchAll("SELECT YEAR(announce_date) AS y, COUNT(*) AS c FROM ebidding WHERE is_active = 1 GROUP BY y ORDER BY y DESC") as $yr) $years[(int)$yr['y']] = (int)$yr['c'];
-    if ($year && !isset($years[$year])) $year = 0;
+    $years = [];   // [fiscal year => number of announcements], for the drop-down
+    foreach ($db->fetchAll("SELECT fiscal_year AS y, COUNT(*) AS c FROM ebidding WHERE is_active = 1 AND fiscal_year > 0 GROUP BY y ORDER BY y DESC") as $yr) $years[(int)$yr['y']] = (int)$yr['c'];
+    if ($fy && !isset($years[$fy])) $fy = 0;
     $where = 'is_active = 1'; $params = [];
     if ($search !== '') { $where .= ' AND title LIKE ?'; $params[] = '%' . addcslashes($search, '%_\\') . '%'; }
-    if ($year) { $where .= ' AND YEAR(announce_date) = ?'; $params[] = $year; }
-    if ($status !== '') $where .= $status === 'draft' ? ' AND is_draft = 1' : ' AND is_draft = 0';
+    if ($fy) { $where .= ' AND fiscal_year = ?'; $params[] = $fy; }
+    if ($st !== '') { $where .= ' AND is_draft = ? AND is_closed = ?'; $params[] = $statuses[$st][0]; $params[] = $statuses[$st][1]; }
     $total = (int)($db->fetchOne("SELECT COUNT(*) AS c FROM ebidding WHERE $where", $params)['c'] ?? 0);
-    $pager = paginate($total, 20, $page, '?' . http_build_query(array_filter(['search' => $search, 'year' => $year ?: '', 'status' => $status, 'lang' => $lang])) . '&page={page}');
+    $pager = paginate($total, 20, $page, '?' . http_build_query(array_filter(['search' => $search, 'fy' => $fy ?: '', 'st' => $st, 'lang' => $lang])) . '&page={page}');
     $rows = $db->fetchAll("SELECT * FROM ebidding WHERE $where ORDER BY announce_date DESC, bid_id DESC LIMIT {$pager['per_page']} OFFSET {$pager['offset']}", $params);
 }
-$yearLabel = fn(int $y) => (string)($lang === 'en' ? $y : $y + 543);
+$fyYear  = fn(int $y) => (string)($lang === 'en' ? $y - 543 : $y);
+$fyLabel = fn(int $y) => ($lang === 'en' ? 'FY ' : 'ปีงบประมาณ ') . $fyYear($y);
+$statusOf = fn(array $r) => (int)$r['is_draft'] ? ((int)$r['is_closed'] ? 'hearing-closed' : 'hearing-open') : ((int)$r['is_closed'] ? 'bid-closed' : 'bid-open');
 
 trackPageView($_SERVER['REQUEST_URI'], 'E-Bidding');
 $pageTitle = 'E-Bidding';
@@ -65,15 +75,19 @@ $breadcrumbItems = [
       <input type="search" name="search" aria-label="<?= e($t('ค้นหาประกาศ')) ?>" placeholder="<?= e($t('ค้นหาประกาศ...')) ?>" value="<?= e($search) ?>">
     </div>
     <?php if ($years): ?>
-    <select name="year" class="field-select" aria-label="<?= e($t('ปีที่ประกาศ')) ?>" onchange="this.form.submit()">
-      <option value=""><?= $t('ทุกปี') ?> (<?= array_sum($years) ?>)</option>
-      <?php foreach ($years as $y => $c): ?><option value="<?= $y ?>"<?= $year === $y ? ' selected' : '' ?>><?= $t('ปี') ?> <?= $yearLabel($y) ?> (<?= $c ?>)</option><?php endforeach; ?>
+    <select name="fy" class="field-select" aria-label="<?= e($t('ปีงบประมาณ')) ?>" onchange="this.form.submit()">
+      <option value=""><?= $t('ทุกปีงบประมาณ') ?> (<?= array_sum($years) ?>)</option>
+      <?php foreach ($years as $y => $c): ?><option value="<?= $y ?>"<?= $fy === $y ? ' selected' : '' ?>><?= e($fyLabel($y)) ?> (<?= $c ?>)</option><?php endforeach; ?>
     </select>
     <?php endif; ?>
-    <select name="status" class="field-select" aria-label="<?= e($t('สถานะ')) ?>" onchange="this.form.submit()">
+    <select name="st" class="field-select" aria-label="<?= e($t('สถานะ')) ?>" onchange="this.form.submit()">
       <option value=""><?= $t('ทุกสถานะ') ?></option>
-      <option value="open"<?= $status === 'open' ? ' selected' : '' ?>><?= $t('ประกาศ') ?></option>
-      <option value="draft"<?= $status === 'draft' ? ' selected' : '' ?>><?= $t('ร่างประกาศ') ?></option>
+      <optgroup label="<?= e($t('ร่างประกาศ')) ?>">
+        <?php foreach (['hearing-open', 'hearing-closed'] as $k): ?><option value="<?= $k ?>"<?= $st === $k ? ' selected' : '' ?>><?= $t($statuses[$k][2]) ?></option><?php endforeach; ?>
+      </optgroup>
+      <optgroup label="<?= e($t('ประกาศ')) ?>">
+        <?php foreach (['bid-open', 'bid-closed'] as $k): ?><option value="<?= $k ?>"<?= $st === $k ? ' selected' : '' ?>><?= $t($statuses[$k][2]) ?></option><?php endforeach; ?>
+      </optgroup>
     </select>
     <button type="submit" class="btn btn-primary btn-sm"><?= $t('ค้นหา') ?></button>
     <?php if ($filtered): ?>
@@ -82,17 +96,20 @@ $breadcrumbItems = [
   </form>
 
   <?php if ($filtered): ?>
-  <p class="text-muted" style="margin:-8px 0 16px;font-size:.88rem"><?= $lang === 'en' ? "{$total} announcements found" : "พบ {$total} ประกาศ" ?><?= $year ? ' · ' . $t('ปี') . ' ' . $yearLabel($year) : '' ?><?= $status !== '' ? ' · ' . ($status === 'draft' ? $t('ร่างประกาศ') : $t('ประกาศ')) : '' ?></p>
+  <p class="text-muted" style="margin:-8px 0 16px;font-size:.88rem"><?= $lang === 'en' ? "{$total} announcements found" : "พบ {$total} ประกาศ" ?><?= $fy ? ' · ' . e($fyLabel($fy)) : '' ?><?= $st !== '' ? ' · ' . $t($statuses[$st][2]) : '' ?></p>
   <?php endif; ?>
 
   <?php if (!$rows): ?>
   <div class="empty-state"><?= icon('briefcase') ?><div><?= $filtered ? $t('ไม่พบประกาศที่ค้นหา') : $t('ยังไม่มีประกาศ') ?></div></div>
   <?php else: ?>
-  <ol class="bid-list" start="<?= $pager['offset'] + 1 ?>">
-    <?php foreach ($rows as $i => $r): $url = isHttpUrl($r['link_url']) ? $r['link_url'] : ''; ?>
+  <ul class="bid-list">
+    <?php foreach ($rows as $r): $url = isHttpUrl($r['link_url']) ? $r['link_url'] : ''; $s = $statusOf($r); ?>
     <li class="bid-item">
-      <span class="bid-badge<?= $r['is_draft'] ? '' : ' is-open' ?>"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span>
-      <span class="bid-no" aria-hidden="true"><?= $pager['offset'] + $i + 1 ?></span>
+      <span class="bid-badges">
+        <span class="bid-badge <?= $r['is_draft'] ? 'is-draft' : 'is-announce' ?>"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span>
+        <span class="bid-badge <?= $r['is_closed'] ? 'is-closed' : 'is-open' ?>"><?= $t($statuses[$s][2]) ?></span>
+      </span>
+      <span class="bid-fy"><?php if ((int)$r['fiscal_year'] > 0): ?><small><?= $lang === 'en' ? 'FY' : 'ปีงบประมาณ' ?></small><?= e($fyYear((int)$r['fiscal_year'])) ?><?php endif; ?></span>
       <h2 class="bid-title"><?= e($t($r['title'])) ?></h2>
       <span class="bid-date"><?= icon('calendar', 'icon-sm') ?> <?= e(thaiDate($r['announce_date'])) ?></span>
       <?php if ($url): ?>
@@ -100,7 +117,7 @@ $breadcrumbItems = [
       <?php endif; ?>
     </li>
     <?php endforeach; ?>
-  </ol>
+  </ul>
   <?php endif; ?>
 
   <div style="margin-top:32px"><?= paginationNav($pager) ?></div>

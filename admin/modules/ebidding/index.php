@@ -43,6 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
     $linkUrl = postStr('link_url');
     $date    = postStr('announce_date');
     $isDraft = !empty($_POST['is_draft']) ? 1 : 0;
+    $isClosed = !empty($_POST['is_closed']) ? 1 : 0;
+    $fiscal  = (int)postStr('fiscal_year');   // ปีงบประมาณ in the Buddhist era, e.g. 2570
+    if ($fiscal < 2500 || $fiscal > 2700) jsonError('กรุณาใส่ปีงบประมาณเป็นปี พ.ศ. เช่น 2570');
 
     if ($title === '') jsonError('กรุณากรอกหัวข้อประกาศ');
     if (mb_strlen($title, 'UTF-8') > 500) jsonError('หัวข้อประกาศยาวเกิน 500 ตัวอักษร');
@@ -53,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
     if (!$d || $d->format('Y-m-d') !== $date) jsonError('กรุณาเลือกวันที่ประกาศ');
     if (rowExists($db, 'ebidding', ['title' => $title, 'announce_date' => $date], 'bid_id', $id)) jsonError('มีประกาศหัวข้อนี้ในวันที่เดียวกันอยู่แล้ว กรุณาตรวจสอบรายการเดิม');
 
-    $data = ['title' => $title, 'link_url' => $linkUrl, 'announce_date' => $date, 'is_draft' => $isDraft];
+    $data = ['title' => $title, 'link_url' => $linkUrl, 'announce_date' => $date, 'fiscal_year' => $fiscal, 'is_draft' => $isDraft, 'is_closed' => $isClosed];
     if ($id) {
         if (!$db->fetchOne("SELECT bid_id FROM ebidding WHERE bid_id = ?", [$id])) jsonError('ไม่พบประกาศ');
         $db->update('ebidding', $data, 'bid_id = ?', [$id]);
@@ -122,8 +125,8 @@ include BASE_PATH . '/admin/layout/header.php';
           <tr>
             <th style="width:44px">#</th>
             <th>หัวข้อประกาศ</th>
-            <th style="width:130px">วันที่ประกาศ</th>
-            <th style="width:120px">ประเภท</th>
+            <th style="width:150px">ปีงบประมาณ / วันที่</th>
+            <th style="width:130px">สถานะ</th>
             <th style="width:150px">จัดการ</th>
           </tr>
         </thead>
@@ -137,8 +140,13 @@ include BASE_PATH . '/admin/layout/header.php';
               <a href="<?= e($r['link_url']) ?>" target="_blank" rel="noopener" class="ne-hint" style="display:inline-flex;gap:4px;margin-top:4px;word-break:break-all"><i class="bi bi-box-arrow-up-right"></i><?= e(mb_strimwidth($r['link_url'], 0, 70, '...', 'UTF-8')) ?></a>
               <?php if (!$r['is_active']): ?><div class="ne-hint" style="margin-top:2px"><i class="bi bi-eye-slash"></i> ซ่อนอยู่ ไม่แสดงบนเว็บ</div><?php endif; ?>
             </td>
-            <td class="ne-num"><?= e(thaiDate($r['announce_date'])) ?></td>
-            <td><span class="ne-badge <?= $r['is_draft'] ? 'ne-badge-pending' : 'ne-badge-published' ?>"><?= $r['is_draft'] ? 'ร่างประกาศ' : 'ประกาศ' ?></span></td>
+            <td class="ne-num"><div style="font-weight:600;color:var(--ne-ink)">ปีงบ <?= (int)$r['fiscal_year'] ?></div><?= e(thaiDate($r['announce_date'])) ?></td>
+            <td>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">
+                <span class="ne-badge <?= $r['is_draft'] ? 'ne-badge-pending' : 'ne-badge-draft' ?>"><?= $r['is_draft'] ? 'ร่างประกาศ' : 'ประกาศ' ?></span>
+                <span class="ne-badge <?= $r['is_closed'] ? 'ne-badge-closed' : 'ne-badge-published' ?>"><?= $r['is_draft'] ? ($r['is_closed'] ? 'ปิดรับฟังความคิดเห็น' : 'เปิดรับฟังความคิดเห็น') : ($r['is_closed'] ? 'ปิดประมูล' : 'เปิดประมูล') ?></span>
+              </div>
+            </td>
             <td>
               <div class="ne-actions">
                 <button type="button" class="ne-icon-btn ne-icon-edit" onclick="openBid(<?= (int)$r['bid_id'] ?>)" title="แก้ไข" aria-label="แก้ไข"><i class="bi bi-pencil"></i></button>
@@ -179,15 +187,30 @@ include BASE_PATH . '/admin/layout/header.php';
           <input type="url" class="ne-input" id="bidUrl" maxlength="500" placeholder="https://drive.google.com/...">
           <p class="ne-hint">ลิงก์โฟลเดอร์หรือไฟล์ก็ได้ ตั้งค่าการแชร์เป็น "ทุกคนที่มีลิงก์" เพื่อให้บริษัทเปิดดูได้</p>
         </div>
-        <div class="ne-field">
-          <label for="bidDate">วันที่ประกาศ <span style="color:var(--ne-danger)">*</span></label>
-          <input type="date" class="ne-input" id="bidDate" style="max-width:220px">
+        <div style="display:flex;flex-wrap:wrap;gap:0 20px">
+          <div class="ne-field">
+            <label for="bidDate">วันที่ประกาศ <span style="color:var(--ne-danger)">*</span></label>
+            <input type="date" class="ne-input" id="bidDate" style="max-width:220px" onchange="fillFiscal()">
+          </div>
+          <div class="ne-field">
+            <label for="bidFiscal">ปีงบประมาณ (พ.ศ.) <span style="color:var(--ne-danger)">*</span></label>
+            <input type="number" class="ne-input" id="bidFiscal" min="2500" max="2700" step="1" style="max-width:160px" placeholder="2570">
+          </div>
         </div>
-        <div class="ne-field" style="margin-bottom:0;">
+        <p class="ne-hint" style="margin:-6px 0 16px">ระบบเติมปีงบประมาณจากวันที่ประกาศให้ (ปีงบเริ่ม 1 ตุลาคม) แก้เองได้ถ้าไม่ตรง</p>
+        <div class="ne-field">
           <label>ประเภท</label>
           <div role="radiogroup" aria-label="ประเภทประกาศ" style="display:flex;gap:16px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="bidType" value="0" checked> ประกาศ</label>
-            <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="bidType" value="1"> ร่างประกาศ (ประชาพิจารณ์)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="bidType" value="1" onchange="statusWords()"> ร่างประกาศ (รับฟังความคิดเห็น)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="bidType" value="0" onchange="statusWords()" checked> ประกาศ (ประมูล)</label>
+          </div>
+          <p class="ne-hint">การเปิดประมูลแต่ละครั้งต้องลงร่างประกาศก่อนเสมอ เมื่อมีประกาศจริงให้เพิ่มเป็นรายการใหม่ประเภท "ประกาศ"</p>
+        </div>
+        <div class="ne-field" style="margin-bottom:0;">
+          <label>สถานะ</label>
+          <div role="radiogroup" aria-label="สถานะ" style="display:flex;gap:16px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="bidClosed" value="0" checked> <span id="stOpenWord">เปิดประมูล</span></label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="bidClosed" value="1"> <span id="stClosedWord">ปิดประมูล</span></label>
           </div>
         </div>
       </div>
@@ -210,9 +233,24 @@ const bids = ' . json_encode(array_map(fn($r) => [
     'url'   => $r['link_url'],
     'date'  => $r['announce_date'],
     'draft' => (int)$r['is_draft'],
+    'closed' => (int)$r['is_closed'],
+    'fiscal' => (int)$r['fiscal_year'],
 ], $rows), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . ';
 const today = ' . json_encode(date('Y-m-d')) . ';
 let bidModal;
+
+// the Thai fiscal year runs 1 October - 30 September: 15 Nov 2026 is ปีงบประมาณ 2570
+function fiscalOf(date) {
+  const m = /^(\d{4})-(\d{2})/.exec(date || "");
+  return m ? +m[1] + 543 + (+m[2] >= 10 ? 1 : 0) : "";
+}
+// a ร่างประกาศ is open / closed for comments, a ประกาศ is open / closed for bids
+function statusWords() {
+  const draft = document.querySelector("input[name=bidType]:checked").value === "1";
+  document.getElementById("stOpenWord").textContent = draft ? "เปิดรับฟังความคิดเห็น" : "เปิดประมูล";
+  document.getElementById("stClosedWord").textContent = draft ? "ปิดรับฟังความคิดเห็น" : "ปิดประมูล";
+}
+function fillFiscal() { document.getElementById("bidFiscal").value = fiscalOf(document.getElementById("bidDate").value); }
 
 function openBid(id) {
   const b = id ? bids.find(x => x.id === id) : null;
@@ -220,7 +258,10 @@ function openBid(id) {
   document.getElementById("bidTitle").value = b ? b.title : "";
   document.getElementById("bidUrl").value = b ? b.url : "";
   document.getElementById("bidDate").value = b ? b.date : today;
+  document.getElementById("bidFiscal").value = b && b.fiscal ? b.fiscal : fiscalOf(b ? b.date : today);
   document.querySelector("input[name=bidType][value=\"" + (b && b.draft ? 1 : 0) + "\"]").checked = true;
+  document.querySelector("input[name=bidClosed][value=\"" + (b && b.closed ? 1 : 0) + "\"]").checked = true;
+  statusWords();
   document.getElementById("bidModalTitle").textContent = b ? "แก้ไขประกาศ" : "เพิ่มประกาศ";
   document.getElementById("bidSaveBtn").innerHTML = b ? "<i class=\"bi bi-save\"></i>บันทึกการแก้ไข" : "<i class=\"bi bi-plus-lg\"></i>เพิ่มประกาศ";
   bidModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("bidModal"));
@@ -235,13 +276,17 @@ async function saveBid() {
   if (!url) { showError("กรุณากรอกลิงก์เอกสาร"); return; }
   if (!/^https?:\/\//i.test(url)) { showError("ลิงก์ต้องขึ้นต้นด้วย https://"); return; }
   if (!date) { showError("กรุณาเลือกวันที่ประกาศ"); return; }
+  const fiscal = parseInt(document.getElementById("bidFiscal").value, 10);
+  if (!(fiscal >= 2500 && fiscal <= 2700)) { showError("กรุณาใส่ปีงบประมาณเป็นปี พ.ศ. เช่น 2570"); return; }
   const fd = new FormData();
   fd.append("action", "save");
   fd.append("bid_id", document.getElementById("bidId").value);
   fd.append("title", title);
   fd.append("link_url", url);
   fd.append("announce_date", date);
+  fd.append("fiscal_year", fiscal);
   if (document.querySelector("input[name=bidType]:checked").value === "1") fd.append("is_draft", "1");
+  if (document.querySelector("input[name=bidClosed]:checked").value === "1") fd.append("is_closed", "1");
   fd.append("csrf_token", csrf);
   const btn = document.getElementById("bidSaveBtn"); btn.disabled = true;
   try {
