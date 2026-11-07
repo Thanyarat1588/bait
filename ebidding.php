@@ -105,12 +105,11 @@ $breadcrumbItems = [
   <ul class="bid-list">
     <?php foreach ($rows as $r): $url = isHttpUrl($r['link_url']) ? $r['link_url'] : ''; $s = $statusOf($r); ?>
     <li class="bid-item">
-      <span class="bid-badges">
-        <span class="bid-badge <?= $r['is_draft'] ? 'is-draft' : 'is-announce' ?>"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span>
-        <span class="bid-badge <?= $r['is_closed'] ? 'is-closed' : 'is-open' ?>"><?= $t($statuses[$s][2]) ?></span>
-      </span>
       <span class="bid-fy"><?php if ((int)$r['fiscal_year'] > 0): ?><small><?= $lang === 'en' ? 'FY' : 'ปีงบประมาณ' ?></small><?= e($fyYear((int)$r['fiscal_year'])) ?><?php endif; ?></span>
-      <h2 class="bid-title"><?= e($t($r['title'])) ?></h2>
+      <div class="bid-head">
+        <span class="bid-pill <?= $r['is_draft'] ? 'is-draft' : 'is-announce' ?> <?= $r['is_closed'] ? 'is-closed' : 'is-open' ?>"><span class="bid-pill-type"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span><span class="bid-pill-status"><?= $t($statuses[$s][2]) ?></span></span>
+        <h2 class="bid-title"><?= e($t($r['title'])) ?></h2>
+      </div>
       <span class="bid-date"><?= icon('calendar', 'icon-sm') ?> <?= e(thaiDate($r['announce_date'])) ?></span>
       <?php if ($url): ?>
       <a class="btn btn-secondary btn-sm bid-doc" href="<?= e($url) ?>" target="_blank" rel="noopener"><?= icon('download', 'icon-sm') ?> <?= $t('เอกสารรายละเอียด / ดาวน์โหลด') ?><span class="visually-hidden"> (<?= $t('เปิดในแท็บใหม่') ?>)</span></a>

@@ -763,3 +763,14 @@ code { color: var(--ne-blue-deep); }
 
 /* Info notice (blue) */
 .ne-alert-info { background: #EAF2FD; border-color: #C9DEF9; color: #1B4180; }
+
+/* Two short fields side by side (e.g. date + fiscal year): halves on phones, fixed widths from 576px.
+   iOS draws date inputs with their own minimum width, so they are reset to fit the column. */
+.ne-field-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 12px; align-items: end; }
+.ne-field-pair > .ne-field { min-width: 0; }
+.ne-field-pair .ne-input { min-width: 0; }
+.ne-field-pair input[type="date"].ne-input { -webkit-appearance: none; appearance: none; display: block; min-width: 0; min-height: 40px; }
+.ne-field-pair input[type="date"].ne-input::-webkit-date-and-time-value { text-align: left; }
+@media (min-width: 576px) {
+  .ne-field-pair { grid-template-columns: 220px 160px; gap: 0 20px; }
+}

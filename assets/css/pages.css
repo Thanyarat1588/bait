@@ -331,16 +331,16 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .campus-layout > * { min-width: 0; overflow-wrap: anywhere; }
 @media (min-width: 1100px) { .layout-with-sidebar.campus-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
 
-/* ---------- Downloadable forms (forms.php): cards wrap in a flex row, so the right side is never left empty ---------- */
-.form-list { display: flex; flex-wrap: wrap; gap: 12px; }
-.form-file { display: flex; align-items: center; gap: 12px; flex: 1 1 100%; min-width: 0; padding: 12px 14px; text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); transition: border-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); }
+/* ---------- Downloadable forms (forms.php): a grid, so the cards line up in columns and a short last row leaves its gap empty ---------- */
+.form-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.form-file { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 14px; text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); transition: border-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); }
 .form-file:hover, .form-file:focus-visible { text-decoration: none; border-color: var(--primary); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .form-file *, .form-file:hover * { text-decoration: none; }
 .form-file__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .form-file__name { color: var(--ink); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
 .form-file__meta { font-size: .78rem; color: var(--ink-soft); }
-@media (min-width: 640px)  { .form-file { flex-basis: calc(50% - 6px); } }
-@media (min-width: 1024px) { .form-file { flex-basis: calc(33.333% - 8px); } }
+@media (min-width: 640px)  { .form-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .form-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .form-file:hover { transform: none; } }
 
 /* ---------- Home page promo video (index.php): video + description, either side; the text block's sizes / alignment / colours come from the admin ---------- */
@@ -514,7 +514,7 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 
 /* E-Bidding (ebidding.php): numbered list, the long procurement titles read in full. Phones: number on the left, title, date
    and document button stacked beside it. Wide screens: one row each, the date and button in their own columns on the right.
-   The type (ร่างประกาศ / ประกาศ) and its status (เปิด-ปิดรับฟังความคิดเห็น / เปิด-ปิดประมูล) are pills floating in the top left. */
+   The type (ร่างประกาศ / ประกาศ) and its status (เปิด-ปิดรับฟังความคิดเห็น / เปิด-ปิดประมูล) share one pill right above the title. */
 .bid-intro { margin: 0 0 16px; color: var(--ink-soft); line-height: 1.7; }
 /* search + fiscal-year / status filters: the search box has its own line until the desktop row */
 .bid-filter .search-box { flex: 1 1 100%; }
@@ -524,22 +524,34 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
   .bid-filter select.field-select { flex: 0 0 auto; }
 }
 .bid-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
-.bid-item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "fy title" "fy date" "fy doc"; column-gap: 14px; row-gap: 8px; padding: 46px 16px 18px; }
+/* phones and tablets: the status pill with the fiscal year after it on one line, then the title across the whole card */
+.bid-item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "tag fy" "title title" "date date" "doc doc"; align-items: center; column-gap: 12px; row-gap: 8px; padding: 18px 16px; }
 .bid-item + .bid-item { border-top: 1px solid var(--border); }
-/* the fiscal year in the place of a running number: a small label over the year */
-.bid-fy { grid-area: fy; display: flex; flex-direction: column; align-items: center; min-width: 64px; font-size: 1.25rem; font-weight: 700; line-height: 1.2; color: var(--primary); font-variant-numeric: tabular-nums; }
-.bid-fy small { font-size: .7rem; font-weight: 600; color: var(--ink-faint); margin-bottom: 2px; white-space: nowrap; }
-.bid-title { grid-area: title; margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); }
-.bid-badges { position: absolute; top: 14px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; gap: 6px; }
-.bid-badge { padding: 2px 12px; border-radius: var(--radius-full); color: var(--ink); border: 1px solid; font-size: .75rem; font-weight: 700; line-height: 1.5; }
-.bid-badge.is-open { background: var(--success-bg); border-color: var(--success); }
-.bid-badge.is-closed { background: var(--surface-soft); border-color: var(--ink-faint); color: var(--ink-soft); }
-.bid-badge.is-draft { background: var(--warn-bg); border-color: var(--warn); }
-.bid-badge.is-announce { background: var(--surface-soft); border-color: var(--primary); color: var(--primary); }
+.bid-head { display: contents; }
+.bid-head .bid-pill { grid-area: tag; }
+.bid-head .bid-title { grid-area: title; }
+.bid-fy { grid-area: fy; display: inline-flex; align-items: baseline; gap: 5px; font-size: .9rem; font-weight: 700; line-height: 1.3; color: var(--primary); font-variant-numeric: tabular-nums; flex-wrap: wrap; row-gap: 0; min-width: 0; }
+.bid-fy small { font-size: .75rem; font-weight: 600; color: var(--ink-faint); white-space: nowrap; }
+.bid-title { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); }
+/* one pill in two parts: the type tinted on the left, its status (with a dot) on the right */
+.bid-pill { display: inline-flex; max-width: 100%; border: 1px solid; border-radius: var(--radius-full); overflow: hidden; font-size: .75rem; font-weight: 700; line-height: 1.5; background: var(--surface); }
+.bid-pill-type { padding: 2px 10px; white-space: nowrap; }
+.bid-pill-status { display: inline-flex; align-items: center; gap: 5px; padding: 2px 11px 2px 9px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bid-pill-status::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.bid-pill.is-draft { border-color: var(--warn); }
+.bid-pill.is-draft .bid-pill-type { background: var(--warn-bg); color: var(--ink); }
+.bid-pill.is-announce { border-color: var(--primary); }
+.bid-pill.is-announce .bid-pill-type { background: var(--surface-soft); color: var(--primary); }
+.bid-pill.is-open .bid-pill-status { color: var(--success-text); }
+.bid-pill.is-closed .bid-pill-status { color: var(--ink-faint); }
 .bid-date { grid-area: date; display: inline-flex; align-items: center; gap: 5px; font-size: .85rem; color: var(--ink-faint); white-space: nowrap; }
 .bid-doc { grid-area: doc; justify-self: start; white-space: normal; text-align: left; }
-@media (min-width: 768px) { .bid-item { padding: 48px 24px 20px; column-gap: 18px; } .bid-badges { left: 24px; right: 24px; } .bid-fy { min-width: 72px; font-size: 1.4rem; } }
+@media (min-width: 768px) { .bid-item { padding: 20px 24px; } }
+/* wide screens: the fiscal year in its own column on the left (a small label over the year), the pill right above the title */
 @media (min-width: 1024px) {
   .bid-item { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "fy title date doc"; align-items: center; column-gap: 24px; }
+  .bid-head { grid-area: title; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .bid-fy { flex-direction: column; align-items: center; gap: 0; min-width: 72px; font-size: 1.4rem; line-height: 1.2; }
+  .bid-fy small { font-size: .7rem; margin-bottom: 2px; }
   .bid-doc { justify-self: end; white-space: nowrap; }
 }

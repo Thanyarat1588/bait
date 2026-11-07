@@ -187,14 +187,14 @@ include BASE_PATH . '/admin/layout/header.php';
           <input type="url" class="ne-input" id="bidUrl" maxlength="500" placeholder="https://drive.google.com/...">
           <p class="ne-hint">ลิงก์โฟลเดอร์หรือไฟล์ก็ได้ ตั้งค่าการแชร์เป็น "ทุกคนที่มีลิงก์" เพื่อให้บริษัทเปิดดูได้</p>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:0 20px">
+        <div class="ne-field-pair">
           <div class="ne-field">
             <label for="bidDate">วันที่ประกาศ <span style="color:var(--ne-danger)">*</span></label>
-            <input type="date" class="ne-input" id="bidDate" style="max-width:220px" onchange="fillFiscal()">
+            <input type="date" class="ne-input" id="bidDate" onchange="fillFiscal()">
           </div>
           <div class="ne-field">
             <label for="bidFiscal">ปีงบประมาณ (พ.ศ.) <span style="color:var(--ne-danger)">*</span></label>
-            <input type="number" class="ne-input" id="bidFiscal" min="2500" max="2700" step="1" style="max-width:160px" placeholder="2570">
+            <input type="number" class="ne-input" id="bidFiscal" min="2500" max="2700" step="1" placeholder="2570">
           </div>
         </div>
         <p class="ne-hint" style="margin:-6px 0 16px">ระบบเติมปีงบประมาณจากวันที่ประกาศให้ (ปีงบเริ่ม 1 ตุลาคม) แก้เองได้ถ้าไม่ตรง</p>
