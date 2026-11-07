@@ -60,7 +60,7 @@ $breadcrumbItems = [
 ?>
 <section class="page-hero">
   <div class="container">
-    <h1>E-Bidding</h1>
+    <h1><?= $t('ประกวดราคาอิเล็กทรอนิกส์ (e-bidding)') ?></h1>
     <?= breadcrumb($breadcrumbItems) ?>
   </div>
 </section>

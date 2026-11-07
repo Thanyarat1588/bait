@@ -74,6 +74,7 @@ return [
     'ดูภาพขนาดใหญ่' => 'View full size',
     // E-Bidding page (ebidding.php)
     'ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding) ของคณะ กดปุ่มเอกสารเพื่อเปิดรายละเอียดและดาวน์โหลดเอกสาร' => 'The faculty\'s electronic bidding (e-bidding) procurement announcements. Open the documents button for details and downloads.',
+    'ประกวดราคาอิเล็กทรอนิกส์ (e-bidding)' => 'Electronic Bidding (e-bidding)',
     'ค้นหาประกาศ' => 'Search announcements',
     'ค้นหาประกาศ...' => 'Search announcements...',
     'ปีงบประมาณ' => 'Fiscal year',
