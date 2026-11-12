@@ -22,6 +22,10 @@ if (!defined('DB_HOST')) {   // (a test harness may have defined everything alre
 }
 $reqHost  = strtolower(preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
 $is_local = $hostCfg === null && (($reqHost === '' && PHP_SAPI === 'cli') || in_array($reqHost, ['localhost', '127.0.0.1', '[::1]', '::1'], true));
+// On the real host never print PHP notices into the page: .htaccess's php_flag only works under mod_php and the host may
+// not have .user.ini, and one printed warning (e.g. a deprecation after a PHP upgrade) sent the page out before the
+// session started — no session cookie, so every sign-in failed with "หน้านี้หมดอายุ". They go to the error log instead.
+if (!$is_local) { @ini_set('display_errors', '0'); @ini_set('log_errors', '1'); }
 $setupFail = function (string $why): void {
     error_log('BAIT: config/database.host.php - ' . $why);
     if (PHP_SAPI !== 'cli' && !headers_sent()) { http_response_code(500); header('Content-Type: text/plain; charset=utf-8'); }
