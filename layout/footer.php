@@ -100,8 +100,8 @@ $campus1 = $db->fetchOne(
   </div>
 </footer>
 
-<a href="https://baitrus.com/" target="_blank" rel="noopener" title="BA&amp;IT RUS" class="baitrus-float">
-  <img src="<?= BASE_URL ?>/assets/img/baitrus-icon.png" alt="BA&amp;IT RUS"<?= imgSizeAttrs(BASE_PATH . '/assets/img/baitrus-icon.png', true) ?>>
+<a href="https://baitrus.com/" target="_blank" rel="noopener" title="BAIT RUS" class="baitrus-float">
+  <img src="<?= BASE_URL ?>/assets/img/baitrus-icon.png" alt="BAIT RUS"<?= imgSizeAttrs(BASE_PATH . '/assets/img/baitrus-icon.png', true) ?>>
 </a>
 
 <button type="button" class="back-to-top" aria-label="<?= $lang === 'en' ? 'Back to top' : 'กลับด้านบน' ?>">
