@@ -654,7 +654,8 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .bid-cal.is-empty .bid-cal-d { background: var(--surface-soft); color: var(--ink-faint); }
 .bid-cal.is-empty .bid-cal-m { background: var(--border); }
 .bid-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
-.bid-title { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); }
+.bid-title { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); transition: color var(--dur-fast) var(--ease-standard); }
+.bid-item.has-link:hover .bid-title, .bid-item.has-link:focus-within .bid-title { color: var(--primary); }   /* the row is pointed at: title turns faculty blue (no underline) */
 .bid-meta { margin: 0; font-size: .8125rem; color: var(--ink-soft); }
 /* documents button: an icon disc + two lines (what / action). The whole row also opens it (stretched link), no underline anywhere.
    Phones: under the text, lined up with it; from 1024px its own column on the right, centred on the row. */
