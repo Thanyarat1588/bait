@@ -227,6 +227,11 @@ function programCard(array $p, string $lang): string {
     $closed = isset($p['is_active']) && (int)$p['is_active'] !== 1;
     $closedBadge = $closed ? '<span class="card-badge card-badge-closed">' . ($lang === 'en' ? 'Applications closed' : 'ปิดรับสมัคร') . '</span>' : '';
     $closedClass = $closed ? ' is-closed' : '';
+    // study modes open this academic year (ภาคปกติ / ภาคสมทบ), when the page passes them
+    $modesHtml = '';
+    if (!empty($p['modes']) && function_exists('tuitionModeName')) {
+        $modesHtml = '<div class="tu-modes">' . implode('', array_map(fn($m) => '<span class="tu-mode tu-mode-' . (int)$m . '">' . e(tuitionModeName((int)$m, $lang)) . '</span>', $p['modes'])) . '</div>';
+    }
 
     return <<<HTML
     <article class="card card-program{$closedClass} reveal">
@@ -237,6 +242,7 @@ function programCard(array $p, string $lang): string {
         <h3 class="card-title"><a href="{$url}">{$name}</a></h3>
         <p class="card-excerpt">{$descHtml}</p>
         <div class="card-meta">{$pinIcon} {$campus}</div>
+        {$modesHtml}
       </div>
     </article>
     HTML;

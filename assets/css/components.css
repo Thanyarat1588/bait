@@ -185,6 +185,16 @@
   .nav-actions .lang-switch { display: flex; }
   .nav-toggle { display: none; }
 }
+/* 1200–1365px: the English labels (Faculty Overview, Information ...) plus logo, search and TH/EN were ~110px wider than
+   the bar and pushed the language switch off screen (the whole site scrolled sideways). Tighter links and a smaller logo here. */
+@media (min-width: 1200px) and (max-width: 1365.98px) {
+  .navbar .container { gap: 14px; }
+  .nav-links { gap: 0; margin-left: 0; }
+  .nav-link { padding-inline: 7px; font-size: .875rem; }
+  .nav-link[aria-current="page"]::after { left: 7px; right: 7px; }
+  .brand img { height: 56px; }
+  .nav-actions { gap: 6px; }
+}
 
 .offcanvas-nav {
   position: fixed; inset: 0 0 0 auto; width: min(340px, 88vw); z-index: 300;

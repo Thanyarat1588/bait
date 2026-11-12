@@ -212,6 +212,7 @@ bait/
 | majors / education_levels | สาขาวิชา / ระดับการศึกษา |
 | programs / program_campuses | หลักสูตร / ศูนย์ที่เปิดสอน |
 | tuition_fees / tuition_page / tuition_options | ค่าธรรมเนียมการศึกษา / ตั้งค่าหน้า / ตัวเลือกในฟอร์ม |
+| tuition_banners | แบนเนอร์สไลด์บนหน้าค่าเทอม (หลังบ้าน: ค่าเทอม → แบนเนอร์หน้าค่าเทอม) |
 | campuses / campus_contacts | ศูนย์พื้นที่ / ช่องทางติดต่อ |
 | faculty / about_sections / about_section_items / highlights | ข้อมูลคณะ / หัวข้อหน้าเกี่ยวกับคณะ / รายการในหัวข้อ / จุดเด่นของคณะ |
 | staff / staff_types / positions / departments / staff_units | บุคลากร / ประเภท / ตำแหน่ง / หน่วยงาน / งาน (สายสนับสนุน) |

@@ -23,6 +23,11 @@ $majorParam = getStr('major');
 // สาขาวิชา assigned (ป.โท/ป.เอก that stand on their own, not tied to any one
 // undergraduate major). Anything else is a normal numeric major_id.
 $majorId    = $majorParam === 'none' ? 'none' : (int)$majorParam;
+// ภาคปกติ / ภาคสมทบ: which modes each programme is open for in the current academic year (admin: หลักสูตร > ค่าเทอม)
+$hasModes = hasTuitionModes();
+$offers   = $hasModes ? tuitionOffers(tuitionCurrentYear()) : [];
+$mode     = $hasModes ? (int)getStr('mode') : 0;
+if (!isset(TUITION_MODES[$mode])) $mode = 0;
 
 $where = '1=1'; $params = [];   // programmes closed for applications are listed too, marked "ปิดรับสมัคร" (programCard)
 if ($levelId)  { $where .= ' AND p.level_id = ?';  $params[] = $levelId; }
@@ -38,6 +43,10 @@ if ($campusId) {
 }
 if ($majorId === 'none') { $where .= ' AND p.major_id IS NULL'; }
 elseif ($majorId)        { $where .= ' AND p.major_id = ?'; $params[] = $majorId; }
+if ($mode) {
+    $ids = array_keys(array_filter($offers, fn($m) => in_array($mode, $m, true)));
+    $where .= $ids ? ' AND p.program_id IN (' . implode(',', array_map('intval', $ids)) . ')' : ' AND 0';
+}
 
 $programs = $db->fetchAll(
     "SELECT p.*, m.major_name, el.level_name, el.level_abbr, el.level_order,
@@ -57,7 +66,7 @@ $campuses = $db->fetchAll("SELECT * FROM campuses ORDER BY campus_id");
 $majors   = $db->fetchAll("SELECT * FROM majors ORDER BY major_name");
 
 $grouped = [];
-foreach ($programs as $p) { $grouped[$p['level_name']][] = $p; }
+foreach ($programs as $p) { $p['modes'] = $offers[(int)$p['program_id']] ?? []; $grouped[$p['level_name']][] = $p; }
 
 trackPageView($_SERVER['REQUEST_URI'], $lang === 'en' ? 'Programs' : 'หลักสูตร');
 $pageTitle = $lang === 'en' ? 'Academic Programs' : 'หลักสูตรการศึกษา';
@@ -116,8 +125,14 @@ $breadcrumbItems = [
       <?php endforeach; ?>
       <option value="none" <?= $majorId === 'none' ? 'selected' : '' ?>><?= $t('บัณฑิตศึกษา') ?></option>
     </select>
+    <?php if ($hasModes): ?>
+    <select class="field-select" name="mode" data-filter-select="mode" aria-label="<?= e($lang === 'en' ? 'Study mode' : 'รูปแบบการจัดการศึกษา') ?>">
+      <option value=""><?= $lang === 'en' ? 'Any study mode' : 'ทุกรูปแบบ' ?></option>
+      <?php foreach (TUITION_MODES as $k => $v): ?><option value="<?= $k ?>" <?= $mode === $k ? 'selected' : '' ?>><?= e(tuitionModeName($k, $lang)) ?></option><?php endforeach; ?>
+    </select>
+    <?php endif; ?>
     <noscript><button type="submit" class="btn btn-primary btn-sm"><?= $t('กรอง') ?></button></noscript>
-    <?php if ($levelId || $campusId || $majorId): ?>
+    <?php if ($levelId || $campusId || $majorId || $mode): ?>
     <a href="?lang=<?= e($lang) ?>" class="btn btn-ghost btn-sm"><?= icon('close', 'icon-sm') ?> <?= $t('ล้างตัวกรอง') ?></a>
     <?php endif; ?>
     <span class="filter-count"><?= count($programs) ?> <?= $t('หลักสูตร') ?></span>
@@ -125,7 +140,7 @@ $breadcrumbItems = [
 
   <?php if (empty($programs)): ?>
   <div class="empty-state"><?= icon('book') ?><div><?= $t('ไม่พบหลักสูตร') ?></div>
-    <?php if ($levelId || $campusId || $majorId): ?>
+    <?php if ($levelId || $campusId || $majorId || $mode): ?>
     <small class="text-faint"><?= $t('ลองเปลี่ยนหรือล้างตัวกรอง') ?></small>
     <a href="?lang=<?= e($lang) ?>" class="btn btn-secondary btn-sm" style="margin-top:12px"><?= $t('ล้างตัวกรอง') ?></a>
     <?php endif; ?>

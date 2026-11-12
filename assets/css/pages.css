@@ -375,8 +375,76 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 /* ── Tuition fees (tuition.php) ── mobile first: each programme is a card; from 1200px (8 columns need the room) a table with a full grid ── */
 .tu-levels { margin-bottom: 16px; }
 .tu-filters { margin-bottom: 14px; }
-.tu-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .88rem; color: var(--ink-soft); margin-bottom: 12px; }
+.tu-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: .88rem; color: var(--ink-soft); margin-bottom: 12px; }
 .tu-meta b { color: var(--primary); }
+
+/* top of the page: banner slideshow (admin: ค่าเทอม > แบนเนอร์) + the academic-year card. Phones: stacked;
+   from 1024px side by side, both as tall as the row. No banner: the card alone, laid out across the width. */
+.tu-top { display: grid; gap: 16px; margin-bottom: 24px; }
+/* width 100% + min-width 0: otherwise, stretched to the row's height, the 3:1 ratio turns that height back into a width and covers the card */
+.hero.tu-banner { aspect-ratio: 3 / 1; width: 100%; min-width: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+  background: linear-gradient(120deg, var(--navy-800), var(--navy-600)); }
+.tu-banner .hero-slide a, .tu-banner .hero-slide .img-zoom { display: block; width: 100%; height: 100%; }
+.tu-banner .hero-arrow { width: 40px; height: 40px; background: rgba(255,255,255,.92); color: var(--navy-800); box-shadow: var(--shadow-sm); }
+.tu-banner .hero-arrow:hover { background: #fff; }
+.tu-banner .hero-arrow-prev { left: 12px; } .tu-banner .hero-arrow-next { right: 12px; }
+
+.tu-info { position: relative; display: flex; flex-direction: column; gap: 16px; padding: 20px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.tu-info::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+.tu-info-eyebrow { display: block; font-size: .8125rem; font-weight: 600; letter-spacing: .02em; color: var(--ink-soft); }
+.tu-info-year { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 2px; }
+.tu-info-ylabel { font-size: 1rem; font-weight: 600; color: var(--ink); }
+.tu-info-year b { font-size: clamp(2rem, 1.6rem + 1.4vw, 2.6rem); line-height: 1.1; color: var(--primary); font-variant-numeric: tabular-nums; }
+.tu-info-badge { align-self: center; padding: 3px 10px; border-radius: var(--radius-full); font-size: .75rem; font-weight: 600; background: var(--success-bg); color: var(--success-text); }
+.tu-info-badge.is-prev { background: var(--warn-bg); color: var(--ink); }
+.tu-facts { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; }   /* phones: one fact per row, never a date broken in two */
+@media (min-width: 560px) { .tu-facts { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); } }
+.tu-fact { display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center;
+  padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-soft); }
+.tu-fact-ic { grid-row: 1 / 3; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface); color: var(--primary); }
+.tu-fact-ic .icon { width: 18px; height: 18px; }
+.tu-fact dt { font-size: .75rem; color: var(--ink-soft); line-height: 1.3; }
+.tu-fact dd { margin: 0; font-weight: 700; color: var(--ink); line-height: 1.35; }
+.tu-info-ctas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.tu-info-ctas .btn { flex: 1 1 auto; justify-content: center; white-space: normal; text-align: center; }
+/* the admission-rules links: a small title over one button per group of levels (ปวช.–ป.ตรี / ป.โท–ป.เอก) */
+.tu-rules-box { display: flex; flex-direction: column; gap: 8px; }
+.tu-rules-title { display: flex; align-items: center; gap: 6px; font-size: .8125rem; font-weight: 600; color: var(--ink-soft); }
+.tu-rules-title .icon { color: var(--primary); }
+.tu-rules-box .tu-info-ctas { margin-top: 0; }
+/* full level names are long: one button per line, text may wrap on a narrow phone */
+.tu-rules-box .tu-info-ctas { flex-direction: column; gap: 6px; }
+.tu-rules-box .tu-info-ctas .btn { flex: 0 0 auto; width: 100%; min-height: 44px; padding-block: 8px; white-space: normal; }
+.tu-nwp { white-space: nowrap; }
+
+/* 768px up: the card is a strip under the banner (or alone): year on the left, facts in the middle, button on the right */
+@media (min-width: 768px) {
+  .tu-info { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 16px 28px; padding: 22px 24px; }
+  .tu-facts { flex: 1 1 420px; }
+  .tu-info-ctas { margin-top: 0; flex: 0 1 auto; }
+  .tu-rules-box { flex: 1 1 100%; }   /* its own row across the strip, the two buttons side by side */
+  .tu-rules-box .tu-info-ctas { flex-direction: row; }
+  .tu-rules-box .tu-info-ctas .btn { flex: 1 1 0; width: auto; }
+}
+/* 1440px up with a banner: side by side, as tall as each other (the 3:1 banner sets the height, the card fills it) */
+@media (min-width: 1440px) {
+  .tu-top.has-banner { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+  .tu-top.has-banner .tu-info { flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: space-between; gap: 8px; padding: 16px 20px; }
+  .tu-top.has-banner .tu-info-year b { font-size: clamp(1.9rem, 1rem + 1.1vw, 2.6rem); }
+  .tu-top.has-banner .tu-facts { flex: 0 0 auto; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* compact facts here (the two full-name rules buttons need the height): small icon in front of the label, value under it */
+  .tu-top.has-banner .tu-fact { grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 5px; row-gap: 0; padding: 7px 10px; }
+  .tu-top.has-banner .tu-fact-ic { grid-row: 1; width: auto; height: auto; background: none; }
+  .tu-top.has-banner .tu-fact-ic .icon { width: 14px; height: 14px; }
+  .tu-top.has-banner .tu-fact dd { grid-column: 1 / -1; }
+  .tu-top.has-banner .tu-rules-box { flex: 0 0 auto; }
+  .tu-top.has-banner .tu-rules-box .tu-info-ctas { flex-direction: column; }
+  .tu-top.has-banner .tu-rules-box .tu-info-ctas .btn { flex: 0 0 auto; width: 100%; min-height: 40px; padding-block: 6px; }
+  .tu-top.has-banner .tu-rules-box { gap: 6px; }
+  .tu-top.has-banner .tu-info-ctas { margin-top: 0; }
+}
 .tu-wrap { width: 100%; }
 .tu-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .tu-table thead { display: none; }
@@ -400,6 +468,11 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .tu-num { font-variant-numeric: tabular-nums; }
 .tu-total { font-weight: 700; color: var(--primary); }
 .tu-val { display: block; }
+/* study mode pill (ภาคปกติ / ภาคสมทบ): on the tuition table, the programme cards and the programme page */
+.tu-mode { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; white-space: nowrap; background: var(--surface-soft); color: var(--primary); }
+.tu-mode-2 { background: var(--warn-bg); color: var(--warn); }
+.tu-days { display: block; font-size: .82rem; color: var(--ink-soft); margin-top: 2px; }
+.tu-modes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .tu-only, .tu-note { display: block; font-size: .76rem; color: #A84300; }
 .tu-note { color: var(--ink-soft); }
 .tu-foot { margin-top: 22px; font-size: .9rem; color: var(--ink-soft); line-height: 1.75; }
@@ -422,7 +495,18 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
   .tu-prog tr + tr { border-top: 0; }
   .tu-name { background: var(--surface); min-width: 280px; }
   .tu-table tbody.tu-prog:nth-of-type(even) td { background: #FAFBFE; }
-  .tu-num { text-align: right !important; white-space: nowrap; }
+  /* amounts centred under their column titles (wide columns, similar digit counts); same-width digits keep them lined up */
+  .tu-num { text-align: center !important; white-space: nowrap; }
+  .tu-table .tu-dur { text-align: center !important; }
+}
+/* 1200–1439px: seven one-line column titles plus a 280px name column are wider than the page (it scrolled sideways at
+   1200–1300px). Here the titles may wrap (the browser breaks Thai between words, balanced over the lines) and the
+   cells get tighter; from 1440px there is room for everything on one line again. */
+@media (min-width: 1200px) and (max-width: 1439.98px) {
+  .tu-table thead th { white-space: normal; text-wrap: balance; }
+  .tu-table th, .tu-table td { padding: 9px 10px; }
+  .tu-name { min-width: 220px; }
+  .tu-table { font-size: .88rem; }
 }
 
 /* home: the "ค่าเทอม" button — brand sky blue, darker with white text on hover (like the other buttons) */

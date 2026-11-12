@@ -1,11 +1,13 @@
 /**
  * BAIT - Accessible hero slider. Autoplay pauses on hover/focus/tab-blur
  * and is skipped entirely for prefers-reduced-motion. No dependencies.
+ * Every [data-hero-slider] on the page gets its own (home page hero, tuition-page banners).
  */
 export function initHeroSlider() {
-  const root = document.querySelector('[data-hero-slider]');
-  if (!root) return;
+  document.querySelectorAll('[data-hero-slider]').forEach(initOne);
+}
 
+function initOne(root) {
   const slides = Array.from(root.querySelectorAll('.hero-slide'));
   if (slides.length <= 1) return; // nothing to animate
 
@@ -70,6 +72,14 @@ export function initHeroSlider() {
   // keyboard focus only (:focus-visible): a tapped dot or banner link also takes focus, and on touch nothing moves it away again
   root.addEventListener('focusin', (e) => { let kb = true; try { kb = e.target.matches(':focus-visible'); } catch (err) { /* old browser */ } if (kb) stop(); });
   root.addEventListener('focusout', resume);
+  // swipe on touch screens (the arrows are hidden on phones)
+  let x0 = null;
+  root.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+  root.addEventListener('touchend', (e) => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev(); resume(); }
+  }, { passive: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop(); else resume();
   });

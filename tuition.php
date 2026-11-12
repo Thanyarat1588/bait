@@ -29,16 +29,27 @@ $campusId = (int)getStr('campus');
 if (!in_array($campusId, array_map(fn($c) => (int)$c['campus_id'], $campuses), true)) $campusId = 0;
 $q = mb_substr(getStr('q'), 0, 80);
 
+// ── academic year: the current one (newest) or the previous one; only these two are kept (migration 21) ──
+$yearRows = tuitionYearRows();
+$curYear  = tuitionCurrentYear();
+$ay = getStr('ay');
+if (!isset($yearRows[$ay])) $ay = $curYear;
+$ayParam = ($ay !== '' && $ay !== $curYear) ? $ay : '';   // only the previous year goes into the links
+// ── study mode: ภาคปกติ / ภาคสมทบ (migration 22) ──
+$hasModes = hasTuitionModes();
+$mode = $hasModes ? (int)getStr('mode') : 0;
+if (!isset(TUITION_MODES[$mode])) $mode = 0;
+
 // ── programmes (of the chosen level, or all), their campuses and fee rows ──
 $programs = $levels ? $db->fetchAll(
-    "SELECT p.program_id, p.program_name, p.is_active, COALESCE(m.major_name, '') AS major_name, el.level_name,
+    "SELECT p.program_id, p.level_id, p.program_name, p.is_active, COALESCE(m.major_name, '') AS major_name, el.level_name,
             GROUP_CONCAT(pc.campus_id ORDER BY pc.campus_id) AS campus_ids,
             GROUP_CONCAT(c.campus_name ORDER BY c.campus_id SEPARATOR ', ') AS campus_names
      FROM programs p JOIN education_levels el ON el.level_id = p.level_id LEFT JOIN majors m ON m.major_id = p.major_id
      LEFT JOIN program_campuses pc ON pc.program_id = p.program_id LEFT JOIN campuses c ON c.campus_id = pc.campus_id
      WHERE 1=1" . ($levelId ? ' AND p.level_id = ' . (int)$levelId : '') . "
      GROUP BY p.program_id ORDER BY el.level_order, m.major_name, p.program_name") : [];
-$fees = tuitionRowsByProgram(array_column($programs, 'program_id'));
+$fees = tuitionShownRows($programs, $ay !== '' ? $ay : null);   // own rows, or the general rate of the level, per study mode
 
 // lengths of study that exist in what is shown (the "ระยะเวลา" filter)
 $yearsList = [];
@@ -54,25 +65,29 @@ foreach ($programs as $p) {
     $offered = $p['campus_ids'] ? array_map('intval', explode(',', $p['campus_ids'])) : [];   // none listed = every campus
     if ($campusId && $offered && !in_array($campusId, $offered, true)) continue;
     if ($q !== '' && mb_stripos($p['program_name'] . ' ' . $p['major_name'] . ' ' . $t($p['program_name']), $q) === false) continue;
-    $rows = array_values(array_filter($fees[$pid] ?? [], function ($r) use ($campusId, $years) {
+    $rows = array_values(array_filter($fees[$pid] ?? [], function ($r) use ($campusId, $years, $mode) {
+        if ($mode && (int)$r['study_mode'] !== $mode) return false;
         if ($campusId && $r['campus_id'] !== null && (int)$r['campus_id'] !== $campusId) return false;
         if ($years !== '' && (string)(float)$r['duration_years'] !== $years) return false;
         return true;
     }));
-    if (!$rows && $years !== '') continue;            // filtering by length: only programmes that have it
+    if (!$rows && ($years !== '' || $mode)) continue;   // filtering by length or study mode: only programmes that have it
     $p['rows'] = $rows;
     $groups[$p['level_name']][$p['major_name']][] = $p;   // level -> major -> programmes
     $shown++;
 }
 
-$tuSet = tuitionSettings();
+$tuSet = tuitionSettings($ay !== '' ? $ay : null);
+$rulesUrl = isHttpUrl((string)$tuSet['admission_url']) ? (string)$tuSet['admission_url'] : '';             // ปวช. – ป.ตรี
+$rulesGrad = isHttpUrl((string)$tuSet['admission_url_grad']) ? (string)$tuSet['admission_url_grad'] : '';  // ป.โท – ป.เอก
 $updated  = $tuSet['data_date'] ?: null;
 if (!$updated) foreach ($fees as $rows) foreach ($rows as $r) $updated = max((string)$updated, (string)$r['updated_at']);
 $money = fn($v) => ($v === null || $v === '') ? '-' : number_format((int)$v);
-$types = tuitionFeeTypes();
-$typeLabel = fn(string $k) => $en ? ($k === 'credit' ? 'Per credit' : 'Flat rate') : ($types[$k] ?? $types['lump']);
-$keep = array_filter(['level' => $levelId ?: '', 'campus' => $campusId ?: '', 'years' => $years, 'q' => $q], fn($v) => $v !== '');
+$keep = array_filter(['ay' => $ayParam, 'mode' => $mode ?: '', 'level' => $levelId ?: '', 'campus' => $campusId ?: '', 'years' => $years, 'q' => $q], fn($v) => $v !== '');
 $clearUrl = '?' . http_build_query(array_filter(['level' => $levelId ?: ''], fn($v) => $v !== '') + ['lang' => $lang]);
+$yearLabel = fn(string $y) => ($en ? 'Academic year ' . $y : 'ปีการศึกษา ' . $y) . ($y === $curYear ? ($en ? ' (current)' : ' (ปัจจุบัน)') : ($en ? ' (previous)' : ' (ปีก่อนหน้า)'));
+$tuBanners = tuitionBanners();
+$openProgs = array_sum(array_map(fn($l) => (int)$l['n'], $levels));   // programmes open for admission, every level
 
 trackPageView($_SERVER['REQUEST_URI'], $en ? 'Tuition Fees' : 'ค่าธรรมเนียมการศึกษา');
 $pageTitle = $en ? 'Tuition Fees' : 'ค่าธรรมเนียมการศึกษา';
@@ -88,8 +103,8 @@ $breadcrumbItems = [
     ['label' => $pageTitle],
 ];
 $cols = $en
-    ? ['Programme / campus', 'Study schedule', 'Length', 'Fee per semester', 'Summer term', 'Fee type', 'Student loan', 'Whole programme (approx.)']
-    : ['หลักสูตร / ศูนย์พื้นที่', 'ภาคเรียนและวัน', 'ระยะเวลา', 'ค่าเทอม/ภาคเรียน', 'ภาคฤดูร้อน', 'รูปแบบ', 'กองทุนกู้ยืม', 'ตลอดหลักสูตร (โดยประมาณ)'];
+    ? ['Programme / campus', 'Study mode', 'Length', 'Entry fee (once)', 'Fee per semester', 'Summer term', 'Whole programme (approx.)']
+    : ['หลักสูตร / ศูนย์พื้นที่', 'รูปแบบการจัดการศึกษา', 'ระยะเวลา', 'ค่าแรกเข้า (ครั้งเดียว)', 'ค่าเทอม/ภาคการศึกษาปกติ', 'ภาคฤดูร้อน', 'ตลอดหลักสูตร (โดยประมาณ)'];
 ?>
 
 <section class="page-hero">
@@ -100,11 +115,82 @@ $cols = $en
 </section>
 
 <div class="container section" style="padding-top:28px">
+  <div class="tu-top<?= $tuBanners ? ' has-banner' : '' ?>">
+    <?php if ($tuBanners): ?>
+    <section class="hero hero-banner-only tu-banner" data-hero-slider data-interval="6000" aria-roledescription="carousel" aria-label="<?= e($en ? 'Tuition announcements' : 'ประกาศเกี่ยวกับค่าเทอมและการรับสมัคร') ?>">
+      <div class="hero-track">
+        <?php foreach ($tuBanners as $i => $b):
+            $alt = $b['title'] ? $t($b['title']) : ($en ? 'Banner ' : 'แบนเนอร์ ') . ($i + 1);
+            $img = '<img src="' . UPLOAD_URL . '/' . e($b['image']) . '" alt="' . e($alt) . '" loading="' . ($i === 0 ? 'eager' : 'lazy') . '" decoding="async"' . imgSizeAttrs($b['image']) . '>';
+        ?>
+        <div class="hero-slide<?= $i === 0 ? ' is-active' : '' ?>">
+          <?php if (isHttpUrl((string)$b['link_url'])): ?>
+          <a href="<?= e($b['link_url']) ?>" target="_blank" rel="noopener"><?= $img ?><span class="visually-hidden"> (<?= $t('เปิดในแท็บใหม่') ?>)</span></a>
+          <?php else: ?>
+          <button type="button" class="img-zoom" data-zoom="<?= UPLOAD_URL . '/' . e($b['image']) ?>" aria-label="<?= e($t('ดูภาพขนาดใหญ่') . ': ' . $alt) ?>"><?= $img ?></button>
+          <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <?php if (count($tuBanners) > 1): ?>
+      <button type="button" class="hero-arrow hero-arrow-prev" data-hero-prev aria-label="<?= $en ? 'Previous slide' : 'ภาพก่อนหน้า' ?>"><?= icon('chevron-left') ?></button>
+      <button type="button" class="hero-arrow hero-arrow-next" data-hero-next aria-label="<?= $en ? 'Next slide' : 'ภาพถัดไป' ?>"><?= icon('chevron-right') ?></button>
+      <button type="button" class="hero-pause" data-hero-pause aria-label="<?= $en ? 'Pause slideshow' : 'หยุดสไลด์' ?>"></button>
+      <div class="hero-dots" data-hero-dots></div>
+      <?php endif; ?>
+    </section>
+    <?php endif; ?>
+
+    <aside class="tu-info" aria-label="<?= e($en ? 'About these figures' : 'ข้อมูลค่าธรรมเนียมการศึกษา') ?>">
+      <div class="tu-info-head">
+        <span class="tu-info-eyebrow"><?= $en ? 'Tuition fees' : 'ค่าธรรมเนียมการศึกษา' ?></span>
+        <?php if ($tuSet['academic_year'] !== ''): ?>
+        <div class="tu-info-year">
+          <span class="tu-info-ylabel"><?= $en ? 'Academic year' : 'ปีการศึกษา' ?></span>
+          <b><?= e($tuSet['academic_year']) ?></b>
+          <span class="tu-info-badge<?= $ayParam !== '' ? ' is-prev' : '' ?>"><?= $ayParam !== '' ? ($en ? 'Previous year' : 'ปีก่อนหน้า') : ($en ? 'Current' : 'ปีปัจจุบัน') ?></span>
+        </div>
+        <?php endif; ?>
+      </div>
+      <dl class="tu-facts">
+        <?php if ($updated): ?>
+        <div class="tu-fact"><span class="tu-fact-ic"><?= icon('calendar') ?></span><dt><?= $en ? 'Figures as of' : 'ข้อมูล ณ วันที่' ?></dt><dd><?= e(thaiDate($updated)) ?></dd></div>
+        <?php endif; ?>
+        <div class="tu-fact"><span class="tu-fact-ic"><?= icon('graduation-cap') ?></span><dt><?= $en ? 'Offered' : 'เปิดสอน' ?></dt><dd><?= number_format($openProgs) ?> <?= $t('หลักสูตร') ?></dd></div>
+        <div class="tu-fact"><span class="tu-fact-ic"><?= icon('tag') ?></span><dt><?= $en ? 'Currency' : 'หน่วยเงิน' ?></dt><dd><?= $en ? 'Thai baht' : 'บาท' ?></dd></div>
+      </dl>
+      <?php
+        // "ระเบียบการคัดเลือก" of the year shown, one button per group of levels (outside links, e.g. Google Drive)
+        $rulesLinks = array_filter([
+            [$rulesUrl, $en ? ['Vocational Certificate', 'Bachelor’s Degree'] : ['ระดับประกาศนียบัตรวิชาชีพ', 'ปริญญาตรี']],
+            [$rulesGrad, $en ? ['Master’s', 'Doctoral Degree'] : ['ระดับปริญญาโท', 'ปริญญาเอก']],
+        ], fn($r) => $r[0] !== '');
+        // each level name stays whole; on a narrow phone the line breaks only at the dash (never "ปริญญา / ตรี")
+        $levelRange = fn(array $p) => '<span class="tu-nwp">' . e($p[0]) . '</span> – <span class="tu-nwp">' . e($p[1]) . '</span>';
+        $newTab = '<span class="visually-hidden"> (' . e($t('เปิดในแท็บใหม่')) . ')</span>';
+      ?>
+      <?php if ($rulesLinks): ?>
+      <div class="tu-rules-box">
+        <span class="tu-rules-title"><?= icon('book', 'icon-sm') ?> <?= $en ? 'Admission regulations' : 'ระเบียบการคัดเลือกเข้าศึกษา' ?><?= $tuSet['academic_year'] !== '' ? ' ' . ($en ? 'academic year ' : 'ปีการศึกษา ') . e($tuSet['academic_year']) : '' ?></span>
+        <div class="tu-info-ctas">
+          <?php foreach ($rulesLinks as [$url, $label]): ?>
+          <a class="btn btn-primary" href="<?= e($url) ?>" target="_blank" rel="noopener"><span class="visually-hidden"><?= $en ? 'Admission regulations,' : 'ระเบียบการคัดเลือกเข้าศึกษา' ?> </span><span><?= $levelRange($label) ?></span> <?= icon('external-link', 'icon-sm') ?><?= $newTab ?></a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php else: ?>
+      <div class="tu-info-ctas">
+        <a class="btn btn-accent" href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener"><?= $t('สมัครเรียน') ?><?= $newTab ?></a>
+      </div>
+      <?php endif; ?>
+    </aside>
+  </div>
+
   <?php if ($levels): ?>
   <nav class="tab-pills tu-levels" aria-label="<?= e($t('ระดับการศึกษา')) ?>">
-    <a href="?<?= e(http_build_query(array_intersect_key($keep, ['campus' => 1]) + ['lang' => $lang])) ?>" class="tab-pill <?= $levelId === 0 ? 'is-active' : '' ?>"<?= $levelId === 0 ? ' aria-current="page"' : '' ?>><?= $t('ทั้งหมด') ?></a>
+    <a href="?<?= e(http_build_query(array_intersect_key($keep, ['ay' => 1, 'mode' => 1, 'campus' => 1]) + ['lang' => $lang])) ?>" class="tab-pill <?= $levelId === 0 ? 'is-active' : '' ?>"<?= $levelId === 0 ? ' aria-current="page"' : '' ?>><?= $t('ทั้งหมด') ?></a>
     <?php foreach ($levels as $l): ?>
-    <a href="?<?= e(http_build_query(['level' => (int)$l['level_id']] + array_intersect_key($keep, ['campus' => 1]) + ['lang' => $lang])) ?>" class="tab-pill <?= (int)$l['level_id'] === $levelId ? 'is-active' : '' ?>"<?= (int)$l['level_id'] === $levelId ? ' aria-current="page"' : '' ?>><?= e($t($l['level_name'])) ?></a>
+    <a href="?<?= e(http_build_query(['level' => (int)$l['level_id']] + array_intersect_key($keep, ['ay' => 1, 'mode' => 1, 'campus' => 1]) + ['lang' => $lang])) ?>" class="tab-pill <?= (int)$l['level_id'] === $levelId ? 'is-active' : '' ?>"<?= (int)$l['level_id'] === $levelId ? ' aria-current="page"' : '' ?>><?= e($t($l['level_name'])) ?></a>
     <?php endforeach; ?>
   </nav>
 
@@ -112,6 +198,17 @@ $cols = $en
     <input type="hidden" name="lang" value="<?= e($lang) ?>">
     <?php if ($levelId): ?><input type="hidden" name="level" value="<?= (int)$levelId ?>"><?php endif; ?>
     <span class="filter-label"><?= icon('filter') ?> <?= $t('กรอง:') ?></span>
+    <?php if ($hasModes): ?>
+    <select class="field-select" name="mode" data-filter-select="mode" aria-label="<?= e($en ? 'Study mode' : 'รูปแบบการจัดการศึกษา') ?>">
+      <option value=""><?= $en ? 'Any study mode' : 'ทุกรูปแบบ' ?></option>
+      <?php foreach (TUITION_MODES as $k => $v): ?><option value="<?= $k ?>"<?= $mode === $k ? ' selected' : '' ?>><?= e(tuitionModeName($k, $lang)) ?></option><?php endforeach; ?>
+    </select>
+    <?php endif; ?>
+    <?php if (count($yearRows) > 1): ?>
+    <select class="field-select" name="ay" data-filter-select="ay" aria-label="<?= e($en ? 'Academic year' : 'ปีการศึกษา') ?>">
+      <?php foreach (array_keys($yearRows) as $y): $y = (string)$y; ?><option value="<?= e($y === $curYear ? '' : $y) ?>"<?= $ay === $y ? ' selected' : '' ?>><?= e($yearLabel($y)) ?></option><?php endforeach; ?>
+    </select>
+    <?php endif; ?>
     <select class="field-select" name="campus" data-filter-select="campus" aria-label="<?= e($t('ศูนย์พื้นที่')) ?>">
       <option value=""><?= $t('ทุกศูนย์พื้นที่') ?></option>
       <?php foreach ($campuses as $c): ?><option value="<?= (int)$c['campus_id'] ?>"<?= $campusId === (int)$c['campus_id'] ? ' selected' : '' ?>><?= e($t($c['campus_name'])) ?></option><?php endforeach; ?>
@@ -125,16 +222,14 @@ $cols = $en
       <input type="search" name="q" value="<?= e($q) ?>" placeholder="<?= e($en ? 'Search programme / major' : 'ค้นหาหลักสูตร / สาขา') ?>" aria-label="<?= e($en ? 'Search programme' : 'ค้นหาหลักสูตร') ?>">
     </div>
     <button type="submit" class="btn btn-primary btn-sm"><?= $t('ค้นหา') ?></button>
-    <?php if ($campusId || $years !== '' || $q !== ''): ?>
+    <?php if ($ayParam !== '' || $mode || $campusId || $years !== '' || $q !== ''): ?>
     <a href="<?= e($clearUrl) ?>" class="btn btn-ghost btn-sm"><?= icon('close', 'icon-sm') ?> <?= $t('ล้างตัวกรอง') ?></a>
     <?php endif; ?>
   </form>
 
   <div class="tu-meta">
-    <?php if ($tuSet['academic_year'] !== ''): ?><span><?= $en ? 'Academic year' : 'ปีการศึกษา' ?> <b><?= e($tuSet['academic_year']) ?></b></span><?php endif; ?>
+    <span><?= $en ? 'Showing' : 'แสดง' ?> <b><?= $shown ?></b> <?= $t('หลักสูตร') ?></span>
     <span><?= $en ? 'Amounts in' : 'หน่วย:' ?> <b><?= $en ? 'Thai baht' : 'บาท' ?></b></span>
-    <?php if ($updated): ?><span><?= $en ? 'Figures as of' : 'ข้อมูล ณ วันที่' ?> <b><?= e(thaiDate($updated)) ?></b></span><?php endif; ?>
-    <span><?= $shown ?> <?= $t('หลักสูตร') ?></span>
   </div>
 
   <?php if (!$groups): ?>
@@ -145,12 +240,12 @@ $cols = $en
     <table class="tu-table">
       <caption class="visually-hidden"><?= e($pageTitle . ' — ' . ($levelId ? $t($levels[array_search($levelId, $levelIds, true)]['level_name'] ?? '') : $t('ทั้งหมด'))) ?></caption>
       <thead><tr>
-        <?php foreach ($cols as $i => $c): ?><th scope="col"<?= in_array($i, [3, 4, 7], true) ? ' class="tu-num"' : '' ?>><?= e($c) ?></th><?php endforeach; ?>
+        <?php foreach ($cols as $i => $c): ?><th scope="col"<?= in_array($i, [3, 4, 5, 6], true) ? ' class="tu-num"' : (in_array($i, [1, 2], true) ? ' class="tu-dur"' : '') ?>><?= e($c) ?></th><?php endforeach; ?>
       </tr></thead>
       <?php foreach ($groups as $levelName => $majors): ?>
-      <?php if (!$levelId): ?><tbody class="tu-level"><tr><th colspan="8" scope="colgroup"><?= e($t($levelName)) ?></th></tr></tbody><?php endif; ?>
+      <?php if (!$levelId): ?><tbody class="tu-level"><tr><th colspan="7" scope="colgroup"><?= e($t($levelName)) ?></th></tr></tbody><?php endif; ?>
       <?php foreach ($majors as $major => $list): ?>
-      <tbody class="tu-group"><tr><th colspan="8" scope="colgroup"><?= e($major !== '' ? ($en ? $t('สาขาวิชา' . $major) : 'สาขาวิชา' . $major) : $t('หลักสูตรระดับบัณฑิตศึกษา')) ?></th></tr></tbody>
+      <tbody class="tu-group"><tr><th colspan="7" scope="colgroup"><?= e($major !== '' ? ($en ? $t('สาขาวิชา' . $major) : 'สาขาวิชา' . $major) : $t('หลักสูตรระดับบัณฑิตศึกษา')) ?></th></tr></tbody>
       <?php foreach ($list as $p):
           $rows = $p['rows'] ?: [null];
           $url  = BASE_URL . '/program-detail.php?id=' . (int)$p['program_id'] . '&amp;lang=' . e($lang);
@@ -166,22 +261,26 @@ $cols = $en
           </th>
           <?php endif; ?>
           <?php if ($r === null): ?>
-          <td colspan="7" class="tu-ask"><?= $en ? 'No fee figures yet — please' : 'ยังไม่มีข้อมูลค่าเทอม' ?> <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>"><?= $en ? 'contact the faculty' : 'สอบถามคณะ' ?></a></td>
+          <td colspan="6" class="tu-ask"><?= $en ? 'No fee figures yet — please' : 'ยังไม่มีข้อมูลค่าเทอม' ?> <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>"><?= $en ? 'contact the faculty' : 'สอบถามคณะ' ?></a></td>
           <?php else:
               $credit = $r['fee_type'] === 'credit';
               $per    = $credit ? ' ' . ($en ? '/ credit' : '/ หน่วยกิต') : '';
               $two    = $r['term2'] !== null && $r['term2'] !== '' && (int)$r['term2'] !== (int)$r['term1'];
               $total  = tuitionTotal($r);
           ?>
-          <td data-label="<?= e($cols[1]) ?>"><span class="tu-val"><?= e($r['schedule'] !== '' ? $t($r['schedule']) : '-') ?>
+          <td data-label="<?= e($cols[1]) ?>" class="tu-dur"><span class="tu-val"><?php if ((int)$r['study_mode'] > 0): ?><span class="tu-mode tu-mode-<?= (int)$r['study_mode'] ?>"><?= e(tuitionModeName((int)$r['study_mode'], $lang)) ?></span><?php endif; ?>
+            <?php if ($r['schedule'] !== ''): ?><span class="tu-days"><?= e($t($r['schedule'])) ?></span><?php elseif ((int)$r['study_mode'] === 0): ?>-<?php endif; ?>
             <?php if ($r['campus_id'] !== null): ?><span class="tu-only"><?= $en ? 'Only at' : 'เฉพาะ' ?> <?= e($t((string)$r['campus_name'])) ?></span><?php endif; ?>
             <?php if ($r['note'] !== ''): ?><span class="tu-note"><?= e($t($r['note'])) ?></span><?php endif; ?></span></td>
-          <td data-label="<?= e($cols[2]) ?>" class="tu-nw"><?= e(tuitionYears($r['duration_years'], $lang)) ?></td>
-          <td data-label="<?= e($cols[3]) ?>" class="tu-num"><?php if ($two): ?><?= $en ? 'Sem. 1' : 'ภาค 1' ?>: <?= $money($r['term1']) ?><br><?= $en ? 'Sem. 2' : 'ภาค 2' ?>: <?= $money($r['term2']) ?><?php else: ?><?= $money($r['term1']) ?><?php endif; ?><?= $r['term1'] !== null ? $per : '' ?></td>
-          <td data-label="<?= e($cols[4]) ?>" class="tu-num"><?= $money($r['summer']) ?><?= $r['summer'] !== null ? $per : '' ?></td>
-          <td data-label="<?= e($cols[5]) ?>" class="tu-nw"><?= e($typeLabel($r['fee_type'])) ?></td>
-          <td data-label="<?= e($cols[6]) ?>"><?= e($r['loan_fund'] !== '' ? $t($r['loan_fund']) : '-') ?></td>
-          <td data-label="<?= e($cols[7]) ?>" class="tu-num tu-total"><?= $total !== null ? number_format($total) : '-' ?></td>
+          <?php if ($r['source'] === 'none'): ?>
+          <td colspan="5" class="tu-ask"><?= $en ? 'No fee figures for this study mode yet — please' : 'ยังไม่มีอัตราค่าเทอมของรูปแบบนี้' ?> <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>"><?= $en ? 'contact the faculty' : 'สอบถามคณะ' ?></a></td>
+          <?php else: ?>
+          <td data-label="<?= e($cols[2]) ?>" class="tu-nw tu-dur"><?= e(tuitionYears($r['duration_years'], $lang)) ?></td>
+          <td data-label="<?= e($cols[3]) ?>" class="tu-num"><?= $money($r['entry_fee']) ?></td>
+          <td data-label="<?= e($cols[4]) ?>" class="tu-num"><?php if ($two): ?><?= $en ? 'Sem. 1' : 'ภาค 1' ?>: <?= $money($r['term1']) ?><br><?= $en ? 'Sem. 2' : 'ภาค 2' ?>: <?= $money($r['term2']) ?><?php else: ?><?= $money($r['term1']) ?><?php endif; ?><?= $r['term1'] !== null ? $per : '' ?></td>
+          <td data-label="<?= e($cols[5]) ?>" class="tu-num"><?= $money($r['summer']) ?><?= $r['summer'] !== null ? $per : '' ?></td>
+          <td data-label="<?= e($cols[6]) ?>" class="tu-num tu-total"><?= $total !== null ? number_format($total) : '-' ?></td>
+          <?php endif; ?>
           <?php endif; ?>
         </tr>
         <?php endforeach; ?>

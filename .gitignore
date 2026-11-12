@@ -15,6 +15,7 @@ AUDIT_PROMPT.md
 # Database dumps (real data) — only the empty structure is published
 *.sql
 !database/schema.sql
+!database/migration_*.sql
 
 # Upload packages, backups and leftovers
 _deploy_check.php

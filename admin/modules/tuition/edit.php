@@ -18,15 +18,24 @@ $auth = new Auth();
 $auth->requireLogin();
 $db = Database::getInstance();
 if (!hasTuition()) { header('Location: index.php'); exit; }
+// the academic year whose fees are edited (migration 21); before it there is a single set of fees
+$byYear = hasTuitionYears();
+$year = $byYear ? getStr('year') : '';
+if ($byYear) {
+    if ($year === '') $year = tuitionCurrentYear();
+    if (!isset(tuitionYearRows()[$year])) { $_SESSION['flash_error'] = 'ไม่พบปีการศึกษาที่เลือก กรุณาเพิ่มปีการศึกษาก่อน'; header('Location: index.php'); exit; }
+}
+$back = 'index.php' . ($byYear ? '?year=' . urlencode($year) : '');
+$modes = hasTuitionModes();   // ภาคปกติ / ภาคสมทบ + ค่าแรกเข้า (migration 22)
 
 $programId = (int)getStr('program_id');
 $program = $db->fetchOne(
-    "SELECT p.program_id, p.program_name, el.level_name, GROUP_CONCAT(c.campus_name ORDER BY c.campus_id SEPARATOR ', ') AS campus_names,
+    "SELECT p.program_id, p.program_name, p.level_id, el.level_name, GROUP_CONCAT(c.campus_name ORDER BY c.campus_id SEPARATOR ', ') AS campus_names,
             GROUP_CONCAT(c.campus_id ORDER BY c.campus_id) AS campus_ids
      FROM programs p JOIN education_levels el ON el.level_id = p.level_id
      LEFT JOIN program_campuses pc ON pc.program_id = p.program_id LEFT JOIN campuses c ON c.campus_id = pc.campus_id
      WHERE p.program_id = ? GROUP BY p.program_id", [$programId]);
-if (!$program) { $_SESSION['flash_error'] = 'ไม่พบหลักสูตรที่ต้องการแก้ไข'; header('Location: index.php'); exit; }
+if (!$program) { $_SESSION['flash_error'] = 'ไม่พบหลักสูตรที่ต้องการแก้ไข'; header('Location: ' . $back); exit; }
 
 $campuses  = $db->fetchAll('SELECT campus_id, campus_name FROM campuses ORDER BY campus_id');
 $campusName = array_column($campuses, 'campus_name', 'campus_id');
@@ -34,7 +43,15 @@ $campusName = array_column($campuses, 'campus_name', 'campus_id');
 $offered   = $program['campus_ids'] ? array_map('intval', explode(',', $program['campus_ids'])) : array_map('intval', array_keys($campusName));
 $types  = tuitionFeeTypes();
 $errors = [];
-$rows   = tuitionRowsByProgram([$programId])[$programId] ?? [];
+$rows   = tuitionRowsByProgram([$programId], $byYear ? $year : null)[$programId] ?? [];
+// what the public page shows for this programme now: with no rows of its own it follows the general rates of its level
+$shownNow = $modes ? (tuitionShownRows([['program_id' => $programId, 'level_id' => (int)$program['level_id']]], $year)[$programId] ?? []) : [];
+$fromRates = array_values(array_filter($shownNow, fn($r) => $r['source'] !== 'own'));
+$prefilled = false;
+if ($modes && !$rows && getStr('prefill') === '1' && $_SERVER['REQUEST_METHOD'] !== 'POST') {   // start the programme's own rates from the general ones (saved only when the admin saves)
+    foreach ($fromRates as $r) if ($r['source'] === 'rate') $rows[] = ['study_mode' => (int)$r['study_mode'], 'fee_type' => 'lump', 'entry_fee' => $r['entry_fee'], 'term1' => $r['term1'], 'summer' => $r['summer']];
+    $prefilled = (bool)$rows;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
@@ -53,11 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pos++;   // the row's place on the screen, blank rows included, so "แถวที่ n" points at the right one
         $raw = [
             'campus_id' => $str($r['campus_id'] ?? '', 10), 'schedule' => $str($r['schedule'] ?? '', 120), 'duration_years' => $str($r['duration_years'] ?? '', 10),
-            'fee_type' => $str($r['fee_type'] ?? 'lump', 10), 'term1' => $str($r['term1'] ?? '', 20), 'term2' => $str($r['term2'] ?? '', 20),
+            'fee_type' => $str($r['fee_type'] ?? 'lump', 10), 'study_mode' => $str($r['study_mode'] ?? '1', 2), 'entry_fee' => $str($r['entry_fee'] ?? '', 20), 'term1' => $str($r['term1'] ?? '', 20), 'term2' => $str($r['term2'] ?? '', 20),
             'summer' => $str($r['summer'] ?? '', 20), 'total' => $str($r['total'] ?? '', 20), 'loan_fund' => $str($r['loan_fund'] ?? '', 60), 'note' => $str($r['note'] ?? '', 255),
         ];
         $shown[] = $raw;   // what goes back on the screen when something is wrong: exactly what was typed
-        $filled = array_filter(array_diff_key($raw, ['campus_id' => 1, 'fee_type' => 1]), fn($v) => $v !== '');
+        $filled = array_filter(array_diff_key($raw, ['campus_id' => 1, 'fee_type' => 1, 'study_mode' => 1]), fn($v) => $v !== '');
         if (!$filled) continue;   // a row added and never filled: not saved (and nothing to report)
         $row = $raw;
         // "+ เพิ่มตัวเลือกใหม่" chosen but the new text was never confirmed (only possible without the page script)
@@ -70,21 +87,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "แถวที่ $pos: หลักสูตรนี้ไม่ได้เปิดสอนที่" . $campusName[(int)$row['campus_id']] . " (เปิดสอนที่: " . ($program['campus_names'] ?: 'ทุกศูนย์') . ") กรุณาเลือกศูนย์ที่เปิดสอน หรือ \"ทุกศูนย์\"";
             $row['campus_id'] = null;
         } else $row['campus_id'] = (int)$row['campus_id'];
+        if ($modes) { if (!isset(TUITION_MODES[(int)$row['study_mode']])) { $errors[] = "แถวที่ $pos: กรุณาเลือกรูปแบบการจัดการศึกษา (ภาคปกติ / ภาคสมทบ)"; } $row['study_mode'] = isset(TUITION_MODES[(int)$row['study_mode']]) ? (int)$row['study_mode'] : 1; }
+        else unset($row['study_mode'], $row['entry_fee']);
         if (!isset($types[$row['fee_type']])) { $errors[] = "แถวที่ $pos: รูปแบบค่าเทอมไม่ถูกต้อง กรุณาเลือกใหม่"; $row['fee_type'] = 'lump'; }
         if ($row['duration_years'] !== '') {
             $y = str_replace(',', '.', $row['duration_years']);
             if (!preg_match('/^\d+(\.\d)?$/', $y) || (float)$y <= 0 || (float)$y > 10) { $errors[] = "แถวที่ $pos: \"ระยะเวลาเรียน\" ต้องเป็นตัวเลข 0.5 – 10 ปี (ทศนิยม 1 ตำแหน่ง)"; $y = null; }
             $row['duration_years'] = $y === null ? null : round((float)$y, 1);
         } else $row['duration_years'] = null;
-        foreach (['term1' => 'ค่าเทอม ภาคเรียนที่ 1', 'term2' => 'ค่าเทอม ภาคเรียนที่ 2', 'summer' => 'ภาคฤดูร้อน', 'total' => 'ตลอดหลักสูตร'] as $k => $label) $row[$k] = $num($row[$k], $label, $pos);
+        foreach (['term1' => 'ค่าเทอม ภาคเรียนที่ 1', 'term2' => 'ค่าเทอม ภาคเรียนที่ 2', 'summer' => 'ภาคฤดูร้อน', 'total' => 'ตลอดหลักสูตร'] + ($modes ? ['entry_fee' => 'ค่าแรกเข้า'] : []) as $k => $label) $row[$k] = $num($row[$k], $label, $pos);
         if ($row['term1'] === null && $raw['term1'] === '') $errors[] = "แถวที่ $pos: กรุณากรอก \"ค่าเทอม ภาคเรียนที่ 1\"";
         $clean[] = $row;
     }
     if (!$errors) {
         $db->beginTransaction();
         try {
-            $db->query('DELETE FROM tuition_fees WHERE program_id = ?', [$programId]);
-            foreach ($clean as $i => $row) $db->insert('tuition_fees', ['program_id' => $programId, 'sort_order' => $i] + $row);
+            if ($byYear) $db->query('DELETE FROM tuition_fees WHERE program_id = ? AND academic_year = ?', [$programId, $year]);
+            else $db->query('DELETE FROM tuition_fees WHERE program_id = ?', [$programId]);
+            foreach ($clean as $i => $row) $db->insert('tuition_fees', ['program_id' => $programId, 'sort_order' => $i] + ($byYear ? ['academic_year' => $year] : []) + $row);
+            if ($modes) foreach (array_unique(array_column($clean, 'study_mode')) as $m) $db->query('INSERT IGNORE INTO tuition_offers (academic_year, program_id, study_mode) VALUES (?, ?, ?)', [$year, $programId, (int)$m]);   // a programme with its own rate of a mode is open for that mode
             $db->commit();
         } catch (Throwable $e) { $db->rollback(); throw $e; }
         foreach ($clean as $row) {   // a choice typed with "+ เพิ่มตัวเลือกใหม่" becomes a saved choice
@@ -92,15 +113,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($row['duration_years'] !== null) tuitionAddOption('duration', tuitionYearsKey($row['duration_years']));
         }
         $name = preg_replace('/\s+/u', ' ', $program['program_name']);
-        $_SESSION['flash_success'] = $clean ? 'บันทึกค่าเทอม "' . $name . '" แล้ว (' . count($clean) . ' แถว)' : 'ลบค่าเทอมทั้งหมดของ "' . $name . '" แล้ว (หน้าเว็บจะแสดงว่า "ยังไม่มีข้อมูลค่าเทอม")';
-        header('Location: index.php'); exit;
+        $yt = $byYear ? ' ปีการศึกษา ' . $year : '';
+        $_SESSION['flash_success'] = $clean ? 'บันทึกค่าเทอม "' . $name . '"' . $yt . ' แล้ว (' . count($clean) . ' แถว)' : 'ลบค่าเทอมทั้งหมดของ "' . $name . '"' . $yt . ' แล้ว (หน้าเว็บจะแสดงว่า "ยังไม่มีข้อมูลค่าเทอม")';
+        header('Location: ' . $back); exit;
     }
     $rows = $shown;   // show the form again exactly as it was sent
 }
 
 $pageTitle   = 'แก้ไขค่าเทอม';
 $activeMenu  = 'programs-tuition';
-$breadcrumb  = [['label' => 'หลักสูตร', 'url' => BASE_URL . '/admin/modules/programs/index.php'], ['label' => 'ค่าเทอม', 'url' => BASE_URL . '/admin/modules/tuition/index.php'], ['label' => 'แก้ไข']];
+$breadcrumb  = [['label' => 'หลักสูตร', 'url' => BASE_URL . '/admin/modules/programs/index.php'], ['label' => 'ค่าเทอม', 'url' => BASE_URL . '/admin/modules/tuition/' . $back], ['label' => 'แก้ไข' . ($byYear ? ' ปีการศึกษา ' . $year : '')]];
 $pageActions = '';
 include BASE_PATH . '/admin/layout/header.php';
 
@@ -111,13 +133,20 @@ $money = function (array $r, string $k) {
     if ($v === null || $v === '') return '';
     return (is_int($v) || ctype_digit((string)$v)) ? number_format((int)$v) : e((string)$v);
 };
-$rowHtml = function ($idx, array $r) use ($campuses, $offered, $types, $val, $money) {
+$rowHtml = function ($idx, array $r) use ($campuses, $offered, $types, $val, $money, $modes) {
     $cur = (string)($r['campus_id'] ?? '');
     ob_start(); ?>
     <fieldset class="tu-row" data-row>
       <legend><span data-row-no>แถว</span></legend>
       <div class="tu-row-grid">
+        <?php if ($modes): ?>
+        <div><label>รูปแบบการจัดการศึกษา <span class="tu-req">*</span></label><select class="ne-select" name="rows[<?= $idx ?>][study_mode]">
+          <?php foreach (TUITION_MODES as $m => $mName): ?><option value="<?= $m ?>"<?= (int)($r['study_mode'] ?? 1) === $m ? ' selected' : '' ?>><?= e($mName) ?></option><?php endforeach; ?>
+        </select></div>
+        <div><label>วันเรียน (ถ้ามี)</label><?= tuOptionSelect('rows[' . $idx . '][schedule]', 'schedule', (string)($r['schedule'] ?? ''), '', '-- ไม่ระบุ --') ?></div>
+        <?php else: ?>
         <div class="tu-wide"><label>ภาคเรียนและวัน</label><?= tuOptionSelect('rows[' . $idx . '][schedule]', 'schedule', (string)($r['schedule'] ?? '')) ?></div>
+        <?php endif; ?>
         <div><label>ใช้กับศูนย์พื้นที่</label><select class="ne-select" name="rows[<?= $idx ?>][campus_id]">
           <option value="">ทุกศูนย์ (เหมือนกันทุกศูนย์)</option>
           <?php foreach ($campuses as $c): $cid = (int)$c['campus_id']; $taught = in_array($cid, $offered, true); if (!$taught && $cur !== (string)$cid) continue; ?>
@@ -128,11 +157,11 @@ $rowHtml = function ($idx, array $r) use ($campuses, $offered, $types, $val, $mo
         <div><label>รูปแบบค่าเทอม</label><select class="ne-select" name="rows[<?= $idx ?>][fee_type]">
           <?php foreach ($types as $k => $label): ?><option value="<?= $k ?>"<?= ($r['fee_type'] ?? 'lump') === $k ? ' selected' : '' ?>><?= $k === 'lump' ? 'เหมาจ่ายต่อภาคเรียน' : 'ต่อหน่วยกิต' ?></option><?php endforeach; ?>
         </select></div>
-        <div><label>ค่าเทอม ภาคเรียนที่ 1 (บาท) <span class="tu-req">*</span></label><input class="ne-input" name="rows[<?= $idx ?>][term1]" inputmode="numeric" placeholder="เช่น 11,500" value="<?= $money($r, 'term1') ?>"></div>
-        <div><label>ค่าเทอม ภาคเรียนที่ 2 (บาท)</label><input class="ne-input" name="rows[<?= $idx ?>][term2]" inputmode="numeric" placeholder="เว้นว่าง = เท่าภาคเรียนที่ 1" value="<?= $money($r, 'term2') ?>"></div>
+        <?php if ($modes): ?><div><label>ค่าแรกเข้า ชำระครั้งเดียว (บาท)</label><input class="ne-input" name="rows[<?= $idx ?>][entry_fee]" inputmode="numeric" placeholder="เช่น 2,650" value="<?= $money($r, 'entry_fee') ?>"></div><?php endif; ?>
+        <div><label><?= $modes ? 'ค่าเทอม/ภาคการศึกษาปกติ (บาท)' : 'ค่าเทอม ภาคเรียนที่ 1 (บาท)' ?> <span class="tu-req">*</span></label><input class="ne-input" name="rows[<?= $idx ?>][term1]" inputmode="numeric" placeholder="เช่น 11,500" value="<?= $money($r, 'term1') ?>"></div>
+        <div><label><?= $modes ? 'ภาคเรียนที่ 2 ถ้าไม่เท่ากัน (บาท)' : 'ค่าเทอม ภาคเรียนที่ 2 (บาท)' ?></label><input class="ne-input" name="rows[<?= $idx ?>][term2]" inputmode="numeric" placeholder="เว้นว่าง = เท่าภาคเรียนที่ 1" value="<?= $money($r, 'term2') ?>"></div>
         <div><label>ภาคฤดูร้อน (บาท)</label><input class="ne-input" name="rows[<?= $idx ?>][summer]" inputmode="numeric" placeholder="ไม่มี = เว้นว่าง" value="<?= $money($r, 'summer') ?>"></div>
         <div><label>ตลอดหลักสูตร (บาท)</label><input class="ne-input" name="rows[<?= $idx ?>][total]" inputmode="numeric" placeholder="เว้นว่าง = คำนวณให้" value="<?= $money($r, 'total') ?>"></div>
-        <div><label>กองทุนกู้ยืม</label><input class="ne-input" name="rows[<?= $idx ?>][loan_fund]" list="tuFunds" maxlength="60" placeholder="เช่น กยศ. / กรอ." value="<?= $val($r, 'loan_fund') ?>"></div>
         <div class="tu-wide"><label>หมายเหตุ (แสดงใต้ภาคเรียนและวัน)</label><input class="ne-input" name="rows[<?= $idx ?>][note]" maxlength="255" placeholder="เช่น รวมค่าแรกเข้าแล้ว" value="<?= $val($r, 'note') ?>"></div>
       </div>
       <div class="tu-row-actions">
@@ -162,26 +191,38 @@ $rowHtml = function ($idx, array $r) use ($campuses, $offered, $types, $val, $mo
   <div class="ne-panel" style="margin-bottom:16px;">
     <div class="ne-panel-body">
       <div style="font-size:18px;font-weight:700;color:#162E93;"><?= e(preg_replace('/\s+/u', ' ', $program['program_name'])) ?></div>
-      <div class="ne-hint" style="margin:4px 0 0;"><?= e($program['level_name']) ?> · เปิดสอนที่: <?= e($program['campus_names'] ?: 'ทุกศูนย์พื้นที่') ?></div>
+      <div class="ne-hint" style="margin:4px 0 0;"><?php if ($byYear): ?><b style="color:#162E93">ปีการศึกษา <?= e($year) ?><?= $year === tuitionCurrentYear() ? ' (ปีปัจจุบัน)' : ' (ปีก่อนหน้า)' ?></b> · <?php endif; ?><?= e($program['level_name']) ?> · เปิดสอนที่: <?= e($program['campus_names'] ?: 'ทุกศูนย์พื้นที่') ?></div>
+      <?php if ($modes): ?><p class="ne-hint" style="margin:10px 0 0;color:#162E93;"><b>กรอกเฉพาะเมื่อระเบียบการระบุอัตราของหลักสูตรนี้แยกไว้</b> (เช่น ระบบสารสนเทศและนวัตกรรมดิจิทัล) · ถ้าใช้อัตรา "หลักสูตรอื่น ๆ" ไม่ต้องกรอกที่นี่ ให้ติ๊กรูปแบบที่เปิดสอนในหน้ารายการค่าเทอม แล้วระบบจะใช้อัตราตามระเบียบการให้ · แถวของรูปแบบไหนจะใช้แทนอัตราตามระเบียบการของรูปแบบนั้น</p><?php endif; ?>
       <p class="ne-hint" style="margin:10px 0 0;">1 แถว = 1 รูปแบบการเรียน (เช่น ภาคปกติ จันทร์ - ศุกร์ / ภาคพิเศษ เสาร์ - อาทิตย์) · ถ้าค่าเทอม <b>เหมือนกันทุกศูนย์</b> ให้เลือก "ทุกศูนย์" ·
         ถ้า <b>แต่ละศูนย์ไม่เท่ากัน</b> ให้กด "คัดลอกแถวนี้" แล้วเลือกศูนย์และแก้ตัวเลขของแต่ละศูนย์ (เลือกได้เฉพาะศูนย์ที่หลักสูตรนี้เปิดสอน) · แถวที่ว่างทั้งแถวจะไม่ถูกบันทึก</p>
     </div>
   </div>
 
-  <form method="POST" id="tuForm">
+  <?php if ($modes && $fromRates && !$errors): ?>
+  <div class="ne-panel" style="margin-bottom:16px;border-color:#BFD3FF;"><div class="ne-panel-body">
+    <div style="font-weight:700;color:#162E93;margin-bottom:6px;"><i class="bi bi-info-circle"></i> <?= $rows && !$prefilled ? 'รูปแบบที่ยังใช้อัตราตามระเบียบการ' : 'ตอนนี้หลักสูตรนี้ใช้อัตราตามระเบียบการของระดับ' ?> (ปีการศึกษา <?= e($year) ?>)</div>
+    <?php foreach ($fromRates as $r): ?>
+    <div class="tu-a-sum" style="font-size:14px;"><b><?= e(tuitionModeName((int)$r['study_mode'])) ?></b> · <?php if ($r['source'] === 'none'): ?><span style="color:#b42318;">ยังไม่มีอัตรา กรอกในตาราง "อัตราตามระเบียบการ" ที่หน้ารายการค่าเทอม</span><?php else: ?>แรกเข้า <?= $r['entry_fee'] !== null ? number_format((int)$r['entry_fee']) : '-' ?> · ค่าเทอม <?= number_format((int)$r['term1']) ?> บาท/ภาค · ฤดูร้อน <?= $r['summer'] !== null ? number_format((int)$r['summer']) : '-' ?><?php endif; ?></div>
+    <?php endforeach; ?>
+    <p class="ne-hint" style="margin:8px 0 0;">ตัวเลขนี้มาจากตาราง "อัตราตามระเบียบการ" ในหน้ารายการค่าเทอม (แก้ที่นั่นได้เลย ทุกหลักสูตรในระดับเดียวกันจะเปลี่ยนตาม) · ไม่ต้องกรอกที่หน้านี้ เว้นแต่ระเบียบการระบุอัตราของหลักสูตรนี้แยกไว้</p>
+    <?php if (!$rows): ?><a href="edit.php?program_id=<?= (int)$programId ?>&amp;year=<?= e(urlencode($year)) ?>&amp;prefill=1" class="ne-btn ne-btn-ghost" style="margin-top:10px;"><i class="bi bi-files"></i>ใช้อัตรานี้เป็นค่าเริ่มต้น แล้วแก้เป็นอัตราเฉพาะหลักสูตรนี้</a><?php endif; ?>
+  </div></div>
+  <?php endif; ?>
+  <?php if ($prefilled): ?><div class="ne-alert" role="status" style="background:#FFF8E6;border-color:#F5D58A;color:#7A5200;"><strong><i class="bi bi-pencil-square me-1"></i>ยังไม่ได้บันทึก</strong>ดึงอัตราตามระเบียบการมาให้แล้ว แก้ตัวเลขให้เป็นอัตราของหลักสูตรนี้ แล้วกด "บันทึกค่าเทอม"</div><?php endif; ?>
+  <form method="POST" id="tuForm" action="edit.php?program_id=<?= (int)$programId ?><?= $byYear ? '&amp;year=' . e(urlencode($year)) : '' ?>">
     <?= csrfField() ?>
     <div id="tuRows">
       <?php foreach ($rows as $i => $r) echo $rowHtml($i, $r); ?>
     </div>
-    <div class="tu-empty" id="tuEmpty"<?= $rows ? ' hidden' : '' ?>>ยังไม่มีค่าเทอมของหลักสูตรนี้ · หน้าเว็บจะแสดงว่า "ยังไม่มีข้อมูลค่าเทอม สอบถามคณะ" · กด "เพิ่มแถว" เพื่อเริ่มกรอก</div>
+    <div class="tu-empty" id="tuEmpty"<?= $rows ? ' hidden' : '' ?>><?php if ($modes && $fromRates): ?>ยังไม่มีอัตราเฉพาะของหลักสูตรนี้ (หน้าเว็บใช้อัตราตามระเบียบการด้านบน) · กด "เพิ่มแถว" เฉพาะเมื่อต้องการกรอกอัตราเฉพาะ</div><div hidden><?php endif; ?>ยังไม่มีค่าเทอมของหลักสูตรนี้ · หน้าเว็บจะแสดงว่า "ยังไม่มีข้อมูลค่าเทอม สอบถามคณะ" · กด "เพิ่มแถว" เพื่อเริ่มกรอก</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;">
       <button type="button" class="ne-btn ne-btn-ghost" id="tuAdd"><i class="bi bi-plus-lg"></i>เพิ่มแถว</button>
       <button type="submit" class="ne-btn ne-btn-primary"><i class="bi bi-check-lg"></i>บันทึกค่าเทอม</button>
-      <a href="index.php" class="ne-btn ne-btn-ghost">ยกเลิก</a>
+      <a href="<?= e($back) ?>" class="ne-btn ne-btn-ghost">ยกเลิก</a>
     </div>
   </form>
   <datalist id="tuFunds"><option value="กยศ."><option value="กยศ. / กรอ."><option value="ไม่มี"></datalist>
-  <template id="tuTpl"><?= $rowHtml('__I__', ['fee_type' => 'lump']) ?></template>
+  <template id="tuTpl"><?= $rowHtml('__I__', ['fee_type' => 'lump', 'study_mode' => 1]) ?></template>
 </div>
 <script>
 (function () {
@@ -230,10 +271,10 @@ $rowHtml = function ($idx, array $r) use ($campuses, $offered, $types, $val, $mo
     var filled = [].some.call(box.querySelectorAll('[data-row]'), function (r) {
       return [].some.call(r.querySelectorAll('input:not([type=hidden]), select[data-opt-kind]'), function (el) { return el.value.trim() !== '' && el.value !== '__new__'; });
     });
-    if (!filled && <?= tuitionRowsByProgram([$programId]) ? 'true' : 'false' ?> && !confirm('ไม่มีแถวค่าเทอมเหลืออยู่ — บันทึกแล้วจะลบค่าเทอมทั้งหมดของหลักสูตรนี้ และหน้าเว็บจะแสดงว่า "ยังไม่มีข้อมูลค่าเทอม"\n\nต้องการลบทั้งหมดใช่หรือไม่?')) ev.preventDefault();
+    if (!filled && <?= tuitionRowsByProgram([$programId], $byYear ? $year : null) ? 'true' : 'false' ?> && !confirm('ไม่มีแถวค่าเทอมเหลืออยู่ — บันทึกแล้วจะลบค่าเทอมทั้งหมดของหลักสูตรนี้ และหน้าเว็บจะแสดงว่า "ยังไม่มีข้อมูลค่าเทอม"\n\nต้องการลบทั้งหมดใช่หรือไม่?')) ev.preventDefault();
   });
   renumber();
-  if (!box.children.length) add(null);
+  if (!box.children.length && <?= ($modes && $fromRates) ? 'false' : 'true' ?>) add(null);   // a programme on the general rates needs no row of its own
 })();
 </script>
 <?= tuOptionScript() ?>

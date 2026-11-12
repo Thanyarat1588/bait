@@ -131,21 +131,25 @@ function renderOverview($raw, $lang, $t, string $feeHtml = '') {
 $displayAbout    = renderAbout($program['about'], $lang, $t);
 // tuition figures of this programme as a small gridded table, plus a link to the page with every programme
 $feeHtml = '';
-$feeRows = tuitionRowsByProgram([$programId])[$programId] ?? [];
+$feeRows = tuitionShownRows([['program_id' => $programId, 'level_id' => (int)$program['level_id']]])[$programId] ?? [];   // own rows, or the general rate, per study mode
 if ($feeRows) {
     $en = $lang === 'en';
-    $feeHtml = '<div class="tu-mini-wrap"><table class="tu-mini"><thead><tr><th scope="col">' . ($en ? 'Study schedule' : 'ภาคเรียนและวัน') . '</th><th scope="col">' . ($en ? 'Length' : 'ระยะเวลา') . '</th><th scope="col">' . ($en ? 'Fee per semester' : 'ค่าเทอม/ภาคเรียน') . '</th><th scope="col">' . ($en ? 'Whole programme (approx.)' : 'ตลอดหลักสูตร (โดยประมาณ)') . '</th></tr></thead><tbody>';
+    $money = fn($v) => ($v === null || $v === '') ? '-' : number_format((int)$v);
+    $feeHtml = '<div class="tu-mini-wrap"><table class="tu-mini"><thead><tr><th scope="col">' . ($en ? 'Study mode' : 'รูปแบบการจัดการศึกษา') . '</th><th scope="col">' . ($en ? 'Entry fee (once)' : 'ค่าแรกเข้า (ครั้งเดียว)') . '</th><th scope="col">' . ($en ? 'Fee per semester' : 'ค่าเทอม/ภาคการศึกษาปกติ') . '</th><th scope="col">' . ($en ? 'Whole programme (approx.)' : 'ตลอดหลักสูตร (โดยประมาณ)') . '</th></tr></thead><tbody>';
     foreach ($feeRows as $r) {
         $per   = $r['fee_type'] === 'credit' ? ($en ? ' / credit' : ' / หน่วยกิต') : '';
-        $two   = $r['term2'] !== null && (int)$r['term2'] !== (int)$r['term1'];
-        $fee   = $two ? ($en ? 'Sem. 1: ' : 'ภาค 1: ') . number_format((int)$r['term1']) . '<br>' . ($en ? 'Sem. 2: ' : 'ภาค 2: ') . number_format((int)$r['term2']) : number_format((int)$r['term1']);
+        $where = ((int)$r['study_mode'] > 0 ? '<span class="tu-mode tu-mode-' . (int)$r['study_mode'] . '">' . e(tuitionModeName((int)$r['study_mode'], $lang)) . '</span>' : '')
+               . ($r['schedule'] !== '' ? ((int)$r['study_mode'] > 0 ? '<br><small>' : '') . e($t($r['schedule'])) . ((int)$r['study_mode'] > 0 ? '</small>' : '') : ((int)$r['study_mode'] > 0 ? '' : '-'))
+               . ($r['campus_id'] !== null ? '<br><small>' . ($en ? 'Only at ' : 'เฉพาะ') . e($t((string)$r['campus_name'])) . '</small>' : '');
+        if ($r['source'] === 'none') { $feeHtml .= '<tr><td>' . $where . '</td><td colspan="3">' . ($en ? 'No fee figures for this study mode yet' : 'ยังไม่มีอัตราค่าเทอมของรูปแบบนี้') . '</td></tr>'; continue; }
+        $two   = $r['term2'] !== null && $r['term2'] !== '' && (int)$r['term2'] !== (int)$r['term1'];
+        $fee   = $two ? ($en ? 'Sem. 1: ' : 'ภาค 1: ') . $money($r['term1']) . '<br>' . ($en ? 'Sem. 2: ' : 'ภาค 2: ') . $money($r['term2']) : $money($r['term1']);
         $tot   = tuitionTotal($r);
-        $where = ($r['schedule'] !== '' ? e($t($r['schedule'])) : '-') . ($r['campus_id'] !== null ? '<br><small>' . ($en ? 'Only at ' : 'เฉพาะ') . e($t((string)$r['campus_name'])) . '</small>' : '')
-               . ($r['loan_fund'] !== '' ? '<br><small>' . ($en ? 'Student loan: ' : 'กองทุนกู้ยืม: ') . e($t($r['loan_fund'])) . '</small>' : '');
-        $feeHtml .= '<tr><td>' . $where . '</td><td>' . e(tuitionYears($r['duration_years'], $lang)) . '</td><td class="tu-num">' . $fee . $per
-                  . ($r['summer'] !== null ? '<br><small>' . ($en ? 'Summer: ' : 'ภาคฤดูร้อน: ') . number_format((int)$r['summer']) . $per . '</small>' : '') . '</td><td class="tu-num tu-total">' . ($tot !== null ? number_format($tot) : '-') . '</td></tr>';
+        $feeHtml .= '<tr><td>' . $where . '</td><td class="tu-num">' . $money($r['entry_fee']) . '</td><td class="tu-num">' . $fee . ($r['term1'] !== null ? $per : '')
+                  . ($r['summer'] !== null ? '<br><small>' . ($en ? 'Summer: ' : 'ภาคฤดูร้อน: ') . $money($r['summer']) . $per . '</small>' : '') . '</td><td class="tu-num tu-total">' . ($tot !== null ? number_format($tot) : '-') . '</td></tr>';
     }
-    $feeHtml .= '</tbody></table></div><p style="margin:8px 0 0;font-size:.85rem">' . ($en ? 'Amounts in Thai baht. ' : 'หน่วย: บาท · ') . '<a href="' . BASE_URL . '/tuition.php?level=' . (int)$program['level_id'] . '&amp;lang=' . e($lang) . '">' . ($en ? 'Tuition fees of every programme' : 'ดูค่าเทอมทุกหลักสูตร') . ' &rarr;</a></p>';
+    $feeYear = tuitionCurrentYear();   // the fees shown are those of the current academic year
+    $feeHtml .= '</tbody></table></div><p style="margin:8px 0 0;font-size:.85rem">' . ($feeYear !== '' ? ($en ? 'Academic year ' : 'ปีการศึกษา ') . e($feeYear) . ' · ' : '') . ($en ? 'Amounts in Thai baht. ' : 'หน่วย: บาท · ') . '<a href="' . BASE_URL . '/tuition.php?level=' . (int)$program['level_id'] . '&amp;lang=' . e($lang) . '">' . ($en ? 'Tuition fees of every programme' : 'ดูค่าเทอมทุกหลักสูตร') . ' &rarr;</a></p>';
 }
 $displayOverview = renderOverview($program['overview'], $lang, $t, $feeHtml);
 

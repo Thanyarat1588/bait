@@ -1443,34 +1443,218 @@ function tuitionFeeTypes(): array {
     return ['lump' => 'เหมาจ่าย', 'credit' => 'ต่อหน่วยกิต'];
 }
 
-/** program_id => fee rows (in the order the admin set), for the given programmes. */
-function tuitionRowsByProgram(array $programIds): array {
+/**
+ * Fees per academic year (migration 21): tuition_fees.academic_year + table tuition_years (one row per year: date of the
+ * figures, footnote, link to the admission rules). Only TUITION_KEEP_YEARS years are kept: the current one (the newest)
+ * and the previous one. Before migration 21 everything falls back to the single set of fees and tuition_page.
+ */
+const TUITION_KEEP_YEARS = 2;
+
+function hasTuitionYears(): bool {
+    static $has = null;
+    if ($has === null) {
+        try {
+            $db = Database::getInstance();
+            $has = hasTuition() && (bool)$db->fetchOne("SHOW TABLES LIKE 'tuition_years'") && (bool)$db->fetchOne("SHOW COLUMNS FROM tuition_fees LIKE 'academic_year'");
+        } catch (Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
+/** The stored academic years, newest first: [year => its settings row]. $reload after adding or removing a year. */
+function tuitionYearRows(bool $reload = false): array {
+    static $rows = null;
+    if ($rows !== null && !$reload) return $rows;
+    $rows = [];
+    if (!hasTuitionYears()) return $rows;
+    try {
+        foreach (Database::getInstance()->fetchAll('SELECT * FROM tuition_years ORDER BY CAST(academic_year AS UNSIGNED) DESC, academic_year DESC') as $r) $rows[(string)$r['academic_year']] = $r;
+    } catch (Throwable $e) { $rows = []; }
+    return $rows;
+}
+
+/** The current academic year (the newest stored one), '' when there is none. */
+function tuitionCurrentYear(): string {
+    $y = array_key_first(tuitionYearRows());
+    return $y === null ? '' : (string)$y;
+}
+
+/**
+ * Adds an academic year; optionally copies every fee row of the current year into it. When more than TUITION_KEEP_YEARS
+ * years would be stored, the oldest ones are removed with their fees. Returns the removed years.
+ */
+function tuitionAddYear(string $year, bool $copyCurrent): array {
+    $db = Database::getInstance();
+    $from = tuitionCurrentYear();
+    $db->beginTransaction();
+    try {
+        $note = $from !== '' ? (string)(tuitionYearRows()[$from]['note'] ?? '') : '';
+        $db->query('INSERT INTO tuition_years (academic_year, note) VALUES (?, ?)', [$year, $note]);
+        $modes = hasTuitionModes();
+        if ($copyCurrent && $from !== '') {
+            $cols = 'campus_id, schedule, duration_years, fee_type, term1, term2, summer, total, loan_fund, note, sort_order' . ($modes ? ', study_mode, entry_fee' : '');
+            $db->query("INSERT INTO tuition_fees (program_id, academic_year, $cols) SELECT program_id, ?, $cols FROM tuition_fees WHERE academic_year = ?", [$year, $from]);
+            if ($modes) {   // the general rates and which modes each programme is open for come along too
+                $db->query('INSERT INTO tuition_rates (academic_year, level_id, study_mode, entry_fee, term_fee, summer_fee) SELECT ?, level_id, study_mode, entry_fee, term_fee, summer_fee FROM tuition_rates WHERE academic_year = ?', [$year, $from]);
+                $db->query('INSERT INTO tuition_offers (academic_year, program_id, study_mode) SELECT ?, program_id, study_mode FROM tuition_offers WHERE academic_year = ?', [$year, $from]);
+            }
+        }
+        $years = array_column($db->fetchAll('SELECT academic_year FROM tuition_years ORDER BY CAST(academic_year AS UNSIGNED) DESC, academic_year DESC'), 'academic_year');
+        $removed = array_slice($years, TUITION_KEEP_YEARS);
+        foreach ($removed as $old) {
+            $db->query('DELETE FROM tuition_fees WHERE academic_year = ?', [$old]);
+            if ($modes) { $db->query('DELETE FROM tuition_rates WHERE academic_year = ?', [$old]); $db->query('DELETE FROM tuition_offers WHERE academic_year = ?', [$old]); }
+            $db->query('DELETE FROM tuition_years WHERE academic_year = ?', [$old]);
+        }
+        $db->commit();
+    } catch (Throwable $e) { $db->rollback(); throw $e; }
+    tuitionYearRows(true);
+    return $removed;
+}
+
+/**
+ * ภาคปกติ / ภาคสมทบ (migration 22): tuition_fees.study_mode + entry_fee (a programme's own rates), tuition_rates (the general
+ * rates of the admission rules per year x level x mode) and tuition_offers (which modes a programme is open for, per year).
+ */
+const TUITION_MODES = [1 => 'ภาคปกติ', 2 => 'ภาคสมทบ'];
+
+function hasTuitionModes(): bool {
+    static $has = null;
+    if ($has === null) {
+        try {
+            $db = Database::getInstance();
+            $has = hasTuitionYears() && (bool)$db->fetchOne("SHOW TABLES LIKE 'tuition_rates'") && (bool)$db->fetchOne("SHOW TABLES LIKE 'tuition_offers'")
+                && (bool)$db->fetchOne("SHOW COLUMNS FROM tuition_fees LIKE 'study_mode'");
+        } catch (Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
+/** "ภาคปกติ" / "ภาคสมทบ" (en: Regular / Part-time). */
+function tuitionModeName(int $mode, string $lang = 'th'): string {
+    if ($lang === 'en') return $mode === 2 ? 'Part-time' : 'Regular';
+    return TUITION_MODES[$mode] ?? TUITION_MODES[1];
+}
+
+/** General rates of one year: [level_id][mode] => row (entry_fee, term_fee, summer_fee). */
+function tuitionRates(string $year): array {
+    if (!hasTuitionModes() || $year === '') return [];
+    $out = [];
+    try { foreach (Database::getInstance()->fetchAll('SELECT * FROM tuition_rates WHERE academic_year = ?', [$year]) as $r) $out[(int)$r['level_id']][(int)$r['study_mode']] = $r; }
+    catch (Throwable $e) { return []; }
+    return $out;
+}
+
+/** Modes each programme is open for in one year: [program_id] => [mode, ...] (ascending). */
+function tuitionOffers(string $year, ?array $programIds = null): array {
+    if (!hasTuitionModes() || $year === '') return [];
+    $out = [];
+    try {
+        foreach (Database::getInstance()->fetchAll('SELECT program_id, study_mode FROM tuition_offers WHERE academic_year = ? ORDER BY program_id, study_mode', [$year]) as $r) {
+            if ($programIds !== null && !in_array((int)$r['program_id'], $programIds, true)) continue;
+            $out[(int)$r['program_id']][] = (int)$r['study_mode'];
+        }
+    } catch (Throwable $e) { return []; }
+    return $out;
+}
+
+/**
+ * The fee rows to show for each programme in one year (default: the current year). Programmes need program_id and level_id.
+ * With migration 22: one block per mode the programme is open for, made of its own rows of that mode, or else the general
+ * rate of its level and mode, or else a row saying there is no rate yet. Each row gets 'study_mode' and 'source'
+ * (own | rate | none). Before migration 22 the programme's own rows are returned as they are (source own).
+ * Returns [program_id => rows].
+ */
+function tuitionShownRows(array $programs, ?string $year = null): array {
+    $year = $year ?? (hasTuitionYears() ? tuitionCurrentYear() : null);
+    $own = tuitionRowsByProgram(array_column($programs, 'program_id'), $year);
+    if (!hasTuitionModes()) {
+        foreach ($own as $pid => $rows) foreach ($rows as $i => $r) $own[$pid][$i] += ['source' => 'own', 'study_mode' => 0, 'entry_fee' => null];
+        return $own;
+    }
+    $rates  = tuitionRates((string)$year);
+    $offers = tuitionOffers((string)$year);
+    $out = [];
+    foreach ($programs as $p) {
+        $pid = (int)$p['program_id']; $rows = [];
+        foreach ($offers[$pid] ?? [] as $mode) {
+            $mine = array_values(array_filter($own[$pid] ?? [], fn($r) => (int)$r['study_mode'] === $mode));
+            if ($mine) { foreach ($mine as $r) $rows[] = $r + ['source' => 'own']; continue; }
+            $rate = $rates[(int)($p['level_id'] ?? 0)][$mode] ?? null;
+            $base = ['study_mode' => $mode, 'campus_id' => null, 'campus_name' => null, 'schedule' => '', 'duration_years' => null, 'fee_type' => 'lump',
+                     'term2' => null, 'total' => null, 'loan_fund' => '', 'note' => '', 'updated_at' => $rate['updated_at'] ?? null];
+            $rows[] = $rate
+                ? $base + ['source' => 'rate', 'entry_fee' => $rate['entry_fee'], 'term1' => $rate['term_fee'], 'summer' => $rate['summer_fee']]
+                : $base + ['source' => 'none', 'entry_fee' => null, 'term1' => null, 'summer' => null];
+        }
+        if ($rows) $out[$pid] = $rows;
+    }
+    return $out;
+}
+
+/** program_id => fee rows (in the order the admin set), for the given programmes, of one academic year (default: the current one). */
+function tuitionRowsByProgram(array $programIds, ?string $year = null): array {
     $ids = array_values(array_unique(array_filter(array_map('intval', $programIds))));
     if (!$ids || !hasTuition()) return [];
     $out = [];
     try {
         $marks = implode(',', array_fill(0, count($ids), '?'));
-        foreach (Database::getInstance()->fetchAll(
-            "SELECT f.*, c.campus_name FROM tuition_fees f LEFT JOIN campuses c ON c.campus_id = f.campus_id
-             WHERE f.program_id IN ($marks) ORDER BY f.sort_order, f.fee_id", $ids) as $r) $out[(int)$r['program_id']][] = $r;
+        $sql = "SELECT f.*, c.campus_name FROM tuition_fees f LEFT JOIN campuses c ON c.campus_id = f.campus_id WHERE f.program_id IN ($marks)";
+        if (hasTuitionYears()) { $sql .= ' AND f.academic_year = ?'; $ids[] = $year ?? tuitionCurrentYear(); }
+        foreach (Database::getInstance()->fetchAll($sql . ' ORDER BY f.sort_order, f.fee_id', $ids) as $r) $out[(int)$r['program_id']][] = $r;
     } catch (Throwable $e) { return []; }
     return $out;
 }
 
-/** Page settings (academic year, date of the figures, footnote), with empty defaults. */
-function tuitionSettings(): array {
-    $d = ['academic_year' => '', 'data_date' => null, 'note' => '', 'updated_at' => null];
+/** Settings of one academic year (default: the current one): year, date of the figures, footnote, admission rules link. */
+function tuitionSettings(?string $year = null): array {
+    $d = ['academic_year' => '', 'data_date' => null, 'note' => '', 'admission_url' => '', 'admission_url_grad' => '', 'updated_at' => null];
     if (!hasTuition()) return $d;
+    if (hasTuitionYears()) {
+        $year = $year ?? tuitionCurrentYear();
+        $r = tuitionYearRows()[$year] ?? null;
+        return $r ? array_merge($d, $r) : $d;
+    }
     try { $r = Database::getInstance()->fetchOne('SELECT * FROM tuition_page WHERE setting_id = 1'); } catch (Throwable $e) { $r = null; }
     return $r ? array_merge($d, $r) : $d;
 }
 
-/** The whole-programme figure: the one the admin typed, or for a lump fee (term 1 + term 2) x years; null when unknown. */
+/**
+ * Two "ระเบียบการคัดเลือก" links per academic year: admission_url = ปวช. – ป.ตรี, admission_url_grad = ป.โท – ป.เอก
+ * (database/migration_tuition_rules_grad.sql). Without that column only the first link exists.
+ */
+function hasTuitionGradRules(): bool {
+    static $has = null;
+    if ($has === null) {
+        try { $has = hasTuitionYears() && (bool)Database::getInstance()->fetchOne("SHOW COLUMNS FROM tuition_years LIKE 'admission_url_grad'"); } catch (Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
+/** Banners above the tuition page (table tuition_banners; admin: หลักสูตร > ค่าเทอม > แบนเนอร์). */
+function hasTuitionBanners(): bool {
+    static $has = null;
+    if ($has === null) {
+        try { $has = (bool)Database::getInstance()->fetchOne("SHOW TABLES LIKE 'tuition_banners'"); } catch (Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
+/** The tuition-page banners shown to visitors (active ones whose file exists), in the admin's order. */
+function tuitionBanners(): array {
+    if (!hasTuitionBanners()) return [];
+    try {
+        $rows = Database::getInstance()->fetchAll('SELECT * FROM tuition_banners WHERE is_active = 1 ORDER BY display_order, banner_id');
+    } catch (Throwable $e) { return []; }
+    return array_values(array_filter($rows, fn($b) => $b['image'] !== '' && !str_contains($b['image'], '..') && is_file(UPLOAD_PATH . '/' . $b['image'])));
+}
+
+/** The whole-programme figure: the one the admin typed, or for a lump fee entry fee + (term 1 + term 2) x years; null when unknown. */
 function tuitionTotal(array $r): ?int {
-    if ($r['total'] !== null && $r['total'] !== '') return (int)$r['total'];
+    if (isset($r['total']) && $r['total'] !== null && $r['total'] !== '') return (int)$r['total'];
     if (($r['fee_type'] ?? 'lump') !== 'lump' || empty($r['term1']) || empty($r['duration_years'])) return null;
-    $t1 = (int)$r['term1']; $t2 = $r['term2'] !== null && $r['term2'] !== '' ? (int)$r['term2'] : $t1;
-    return (int)round(($t1 + $t2) * (float)$r['duration_years']);
+    $t1 = (int)$r['term1']; $t2 = isset($r['term2']) && $r['term2'] !== null && $r['term2'] !== '' ? (int)$r['term2'] : $t1;
+    return (int)round(($t1 + $t2) * (float)$r['duration_years']) + (int)($r['entry_fee'] ?? 0);
 }
 
 /**
