@@ -294,14 +294,12 @@ $breadcrumbItems = [
           // Cut the Thai text first, then translate the short piece: translating the whole article just for a 100-char excerpt means dozens of API calls per card.
           $aExcerpt = mb_strimwidth($t(mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags($a['content'] ?? ''))), 0, 160, 'UTF-8')), 0, 100, '...', 'UTF-8');
           $aAuthor = translateFixed($a['author'], $lang);
-          $aTag = trim(explode(',', (string)$a['tags'])[0]);
         ?>
         <article class="card card-news reveal">
           <a href="?id=<?= (int)$a['article_id'] ?>&lang=<?= e($lang) ?>" class="card-thumb-link" aria-hidden="true" tabindex="-1">
             <div class="card-thumb">
               <?php if ($a['image']): ?><img src="<?= UPLOAD_URL . '/' . e($a['image']) ?>" alt="<?= e($aTitle) ?>" loading="lazy" decoding="async">
               <?php else: ?><div class="card-thumb-fallback"><?= icon('book') ?></div><?php endif; ?>
-              <?php if ($aTag !== ''): ?><span class="card-badge card-badge-news">#<?= e($t($aTag)) ?></span><?php endif; ?>
             </div>
           </a>
           <div class="card-body">
