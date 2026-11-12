@@ -73,7 +73,7 @@ $breadcrumbItems = [
 </section>
 
 <div class="container section">
-  <p class="bid-intro"><?= $t('ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding) ของคณะ กดที่ประกาศเพื่อเปิดรายละเอียดและดาวน์โหลดเอกสาร') ?></p>
+  <p class="bid-intro"><?= $t('ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding) ของคณะ กดปุ่ม "เอกสารรายละเอียด" เพื่อเปิดดูและดาวน์โหลดเอกสาร') ?></p>
 
   <form class="filter-bar bid-filter" method="GET" role="search">
     <input type="hidden" name="lang" value="<?= e($lang) ?>">
@@ -124,12 +124,16 @@ $breadcrumbItems = [
         <?php endif; ?>
         <div class="bid-body">
           <span class="bid-pill <?= $r['is_draft'] ? 'is-draft' : 'is-announce' ?> <?= $r['is_closed'] ? 'is-closed' : 'is-open' ?>"><span class="bid-pill-type"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span><span class="bid-pill-status"><?= $t($statuses[$s][2]) ?></span></span>
-          <h3 class="bid-title"><?php if ($url): ?><a class="bid-link" href="<?= e($url) ?>" target="_blank" rel="noopener"><?= e($t($r['title'])) ?><span class="visually-hidden"> — <?= $t('เอกสารรายละเอียด / ดาวน์โหลด') ?> (<?= $t('เปิดในแท็บใหม่') ?>)</span></a><?php else: ?><?= e($t($r['title'])) ?><?php endif; ?></h3>
-          <p class="bid-meta">
-            <?php if ((int)$r['fiscal_year'] > 0): ?><span><?= e($fyLabel((int)$r['fiscal_year'])) ?></span><?php endif; ?>
-            <?php if ($url): ?><span class="bid-doc" aria-hidden="true"><?= icon('download', 'icon-sm') ?> <?= $t('เอกสารรายละเอียด / ดาวน์โหลด') ?></span><?php endif; ?>
-          </p>
+          <h3 class="bid-title"><?= e($t($r['title'])) ?></h3>
+          <?php if ((int)$r['fiscal_year'] > 0): ?><p class="bid-meta"><?= e($fyLabel((int)$r['fiscal_year'])) ?></p><?php endif; ?>
         </div>
+        <?php if ($url): ?>
+        <a class="bid-doc" href="<?= e($url) ?>" target="_blank" rel="noopener">
+          <span class="bid-doc-ic"><?= icon('download') ?></span>
+          <span class="bid-doc-txt"><b><?= $t('เอกสารรายละเอียด') ?></b><small><?= $t('เปิดดู / ดาวน์โหลด') ?></small></span>
+          <span class="visually-hidden"> — <?= e($t($r['title'])) ?> (<?= $t('เปิดในแท็บใหม่') ?>)</span>
+        </a>
+        <?php endif; ?>
       </li>
       <?php endforeach; ?>
     </ul>
