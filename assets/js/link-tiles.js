@@ -14,7 +14,8 @@ export function initLinkTiles() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let dots = [], timer = null, paused = false, stopped = reduced, auto = false;
 
-    const pages = () => Math.max(1, Math.round(track.scrollWidth / track.clientWidth));
+    // rounded up: a row 1.4 screens wide still has a second page to scroll to (2px slack for sub-pixel widths)
+    const pages = () => Math.max(1, Math.ceil((track.scrollWidth - 2) / track.clientWidth));
     const current = () => {
       const max = track.scrollWidth - track.clientWidth;
       if (max <= 0) return 0;
