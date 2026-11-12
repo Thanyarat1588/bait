@@ -398,8 +398,19 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
    Phones: two per row; wider screens: as many ~220px tiles as fit, left-aligned (a few tiles stay small, never stretched) */
 .link-tiles { margin-top: 40px; }
 .link-tiles-title { margin: 0 0 14px; padding-left: 12px; border-left: 5px solid var(--primary); font-size: 1.125rem; line-height: 1.4; color: var(--ink); }
-.link-tiles ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-@media (min-width: 560px) { .link-tiles ul { grid-template-columns: repeat(auto-fill, minmax(200px, 240px)); gap: 16px; } }
+/* one sideways-scrolling row, snapping tile by tile, no scrollbar (dots below instead); padding so the hover lift and shadow are not cut off */
+.link-tiles-track { --lt-gap: 12px; list-style: none; margin: -6px -6px 0; padding: 6px 6px 10px; display: flex; gap: var(--lt-gap);
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 6px; overscroll-behavior-x: contain; scrollbar-width: none; }
+.link-tiles-track::-webkit-scrollbar { display: none; }
+.link-tiles-track > li { flex: 0 0 calc((100% - var(--lt-gap)) / 2); scroll-snap-align: start; }   /* phones: two per screen */
+@media (min-width: 560px) { .link-tiles-track { --lt-gap: 16px; } .link-tiles-track > li { flex-basis: 220px; } }
+@media (min-width: 1024px) { .link-tiles-track > li { flex-basis: 240px; } }
+.link-tiles-dots { display: flex; justify-content: center; gap: 4px; margin-top: 6px; }
+.link-tiles-dots[hidden] { display: none; }
+.link-tiles-dot { position: relative; width: 10px; height: 10px; margin: 0 4px; padding: 0; border: 1.5px solid var(--ink-faint); border-radius: 50%; background: transparent;
+  transition: background var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard), width var(--dur-base) var(--ease-standard); }
+.link-tiles-dot::before { content: ""; position: absolute; inset: -17px -6px; }   /* 44px tall tap area, dots stay small */
+.link-tiles-dot.is-active { width: 22px; border-radius: 5px; border-color: var(--primary); background: var(--primary); }
 .link-tile { position: relative; display: block; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-sm);
   transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard); }
 .link-tile img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; object-fit: contain; }

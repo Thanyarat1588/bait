@@ -57,7 +57,8 @@ function linkTiles(array $rows, string $heading): string {
     $en = currentLang() === 'en';
     $t  = fn(string $s) => $en ? translateText($s, 'en') : $s;
     $id = 'linkTiles' . substr(md5($heading), 0, 6);
-    $h = '<section class="link-tiles" aria-labelledby="' . $id . '"><h2 id="' . $id . '" class="link-tiles-title">' . e($heading) . '</h2><ul>';
+    // a scrolling row (swipe / trackpad / keyboard); assets/js/link-tiles.js adds the page dots and a gentle auto-advance
+    $h = '<section class="link-tiles" data-link-tiles aria-labelledby="' . $id . '"><h2 id="' . $id . '" class="link-tiles-title">' . e($heading) . '</h2><ul class="link-tiles-track">';
     foreach ($rows as $i => $b) {
         $name = $b['title'] ? $t($b['title']) : (parse_url($b['link_url'], PHP_URL_HOST) ?: 'Link ' . ($i + 1));
         $h .= '<li><a class="link-tile" href="' . e($b['link_url']) . '" target="_blank" rel="noopener">'
@@ -65,7 +66,7 @@ function linkTiles(array $rows, string $heading): string {
             . '<span class="link-tile-ext" aria-hidden="true">' . icon('external-link', 'icon-sm') . '</span>'
             . '<span class="visually-hidden"> (' . e($t('เปิดในแท็บใหม่')) . ')</span></a></li>';
     }
-    return $h . '</ul></section>';
+    return $h . '</ul><div class="link-tiles-dots" data-link-tiles-dots hidden></div></section>';
 }
 
 /**
