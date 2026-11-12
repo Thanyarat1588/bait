@@ -601,8 +601,7 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .article-author-badge .icon { width: 14px; height: 14px; stroke-width: 2.2; }
 .article-views { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 
-/* E-Bidding (ebidding.php): numbered list, the long procurement titles read in full. Phones: number on the left, title, date
-   and document button stacked beside it. Wide screens: one row each, the date and button in their own columns on the right.
+/* E-Bidding (ebidding.php): a notice board — date tile on the left, the long procurement title read in full beside it.
    The type (ร่างประกาศ / ประกาศ) and its status (เปิด-ปิดรับฟังความคิดเห็น / เปิด-ปิดประมูล) share one pill right above the title. */
 .bid-intro { margin: 0 0 16px; color: var(--ink-soft); line-height: 1.7; }
 /* search + fiscal-year / status filters: the search box has its own line until the desktop row */
@@ -612,16 +611,28 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
   .bid-filter .search-box { flex: 1 1 200px; }
   .bid-filter select.field-select { flex: 0 0 auto; }
 }
-.bid-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
-/* phones and tablets: the status pill with the fiscal year after it on one line, then the title across the whole card */
-.bid-item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "tag fy" "title title" "date date" "doc doc"; align-items: center; column-gap: 12px; row-gap: 8px; padding: 18px 16px; }
+/* the board: a title bar (navy mark on the left, count on the right), then one row per announcement — a date tile
+   (day on navy, month + year on the darker strip under it) and the text beside it. The whole row opens the documents. */
+.bid-board { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.bid-board-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.bid-board-head h2 { margin: 0; padding-left: 12px; border-left: 5px solid var(--primary); font-size: 1.125rem; line-height: 1.4; color: var(--ink); }
+.bid-board-count { font-size: .875rem; color: var(--ink-soft); }
+.bid-list { list-style: none; margin: 0; padding: 0; }
+.bid-item { position: relative; display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: start; column-gap: 14px; padding: 16px; transition: background var(--dur-fast) var(--ease-standard); }
 .bid-item + .bid-item { border-top: 1px solid var(--border); }
-.bid-head { display: contents; }
-.bid-head .bid-pill { grid-area: tag; }
-.bid-head .bid-title { grid-area: title; }
-.bid-fy { grid-area: fy; display: inline-flex; align-items: baseline; gap: 5px; font-size: .9rem; font-weight: 700; line-height: 1.3; color: var(--primary); font-variant-numeric: tabular-nums; flex-wrap: wrap; row-gap: 0; min-width: 0; }
-.bid-fy small { font-size: .75rem; font-weight: 600; color: var(--ink-faint); white-space: nowrap; }
+.bid-item.has-link:hover { background: var(--surface-soft); }
+.bid-cal { display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius-sm); text-align: center; color: #fff; box-shadow: var(--shadow-sm); }
+.bid-cal-d { display: block; padding: 8px 0 6px; background: var(--primary); font-size: 1.5rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.bid-cal-m { display: block; padding: 4px 2px; background: var(--navy-900); font-size: .75rem; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+.bid-cal.is-empty .bid-cal-d { background: var(--surface-soft); color: var(--ink-faint); }
+.bid-cal.is-empty .bid-cal-m { background: var(--border); }
+.bid-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .bid-title { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); }
+.bid-link { color: inherit; }
+.bid-link::after { content: ""; position: absolute; inset: 0; }   /* the whole row is the link */
+.bid-item.has-link:hover .bid-link, .bid-link:focus-visible { color: var(--primary); text-decoration: underline; }
+.bid-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 0; font-size: .8125rem; color: var(--ink-soft); }
+.bid-doc { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--secondary); }
 /* one pill in two parts: the type tinted on the left, its status (with a dot) on the right */
 .bid-pill { display: inline-flex; max-width: 100%; border: 1px solid; border-radius: var(--radius-full); overflow: hidden; font-size: .75rem; font-weight: 700; line-height: 1.5; background: var(--surface); }
 .bid-pill-type { padding: 2px 10px; white-space: nowrap; }
@@ -633,14 +644,9 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .bid-pill.is-announce .bid-pill-type { background: var(--surface-soft); color: var(--primary); }
 .bid-pill.is-open .bid-pill-status { color: var(--success-text); }
 .bid-pill.is-closed .bid-pill-status { color: var(--ink-faint); }
-.bid-date { grid-area: date; display: inline-flex; align-items: center; gap: 5px; font-size: .85rem; color: var(--ink-faint); white-space: nowrap; }
-.bid-doc { grid-area: doc; justify-self: start; white-space: normal; text-align: left; }
-@media (min-width: 768px) { .bid-item { padding: 20px 24px; } }
-/* wide screens: the fiscal year in its own column on the left (a small label over the year), the pill right above the title */
-@media (min-width: 1024px) {
-  .bid-item { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "fy title date doc"; align-items: center; column-gap: 24px; }
-  .bid-head { grid-area: title; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-  .bid-fy { flex-direction: column; align-items: center; gap: 0; min-width: 72px; font-size: 1.4rem; line-height: 1.2; }
-  .bid-fy small { font-size: .7rem; margin-bottom: 2px; }
-  .bid-doc { justify-self: end; white-space: nowrap; }
+@media (min-width: 768px) {
+  .bid-board-head { padding: 16px 24px; }
+  .bid-item { grid-template-columns: 76px minmax(0, 1fr); column-gap: 20px; padding: 18px 24px; }
+  .bid-cal-d { font-size: 1.75rem; padding: 10px 0 8px; }
+  .bid-cal-m { font-size: .8125rem; }
 }

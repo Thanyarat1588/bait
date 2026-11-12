@@ -45,6 +45,13 @@ if (hasEbidding()) {
 $fyYear  = fn(int $y) => (string)($lang === 'en' ? $y - 543 : $y);
 $fyLabel = fn(int $y) => ($lang === 'en' ? 'FY ' : 'ปีงบประมาณ ') . $fyYear($y);
 $statusOf = fn(array $r) => (int)$r['is_draft'] ? ((int)$r['is_closed'] ? 'hearing-closed' : 'hearing-open') : ((int)$r['is_closed'] ? 'bid-closed' : 'bid-open');
+// the date tile: day on top, short month + short year under it (th: "ก.พ. 69", en: "Feb 2026")
+$thMonths = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+$calParts = function (?string $d) use ($lang, $thMonths) {
+    $ts = $d ? strtotime($d) : false;
+    if (!$ts) return null;
+    return [date('j', $ts), $lang === 'en' ? date('M Y', $ts) : $thMonths[(int)date('n', $ts)] . ' ' . substr((string)(date('Y', $ts) + 543), 2), date('Y-m-d', $ts)];
+};
 
 trackPageView($_SERVER['REQUEST_URI'], 'E-Bidding');
 $pageTitle = 'E-Bidding';
@@ -66,7 +73,7 @@ $breadcrumbItems = [
 </section>
 
 <div class="container section">
-  <p class="bid-intro"><?= $t('ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding) ของคณะ กดปุ่มเอกสารเพื่อเปิดรายละเอียดและดาวน์โหลดเอกสาร') ?></p>
+  <p class="bid-intro"><?= $t('ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding) ของคณะ กดที่ประกาศเพื่อเปิดรายละเอียดและดาวน์โหลดเอกสาร') ?></p>
 
   <form class="filter-bar bid-filter" method="GET" role="search">
     <input type="hidden" name="lang" value="<?= e($lang) ?>">
@@ -102,21 +109,31 @@ $breadcrumbItems = [
   <?php if (!$rows): ?>
   <div class="empty-state"><?= icon('briefcase') ?><div><?= $filtered ? $t('ไม่พบประกาศที่ค้นหา') : $t('ยังไม่มีประกาศ') ?></div></div>
   <?php else: ?>
-  <ul class="bid-list">
-    <?php foreach ($rows as $r): $url = isHttpUrl($r['link_url']) ? $r['link_url'] : ''; $s = $statusOf($r); ?>
-    <li class="bid-item">
-      <span class="bid-fy"><?php if ((int)$r['fiscal_year'] > 0): ?><small><?= $lang === 'en' ? 'FY' : 'ปีงบประมาณ' ?></small><?= e($fyYear((int)$r['fiscal_year'])) ?><?php endif; ?></span>
-      <div class="bid-head">
-        <span class="bid-pill <?= $r['is_draft'] ? 'is-draft' : 'is-announce' ?> <?= $r['is_closed'] ? 'is-closed' : 'is-open' ?>"><span class="bid-pill-type"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span><span class="bid-pill-status"><?= $t($statuses[$s][2]) ?></span></span>
-        <h2 class="bid-title"><?= e($t($r['title'])) ?></h2>
-      </div>
-      <span class="bid-date"><?= icon('calendar', 'icon-sm') ?> <?= e(thaiDate($r['announce_date'])) ?></span>
-      <?php if ($url): ?>
-      <a class="btn btn-secondary btn-sm bid-doc" href="<?= e($url) ?>" target="_blank" rel="noopener"><?= icon('download', 'icon-sm') ?> <?= $t('เอกสารรายละเอียด / ดาวน์โหลด') ?><span class="visually-hidden"> (<?= $t('เปิดในแท็บใหม่') ?>)</span></a>
-      <?php endif; ?>
-    </li>
-    <?php endforeach; ?>
-  </ul>
+  <section class="bid-board" aria-labelledby="bidBoardTitle">
+    <div class="bid-board-head">
+      <h2 id="bidBoardTitle"><?= $t('ประกาศประกวดราคา') ?></h2>
+      <span class="bid-board-count"><?= $lang === 'en' ? $total . ' in all' : 'ทั้งหมด ' . number_format($total) . ' ประกาศ' ?></span>
+    </div>
+    <ul class="bid-list">
+      <?php foreach ($rows as $r): $url = isHttpUrl($r['link_url']) ? $r['link_url'] : ''; $s = $statusOf($r); $cal = $calParts($r['announce_date']); ?>
+      <li class="bid-item<?= $url ? ' has-link' : '' ?>">
+        <?php if ($cal): ?>
+        <time class="bid-cal" datetime="<?= e($cal[2]) ?>" title="<?= e(thaiDate($r['announce_date'])) ?>"><span class="bid-cal-d"><?= e($cal[0]) ?></span><span class="bid-cal-m"><?= e($cal[1]) ?></span></time>
+        <?php else: ?>
+        <span class="bid-cal is-empty" aria-hidden="true"><span class="bid-cal-d">–</span><span class="bid-cal-m">&nbsp;</span></span>
+        <?php endif; ?>
+        <div class="bid-body">
+          <span class="bid-pill <?= $r['is_draft'] ? 'is-draft' : 'is-announce' ?> <?= $r['is_closed'] ? 'is-closed' : 'is-open' ?>"><span class="bid-pill-type"><?= $r['is_draft'] ? $t('ร่างประกาศ') : $t('ประกาศ') ?></span><span class="bid-pill-status"><?= $t($statuses[$s][2]) ?></span></span>
+          <h3 class="bid-title"><?php if ($url): ?><a class="bid-link" href="<?= e($url) ?>" target="_blank" rel="noopener"><?= e($t($r['title'])) ?><span class="visually-hidden"> — <?= $t('เอกสารรายละเอียด / ดาวน์โหลด') ?> (<?= $t('เปิดในแท็บใหม่') ?>)</span></a><?php else: ?><?= e($t($r['title'])) ?><?php endif; ?></h3>
+          <p class="bid-meta">
+            <?php if ((int)$r['fiscal_year'] > 0): ?><span><?= e($fyLabel((int)$r['fiscal_year'])) ?></span><?php endif; ?>
+            <?php if ($url): ?><span class="bid-doc" aria-hidden="true"><?= icon('download', 'icon-sm') ?> <?= $t('เอกสารรายละเอียด / ดาวน์โหลด') ?></span><?php endif; ?>
+          </p>
+        </div>
+      </li>
+      <?php endforeach; ?>
+    </ul>
+  </section>
   <?php endif; ?>
 
   <div style="margin-top:32px"><?= paginationNav($pager) ?></div>
