@@ -15,11 +15,11 @@ $bannerPages = [
     'tuition'  => ['name' => 'หน้าค่าเทอม', 'public' => '/tuition.php', 'menu' => 'programs-tuition', 'back' => ['ค่าเทอม', '/admin/modules/tuition/index.php'],
                    'crumbs' => [['label' => 'หลักสูตร', 'url' => '/admin/modules/programs/index.php'], ['label' => 'ค่าเทอม', 'url' => '/admin/modules/tuition/index.php']],
                    'where' => 'แสดงเป็นสไลด์ด้านซ้ายบนสุดของหน้าค่าเทอม คู่กับการ์ดข้อมูลปีการศึกษา เปลี่ยนภาพเองทุก 6 วินาที · ไม่มีภาพที่แสดงอยู่ = หน้าเว็บแสดงเฉพาะการ์ดข้อมูลปีการศึกษาเต็มความกว้าง',
-                   'ratio' => '3 / 1', 'size' => '<strong>แนะนำภาพขนาด 1500×500 พิกเซล</strong> (อัตราส่วน 3:1)', 'needLink' => false],
+                   'ratio' => '3 / 1', 'size' => '<strong>ใช้ภาพอัตราส่วน 3:1 เช่น 1500×500 หรือ 1920×640 พิกเซล</strong>', 'fit' => 'cover', 'needLink' => false],
     'ebidding' => ['name' => 'หน้า E-Bidding', 'public' => '/ebidding.php', 'menu' => 'ebidding', 'back' => ['E-Bidding', '/admin/modules/ebidding/index.php'],
                    'crumbs' => [['label' => 'E-Bidding', 'url' => '/admin/modules/ebidding/index.php']],
                    'where' => 'แสดงเป็นการ์ดลิงก์ขนาดเล็ก หัวข้อ "เว็บไซต์ที่เกี่ยวข้อง" ท้ายหน้า E-Bidding (เช่น กรมบัญชีกลาง ระบบ e-GP) เรียงตามลำดับที่ตั้งไว้ · ไม่มีภาพที่แสดงอยู่ = ไม่แสดงหัวข้อนี้',
-                   'ratio' => '2 / 1', 'size' => '<strong>แนะนำภาพขนาด 600×300 พิกเซล</strong> (อัตราส่วน 2:1) เช่น โลโก้หรือแบนเนอร์ของเว็บไซต์นั้น', 'needLink' => true],
+                   'ratio' => '2 / 1', 'size' => '<strong>แนะนำภาพขนาด 600×300 พิกเซล</strong> (อัตราส่วน 2:1) เช่น โลโก้หรือแบนเนอร์ของเว็บไซต์นั้น', 'needLink' => true, 'fit' => 'contain'],
 ];
 if (!isset($bannerPage, $bannerPages[$bannerPage])) { http_response_code(404); exit; }
 $bp  = $bannerPages[$bannerPage];
@@ -103,11 +103,11 @@ $breadcrumb  = array_map(fn($c) => ['label' => $c['label'], 'url' => BASE_URL . 
 $breadcrumb[] = ['label' => 'แบนเนอร์'];
 $pageActions = '';
 include BASE_PATH . '/admin/layout/header.php';
-$sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ภาพที่ไม่ตรงสัดส่วนจะแสดงครบทั้งภาพ แต่มีขอบว่างด้านข้างหรือบนล่าง';
+$sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ' . ($bp['fit'] === 'cover' ? 'ภาพจะเต็มกรอบเสมอ ไม่มีขอบ — ภาพที่ไม่ใช่ 3:1 พอดีจะถูกตัดขอบบน-ล่างหรือซ้าย-ขวาออกเล็กน้อย จึงไม่ควรวางข้อความสำคัญชิดขอบภาพ' : 'ภาพที่ไม่ตรงสัดส่วนจะแสดงครบทั้งภาพ แต่มีขอบว่างด้านข้างหรือบนล่าง');
 ?>
 <style>
 .tb-item { position: relative; border: 1px solid var(--ne-line); border-radius: 10px; overflow: hidden; background: <?= $bp['needLink'] ? '#fff' : '#0C3566' ?>; cursor: grab; }
-.tb-item img { display: block; width: 100%; aspect-ratio: <?= $bp['ratio'] ?>; object-fit: contain; }
+.tb-item img { display: block; width: 100%; aspect-ratio: <?= $bp['ratio'] ?>; object-fit: <?= $bp['fit'] ?>; }
 .tb-item.is-off img { opacity: .35; }
 .tb-cap { position: absolute; inset: auto 0 0 0; padding: 8px 10px; background: linear-gradient(transparent, rgba(0,0,0,.72)); color: #fff; font-size: 13px; line-height: 1.35; }
 .tb-cap small { display: block; opacity: .8; word-break: break-all; }
@@ -115,7 +115,7 @@ $sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ภาพที่ไ�
 .tb-off { position: absolute; top: 6px; left: 44px; background: #fff; color: #5b6480; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
 .tb-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
 .tb-actions .ne-icon-btn { background: #fff; }
-#tbPreview { width: 100%; aspect-ratio: <?= $bp['ratio'] ?>; object-fit: contain; background: <?= $bp['needLink'] ? '#fff; border: 1px solid var(--ne-line)' : '#0C3566' ?>; border-radius: 8px; }
+#tbPreview { width: 100%; aspect-ratio: <?= $bp['ratio'] ?>; object-fit: <?= $bp['fit'] ?>; background: <?= $bp['needLink'] ? '#fff; border: 1px solid var(--ne-line)' : '#0C3566' ?>; border-radius: 8px; }
 </style>
 
 <div class="ne">

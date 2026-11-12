@@ -391,6 +391,9 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .hero.page-banner { aspect-ratio: 3 / 1; width: 100%; min-width: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
   background: linear-gradient(120deg, var(--navy-800), var(--navy-600)); }
 .page-banner .hero-slide a, .page-banner .hero-slide .img-zoom { display: block; width: 100%; height: 100%; }
+/* fill the box edge to edge (the home hero's "contain" left blue bars beside a picture slightly off 3:1, e.g. 1920x661);
+   a 3:1 picture (1500x500, 1920x640) shows whole, anything close loses only a sliver at the edges */
+.hero.page-banner .hero-slide img { object-fit: cover; }
 .page-banner .hero-arrow { width: 40px; height: 40px; background: rgba(255,255,255,.92); color: var(--navy-800); box-shadow: var(--shadow-sm); }
 .page-banner .hero-arrow:hover { background: #fff; }
 .page-banner .hero-arrow-prev { left: 12px; } .page-banner .hero-arrow-next { right: 12px; }
