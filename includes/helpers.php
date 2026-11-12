@@ -1633,23 +1633,34 @@ function hasTuitionGradRules(): bool {
     return $has;
 }
 
-/** Banners above the tuition page (table tuition_banners; admin: หลักสูตร > ค่าเทอม > แบนเนอร์). */
-function hasTuitionBanners(): bool {
-    static $has = null;
-    if ($has === null) {
-        try { $has = (bool)Database::getInstance()->fetchOne("SHOW TABLES LIKE 'tuition_banners'"); } catch (Throwable $e) { $has = false; }
+/**
+ * Banner slideshows at the top of some pages, one table each (same columns): page key => table.
+ * Admin: admin/modules/page-banners/_manage.php (opened from ค่าเทอม and from E-Bidding).
+ */
+const PAGE_BANNER_TABLES = ['tuition' => 'tuition_banners', 'ebidding' => 'ebidding_banners'];
+
+function hasPageBanners(string $page): bool {
+    static $has = [];
+    if (!isset(PAGE_BANNER_TABLES[$page])) return false;
+    if (!isset($has[$page])) {
+        // the table name is a constant of this file, never user input
+        try { $has[$page] = (bool)Database::getInstance()->fetchOne("SHOW TABLES LIKE '" . PAGE_BANNER_TABLES[$page] . "'"); } catch (Throwable $e) { $has[$page] = false; }
     }
-    return $has;
+    return $has[$page];
 }
 
-/** The tuition-page banners shown to visitors (active ones whose file exists), in the admin's order. */
-function tuitionBanners(): array {
-    if (!hasTuitionBanners()) return [];
+/** A page's banners shown to visitors (active ones whose file exists), in the admin's order. */
+function pageBanners(string $page): array {
+    if (!hasPageBanners($page)) return [];
     try {
-        $rows = Database::getInstance()->fetchAll('SELECT * FROM tuition_banners WHERE is_active = 1 ORDER BY display_order, banner_id');
+        $rows = Database::getInstance()->fetchAll('SELECT * FROM `' . PAGE_BANNER_TABLES[$page] . '` WHERE is_active = 1 ORDER BY display_order, banner_id');
     } catch (Throwable $e) { return []; }
     return array_values(array_filter($rows, fn($b) => $b['image'] !== '' && !str_contains($b['image'], '..') && is_file(UPLOAD_PATH . '/' . $b['image'])));
 }
+
+/** Banners above the tuition page (table tuition_banners). */
+function hasTuitionBanners(): bool { return hasPageBanners('tuition'); }
+function tuitionBanners(): array { return pageBanners('tuition'); }
 
 /** The whole-programme figure: the one the admin typed, or for a lump fee entry fee + (term 1 + term 2) x years; null when unknown. */
 function tuitionTotal(array $r): ?int {

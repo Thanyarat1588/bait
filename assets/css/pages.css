@@ -386,13 +386,16 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 /* top of the page: banner slideshow (admin: ค่าเทอม > แบนเนอร์) + the academic-year card. Phones: stacked;
    from 1024px side by side, both as tall as the row. No banner: the card alone, laid out across the width. */
 .tu-top { display: grid; gap: 16px; margin-bottom: 24px; }
-/* width 100% + min-width 0: otherwise, stretched to the row's height, the 3:1 ratio turns that height back into a width and covers the card */
-.hero.tu-banner { aspect-ratio: 3 / 1; width: 100%; min-width: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+/* page banner slideshows (pageBannerSlider(): tuition beside its card, E-Bidding across the page), 3:1 pictures.
+   width 100% + min-width 0: otherwise, stretched to a grid row's height, the 3:1 ratio turns that height back into a width and covers the card */
+.hero.page-banner { aspect-ratio: 3 / 1; width: 100%; min-width: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
   background: linear-gradient(120deg, var(--navy-800), var(--navy-600)); }
-.tu-banner .hero-slide a, .tu-banner .hero-slide .img-zoom { display: block; width: 100%; height: 100%; }
-.tu-banner .hero-arrow { width: 40px; height: 40px; background: rgba(255,255,255,.92); color: var(--navy-800); box-shadow: var(--shadow-sm); }
-.tu-banner .hero-arrow:hover { background: #fff; }
-.tu-banner .hero-arrow-prev { left: 12px; } .tu-banner .hero-arrow-next { right: 12px; }
+.page-banner .hero-slide a, .page-banner .hero-slide .img-zoom { display: block; width: 100%; height: 100%; }
+.page-banner .hero-arrow { width: 40px; height: 40px; background: rgba(255,255,255,.92); color: var(--navy-800); box-shadow: var(--shadow-sm); }
+.page-banner .hero-arrow:hover { background: #fff; }
+.page-banner .hero-arrow-prev { left: 12px; } .page-banner .hero-arrow-next { right: 12px; }
+.page-banner--wide { margin-bottom: 24px; }
+@media (min-width: 1024px) { .page-banner--wide { margin-bottom: 32px; } .page-banner--wide .hero-arrow { width: 48px; height: 48px; } .page-banner--wide .hero-arrow-prev { left: 20px; } .page-banner--wide .hero-arrow-next { right: 20px; } }
 
 .tu-info { position: relative; display: flex; flex-direction: column; gap: 16px; padding: 20px; overflow: hidden;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }

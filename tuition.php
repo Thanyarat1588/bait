@@ -116,30 +116,7 @@ $cols = $en
 
 <div class="container section" style="padding-top:28px">
   <div class="tu-top<?= $tuBanners ? ' has-banner' : '' ?>">
-    <?php if ($tuBanners): ?>
-    <section class="hero hero-banner-only tu-banner" data-hero-slider data-interval="6000" aria-roledescription="carousel" aria-label="<?= e($en ? 'Tuition announcements' : 'ประกาศเกี่ยวกับค่าเทอมและการรับสมัคร') ?>">
-      <div class="hero-track">
-        <?php foreach ($tuBanners as $i => $b):
-            $alt = $b['title'] ? $t($b['title']) : ($en ? 'Banner ' : 'แบนเนอร์ ') . ($i + 1);
-            $img = '<img src="' . UPLOAD_URL . '/' . e($b['image']) . '" alt="' . e($alt) . '" loading="' . ($i === 0 ? 'eager' : 'lazy') . '" decoding="async"' . imgSizeAttrs($b['image']) . '>';
-        ?>
-        <div class="hero-slide<?= $i === 0 ? ' is-active' : '' ?>">
-          <?php if (isHttpUrl((string)$b['link_url'])): ?>
-          <a href="<?= e($b['link_url']) ?>" target="_blank" rel="noopener"><?= $img ?><span class="visually-hidden"> (<?= $t('เปิดในแท็บใหม่') ?>)</span></a>
-          <?php else: ?>
-          <button type="button" class="img-zoom" data-zoom="<?= UPLOAD_URL . '/' . e($b['image']) ?>" aria-label="<?= e($t('ดูภาพขนาดใหญ่') . ': ' . $alt) ?>"><?= $img ?></button>
-          <?php endif; ?>
-        </div>
-        <?php endforeach; ?>
-      </div>
-      <?php if (count($tuBanners) > 1): ?>
-      <button type="button" class="hero-arrow hero-arrow-prev" data-hero-prev aria-label="<?= $en ? 'Previous slide' : 'ภาพก่อนหน้า' ?>"><?= icon('chevron-left') ?></button>
-      <button type="button" class="hero-arrow hero-arrow-next" data-hero-next aria-label="<?= $en ? 'Next slide' : 'ภาพถัดไป' ?>"><?= icon('chevron-right') ?></button>
-      <button type="button" class="hero-pause" data-hero-pause aria-label="<?= $en ? 'Pause slideshow' : 'หยุดสไลด์' ?>"></button>
-      <div class="hero-dots" data-hero-dots></div>
-      <?php endif; ?>
-    </section>
-    <?php endif; ?>
+    <?= pageBannerSlider($tuBanners, $en ? 'Tuition announcements' : 'ประกาศเกี่ยวกับค่าเทอมและการรับสมัคร', 'tu-banner') ?>
 
     <aside class="tu-info" aria-label="<?= e($en ? 'About these figures' : 'ข้อมูลค่าธรรมเนียมการศึกษา') ?>">
       <div class="tu-info-head">

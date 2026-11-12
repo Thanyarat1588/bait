@@ -15,6 +15,38 @@ function icon(string $name, string $class = ''): string {
 }
 
 /**
+ * A page's banner slideshow (pageBanners('tuition' | 'ebidding')): 3:1 pictures, each opening its outside link in a new
+ * tab, or the full-size picture when it has none. Driven by assets/js/hero-slider.js (autoplay, arrows, dots, pause,
+ * swipe). $extraClass sets the layout: 'tu-banner' (beside the tuition card) or 'page-banner--wide' (across the page).
+ * Returns '' when there is nothing to show.
+ */
+function pageBannerSlider(array $banners, string $label, string $extraClass = ''): string {
+    if (!$banners) return '';
+    $en = currentLang() === 'en';
+    $t  = fn(string $s) => $en ? translateText($s, 'en') : $s;
+    $newTab = e($t('เปิดในแท็บใหม่'));
+    $h = '<section class="hero hero-banner-only page-banner ' . e($extraClass) . '" data-hero-slider data-interval="6000" aria-roledescription="carousel" aria-label="' . e($label) . '"><div class="hero-track">';
+    foreach (array_values($banners) as $i => $b) {
+        $alt = $b['title'] ? $t($b['title']) : ($en ? 'Banner ' : 'แบนเนอร์ ') . ($i + 1);
+        $src = UPLOAD_URL . '/' . e($b['image']);
+        $img = '<img src="' . $src . '" alt="' . e($alt) . '" loading="' . ($i === 0 ? 'eager' : 'lazy') . '" decoding="async"' . imgSizeAttrs($b['image']) . '>';
+        $h .= '<div class="hero-slide' . ($i === 0 ? ' is-active' : '') . '">';
+        $h .= isHttpUrl((string)$b['link_url'])
+            ? '<a href="' . e($b['link_url']) . '" target="_blank" rel="noopener">' . $img . '<span class="visually-hidden"> (' . $newTab . ')</span></a>'
+            : '<button type="button" class="img-zoom" data-zoom="' . $src . '" aria-label="' . e($t('ดูภาพขนาดใหญ่') . ': ' . $alt) . '">' . $img . '</button>';
+        $h .= '</div>';
+    }
+    $h .= '</div>';
+    if (count($banners) > 1) {
+        $h .= '<button type="button" class="hero-arrow hero-arrow-prev" data-hero-prev aria-label="' . ($en ? 'Previous slide' : 'ภาพก่อนหน้า') . '">' . icon('chevron-left') . '</button>'
+            . '<button type="button" class="hero-arrow hero-arrow-next" data-hero-next aria-label="' . ($en ? 'Next slide' : 'ภาพถัดไป') . '">' . icon('chevron-right') . '</button>'
+            . '<button type="button" class="hero-pause" data-hero-pause aria-label="' . ($en ? 'Pause slideshow' : 'หยุดสไลด์') . '"></button>'
+            . '<div class="hero-dots" data-hero-dots></div>';
+    }
+    return $h . '</section>';
+}
+
+/**
  * Renders an admin-uploaded custom icon (info_links.icon_image / form_categories.image).
  * SVGs are inlined (sanitized) rather than put in an <img> — an <img>-loaded SVG
  * is rendered in its own document context, so a `stroke="currentColor"` icon (e.g.
