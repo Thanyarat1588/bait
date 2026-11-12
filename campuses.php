@@ -75,7 +75,7 @@ $metaDesc = $lang === 'en'
 $schemaJson = json_encode([
     '@context' => 'https://schema.org',
     '@type'    => 'ItemList',
-    'name'     => 'BAIT Campuses',
+    'name'     => 'BA&IT Campuses',
     'itemListElement' => array_values(array_map(fn($c, $i) => [
         '@type'    => 'ListItem',
         'position' => $i + 1,

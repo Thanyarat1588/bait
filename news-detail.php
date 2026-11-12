@@ -69,7 +69,7 @@ $schemaJson = json_encode([
     'datePublished' => $news['created_at'],
     'dateModified'  => $news['updated_at'],
     'author'        => ['@type' => 'Person', 'name' => $news['author']],
-    'publisher'     => ['@type' => 'Organization', 'name' => 'BAIT RMUTSB'],
+    'publisher'     => ['@type' => 'Organization', 'name' => 'BA&IT RMUTSB'],
     'description'   => $metaDesc,
     'url'           => BASE_URL_ABSOLUTE . '/news-detail.php?id=' . $newsId,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);

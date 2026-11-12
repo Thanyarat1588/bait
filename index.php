@@ -123,7 +123,7 @@ include __DIR__ . '/layout/header.php';
       <?php endif; ?>
     </div>
     <?php endforeach; elseif ($heroFallbackImg): ?>
-    <div class="hero-slide is-active"><img src="<?= UPLOAD_URL . '/' . e($heroFallbackImg) ?>" alt="BAIT" loading="eager" decoding="async"<?= imgSizeAttrs($heroFallbackImg) ?>></div>
+    <div class="hero-slide is-active"><img src="<?= UPLOAD_URL . '/' . e($heroFallbackImg) ?>" alt="BA&amp;IT" loading="eager" decoding="async"<?= imgSizeAttrs($heroFallbackImg) ?>></div>
     <?php else: ?>
     <div class="hero-slide is-active"><div class="hero-fallback"></div></div>
     <?php endif; ?>
@@ -139,7 +139,7 @@ include __DIR__ . '/layout/header.php';
     <div class="container">
       <div class="reveal">
         <span class="eyebrow hero-eyebrow"><?= $lang === 'en' ? 'FACULTY OF BUSINESS ADMINISTRATION AND INFORMATION TECHNOLOGY' : 'คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ' ?></span>
-        <h1><?= $lang === 'en' ? 'Shape Your Future with BAIT' : 'ก้าวสู่อนาคตไปกับ BAIT' ?></h1>
+        <h1><?= $lang === 'en' ? 'Shape Your Future with BA&amp;IT' : 'ก้าวสู่อนาคตไปกับ BA&amp;IT' ?></h1>
         <p><?= $lang === 'en'
               ? 'Rajamangala University of Technology Suvarnabhumi — quality business and technology education across 4 campuses.'
               : 'มหาวิทยาลัยเทคโนโลยีราชมงคลสุวรรณภูมิ การศึกษาด้านบริหารธุรกิจและเทคโนโลยีสารสนเทศคุณภาพ ครอบคลุม 4 ศูนย์พื้นที่' ?></p>
@@ -218,7 +218,7 @@ if ($mqOpt['enabled'] && $mq['items']):
       </div>
       <?php if ($hasText): ?>
       <div class="promo-text">
-        <?php if ($pLogo !== ''): ?><p class="promo-logo"><img src="<?= e($pLogo) ?>" alt="<?= e($siteAbbr ?? 'BAIT') ?>"<?= $pLogoDim ?> decoding="async"></p><?php endif; ?>
+        <?php if ($pLogo !== ''): ?><p class="promo-logo"><img src="<?= e($pLogo) ?>" alt="<?= e($siteAbbr ?? 'BA&IT') ?>"<?= $pLogoDim ?> decoding="async"></p><?php endif; ?>
         <?php if ($pHeading !== ''): ?><h2 class="promo-heading"><?= e($pHeading) ?></h2><?php endif; ?>
         <?php foreach ($pParas as $para): ?><p class="promo-body"><?= nl2br(e($pTx($para))) ?></p><?php endforeach; ?>
         <?php if ($promo['btn_label'] !== '' && $promo['btn_url'] !== ''): ?>
@@ -237,7 +237,7 @@ if ($mqOpt['enabled'] && $mq['items']):
     <div class="section-header">
       <div>
         <h2><?= $lang === 'en' ? 'Latest News' : 'ข่าวเด่น / ข่าวล่าสุด' ?></h2>
-        <p><?= $lang === 'en' ? 'Stay informed with the latest updates from BAIT' : 'ติดตามข่าวสารและกิจกรรมล่าสุดจากคณะ' ?></p>
+        <p><?= $lang === 'en' ? 'Stay informed with the latest updates from BA&amp;IT' : 'ติดตามข่าวสารและกิจกรรมล่าสุดจากคณะ' ?></p>
       </div>
       <a href="<?= BASE_URL ?>/news.php?lang=<?= e($lang) ?>" class="btn btn-secondary btn-sm"><?= $t('ดูข่าวสารทั้งหมด') ?> <?= icon('arrow-right', 'icon-sm') ?></a>
     </div>
@@ -278,8 +278,8 @@ if ($mqOpt['enabled'] && $mq['items']):
 <section class="section">
   <div class="container">
     <div class="section-header center">
-      <h2><?= $lang === 'en' ? 'Why Choose BAIT' : 'จุดเด่นของคณะ' ?></h2>
-      <p><?= $lang === 'en' ? 'What makes a BAIT education different' : 'สิ่งที่ทำให้การเรียนที่ BAIT แตกต่าง' ?></p>
+      <h2><?= $lang === 'en' ? 'Why Choose BA&amp;IT' : 'จุดเด่นของคณะ' ?></h2>
+      <p><?= $lang === 'en' ? 'What makes a BA&amp;IT education different' : 'สิ่งที่ทำให้การเรียนที่ BA&amp;IT แตกต่าง' ?></p>
     </div>
     <!-- Cards in a row, same layout as the original — content is now
          admin-managed via admin/modules/highlights, so each card shows
@@ -352,10 +352,10 @@ if ($mqOpt['enabled'] && $mq['items']):
       <div class="reveal">
         <?php if (!empty($faculty['logo'])): ?>
         <div class="about-logo-showcase">
-          <img src="<?= UPLOAD_URL . '/' . e($faculty['logo']) ?>" alt="<?= e(($lang === 'en' ? ($faculty['faculty_name_en'] ?? '') : ($faculty['faculty_name_th'] ?? '')) ?: 'BAIT') ?>" loading="lazy" decoding="async"<?= imgSizeAttrs($faculty['logo']) ?>>
+          <img src="<?= UPLOAD_URL . '/' . e($faculty['logo']) ?>" alt="<?= e(($lang === 'en' ? ($faculty['faculty_name_en'] ?? '') : ($faculty['faculty_name_th'] ?? '')) ?: 'BA&IT') ?>" loading="lazy" decoding="async"<?= imgSizeAttrs($faculty['logo']) ?>>
         </div>
         <?php elseif ($heroFallbackImg): ?>
-        <img src="<?= UPLOAD_URL . '/' . e($heroFallbackImg) ?>" class="about-img" alt="BAIT" loading="lazy" decoding="async"<?= imgSizeAttrs($heroFallbackImg) ?>>
+        <img src="<?= UPLOAD_URL . '/' . e($heroFallbackImg) ?>" class="about-img" alt="BA&amp;IT" loading="lazy" decoding="async"<?= imgSizeAttrs($heroFallbackImg) ?>>
         <?php else: ?>
         <div class="about-img about-img-fallback"><?= icon('graduation-cap') ?></div>
         <?php endif; ?>
@@ -370,7 +370,7 @@ if ($mqOpt['enabled'] && $mq['items']):
   <div class="container">
     <div class="section-header center">
       <h2><?= $lang === 'en' ? 'Faculty Life in Pictures' : 'ภาพกิจกรรมของคณะ' ?></h2>
-      <p><?= $lang === 'en' ? 'A glimpse into life at BAIT' : 'ภาพบรรยากาศและกิจกรรมต่าง ๆ ของคณะ' ?></p>
+      <p><?= $lang === 'en' ? 'A glimpse into life at BA&amp;IT' : 'ภาพบรรยากาศและกิจกรรมต่าง ๆ ของคณะ' ?></p>
     </div>
     <div class="gallery-grid reveal">
       <?php foreach ($galleryImages as $g): ?>
@@ -411,7 +411,7 @@ if ($mqOpt['enabled'] && $mq['items']):
 <!-- ============ CTA BAND ============ -->
 <section class="cta-band">
   <div class="container reveal">
-    <h2><?= $lang === 'en' ? 'Ready to Join BAIT?' : 'พร้อมเป็นส่วนหนึ่งของ BAIT แล้วหรือยัง?' ?></h2>
+    <h2><?= $lang === 'en' ? 'Ready to Join BA&amp;IT?' : 'พร้อมเป็นส่วนหนึ่งของ BA&amp;IT แล้วหรือยัง?' ?></h2>
     <p><?= $lang === 'en' ? 'Take the next step in your education journey with us' : 'ก้าวต่อไปในเส้นทางการศึกษาของคุณไปกับเรา' ?></p>
     <div class="cluster gap-3" style="justify-content:center">
       <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-pill cta-btn cta-btn--apply"><?= icon('graduation-cap', 'icon-sm') ?> <?= $t('สมัครเรียน') ?></a>

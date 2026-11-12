@@ -60,7 +60,7 @@ include BASE_PATH . '/admin/layout/header.php';
               <div class="ne-meta-field">
                 <label for="siteAbbr">ชื่อย่อ (Abbr)</label>
                 <input type="text" class="ne-input" id="siteAbbr" name="site_abbr"
-                       value="<?=e($settings['site_abbr']??'BAIT')?>">
+                       value="<?=e($settings['site_abbr']??'BA&IT')?>">
               </div>
             </div>
           </div>
@@ -73,7 +73,7 @@ include BASE_PATH . '/admin/layout/header.php';
               <label for="metaKeywords">Meta Keywords</label>
               <input type="text" class="ne-input" id="metaKeywords" name="meta_keywords"
                      value="<?=e($settings['meta_keywords']??'')?>"
-                     placeholder="BAIT,บริหารธุรกิจ,ราชมงคลสุวรรณภูมิ">
+                     placeholder="BA&amp;IT,บริหารธุรกิจ,ราชมงคลสุวรรณภูมิ">
               <p class="ne-hint">คั่นด้วยเครื่องหมาย ,</p>
             </div>
             <div class="ne-field" style="margin-bottom:0;">

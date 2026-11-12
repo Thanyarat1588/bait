@@ -81,7 +81,7 @@ $db = Database::getInstance();
 
 // Site branding (logo / name) for the sidebar + page <title>
 $siteSettings = $db->fetchOne("SELECT logo, site_name, site_abbr FROM site_settings LIMIT 1") ?: [];
-$brandAbbr    = $siteSettings['site_abbr'] ?? 'BAIT';
+$brandAbbr    = $siteSettings['site_abbr'] ?? 'BA&IT';
 ?>
 <!DOCTYPE html>
 <html lang="th">

@@ -50,7 +50,7 @@ $settings = $db->fetchOne("SELECT * FROM site_settings LIMIT 1") ?: [];
 $faculty  = $db->fetchOne("SELECT * FROM faculty LIMIT 1") ?: [];
 
 $siteName   = $settings['site_name'] ?? 'คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ';
-$siteAbbr   = $settings['site_abbr'] ?? 'BAIT';
+$siteAbbr   = $settings['site_abbr'] ?? 'BA&IT';
 $metaKeysFb = $settings['meta_keywords'] ?? '';
 $metaDescFb = $settings['meta_desc'] ?? '';
 
@@ -72,7 +72,7 @@ $ogImgFile  = (!empty($ogImage) && is_file(UPLOAD_PATH . '/' . $ogImage)) ? UPLO
 $ogDims     = @getimagesize($ogImgFile) ?: null;
 
 if ($lang === 'en' && !empty($pageTitle)) {
-    $finalTitle = $shortTitle(translateText($pageTitle, 'en') . ' | BAIT RMUTSB');
+    $finalTitle = $shortTitle(translateText($pageTitle, 'en') . ' | ' . $siteAbbr . ' RMUTSB');
     if ($finalDesc) $finalDesc = translateText($finalDesc, 'en');
 }
 
@@ -159,7 +159,7 @@ $t = fn(string $s) => $lang === 'en' ? translateText($s, 'en') : $s;
 <?php
 // json_encode, not e(): a name with " or \ used to make the JSON invalid (e() escapes for HTML, not for JSON)
 $leanOrg = ['@context' => 'https://schema.org', '@type' => 'EducationalOrganization', '@id' => BASE_URL_ABSOLUTE . '/#faculty',
-    'name' => (string)$siteName, 'alternateName' => 'BAIT RMUTSB', 'url' => BASE_URL_ABSOLUTE . '/'];
+    'name' => (string)$siteName, 'alternateName' => $siteAbbr . ' RMUTSB', 'url' => BASE_URL_ABSOLUTE . '/'];
 if (!empty($faculty['logo'])) $leanOrg['logo'] = UPLOAD_URL_ABSOLUTE . '/' . $faculty['logo'];
 ?>
 <script type="application/ld+json"><?= json_encode($leanOrg, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_PRETTY_PRINT) ?></script>

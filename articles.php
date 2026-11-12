@@ -85,7 +85,7 @@ $pageTitle = $displayTitle;
         '@context' => 'https://schema.org', '@type' => 'Article',
         'headline' => $displayTitle,
         'author'   => ['@type' => 'Person', 'name' => $article['author']],
-        'publisher'=> ['@type' => 'Organization', 'name' => 'BAIT RMUTSB'],
+        'publisher'=> ['@type' => 'Organization', 'name' => 'BA&IT RMUTSB'],
         'datePublished' => $article['created_at'],
         'url' => BASE_URL_ABSOLUTE . '/articles.php?id=' . $articleId,
     ], JSON_UNESCAPED_UNICODE);

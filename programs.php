@@ -77,11 +77,11 @@ $metaDesc = $lang === 'en'
 $schemaJson = json_encode([
     '@context' => 'https://schema.org',
     '@type'    => 'ItemList',
-    'name'     => 'BAIT Programs',
+    'name'     => 'BA&IT Programs',
     'itemListElement' => array_values(array_map(fn($p, $i) => [
         '@type'    => 'ListItem',
         'position' => $i + 1,
-        'item'     => ['@type' => 'Course', 'name' => $p['program_name'], 'provider' => ['@type' => 'Organization', 'name' => 'BAIT RMUTSB']],
+        'item'     => ['@type' => 'Course', 'name' => $p['program_name'], 'provider' => ['@type' => 'Organization', 'name' => 'BA&IT RMUTSB']],
     ], $programs, array_keys($programs))),
 ], JSON_UNESCAPED_UNICODE);
 

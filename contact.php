@@ -30,7 +30,7 @@ $metaDesc = $lang === 'en'
 
 $schemaJson = json_encode([
     '@context' => 'https://schema.org', '@type' => 'ContactPage',
-    'name' => 'Contact BAIT RMUTSB', 'url' => BASE_URL_ABSOLUTE . '/contact.php',
+    'name' => 'Contact BA&IT RMUTSB', 'url' => BASE_URL_ABSOLUTE . '/contact.php',
 ], JSON_UNESCAPED_UNICODE);
 
 $activePage = 'contact';

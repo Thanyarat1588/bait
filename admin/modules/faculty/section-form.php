@@ -432,7 +432,7 @@ include BASE_PATH . '/admin/layout/header.php';
 
             <div id="gridSubtitleField" class="ne-field" style="margin-bottom:0;display:<?= $showGridFields ? '' : 'none' ?>;">
               <label for="subtitle">คำอธิบายย่อย (ถ้ามี)</label>
-              <input type="text" class="ne-input" id="subtitle" name="subtitle" placeholder="เช่น สิ่งที่ทำให้การเรียนที่ BAIT แตกต่าง" value="<?= e($section['subtitle'] ?? '') ?>">
+              <input type="text" class="ne-input" id="subtitle" name="subtitle" placeholder="เช่น สิ่งที่ทำให้การเรียนที่ BA&amp;IT แตกต่าง" value="<?= e($section['subtitle'] ?? '') ?>">
             </div>
 
             <div id="textContentField" class="ne-field" style="margin-bottom:0;display:<?= $showGridFields ? 'none' : '' ?>;">

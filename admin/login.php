@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="only light">   <!-- the admin has one (light) design; stops browsers from forcing a broken dark version of it -->
-<title>เข้าสู่ระบบ | BAIT Admin</title>
+<title>เข้าสู่ระบบ | BA&amp;IT Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -331,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="badge-admin">Admin Panel</div>
       <div class="logo-icon <?= !empty($faculty['logo']) ? 'has-logo' : '' ?>">
         <?php if (!empty($faculty['logo'])): ?>
-        <img src="<?= UPLOAD_URL . '/' . e($faculty['logo']) ?>" alt="<?= e($faculty['faculty_name_th'] ?? 'BAIT') ?>">
+        <img src="<?= UPLOAD_URL . '/' . e($faculty['logo']) ?>" alt="<?= e($faculty['faculty_name_th'] ?? 'BA&IT') ?>">
         <?php else: ?>
         <i class="bi bi-mortarboard-fill"></i>
         <?php endif; ?>

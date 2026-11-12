@@ -394,6 +394,8 @@ function redirectThenPrewarm(string $to, array $texts, int $budget = 20): never 
  * wherever it shows up in the translation. Two-letter ones (IT, AI) are left alone — "it" is also a real word.
  */
 function restoreAcronyms(string $source, string $translated): string {
+    // the faculty's short name: the translator may answer "BA & IT", "ba&amp;it" or "BA and IT"
+    if (str_contains($source, 'BA&IT')) $translated = preg_replace('/(?<![A-Za-z])BA\s*(?:&amp;|&|and)\s*IT(?![A-Za-z])/i', 'BA&IT', $translated);
     if (!preg_match_all('/(?<![A-Za-z])[A-Z]{3,}(?![A-Za-z])/', $source, $m)) return $translated;
     foreach (array_unique($m[0]) as $acr) {
         $translated = preg_replace('/(?<![A-Za-z])' . preg_quote($acr, '/') . '(?![A-Za-z])/i', $acr, $translated);

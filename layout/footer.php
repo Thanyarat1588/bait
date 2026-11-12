@@ -28,7 +28,7 @@ $campus1 = $db->fetchOne(
 
         <div>
           <div class="footer-brand">
-            <img src="<?= BASE_URL ?>/assets/img/logo-full-sm.png" alt="<?= e($settings['site_abbr'] ?? 'BAIT') ?>" width="640" height="171">
+            <img src="<?= BASE_URL ?>/assets/img/logo-full-sm.png" alt="<?= e($settings['site_abbr'] ?? 'BA&IT') ?>" width="640" height="171">
           </div>
           <p class="footer-desc">
             <?= $lang === 'en'
@@ -95,7 +95,7 @@ $campus1 = $db->fetchOne(
   <div class="footer-bottom">
     <div class="container">
       <small><?= e($t($footerText)) ?></small>
-      <small><a href="<?= BASE_URL ?>/privacy.php?lang=<?= e($lang) ?>"><?= $lang === 'en' ? 'Privacy Policy' : 'นโยบายความเป็นส่วนตัว' ?></a> · <a href="<?= BASE_URL ?>/sitemap.xml.php">Sitemap</a> · Powered by BAIT CMS</small>
+      <small><a href="<?= BASE_URL ?>/privacy.php?lang=<?= e($lang) ?>"><?= $lang === 'en' ? 'Privacy Policy' : 'นโยบายความเป็นส่วนตัว' ?></a> · <a href="<?= BASE_URL ?>/sitemap.xml.php">Sitemap</a> · Powered by BA&amp;IT CMS</small>
     </div>
   </div>
 </footer>

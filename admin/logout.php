@@ -29,7 +29,7 @@ if (!$auth->isLoggedIn()) {   // nothing to sign out of
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>ออกจากระบบ | BAIT Admin</title>
+<title>ออกจากระบบ | BA&amp;IT Admin</title>
 <style>
   body { font-family: Kanit, system-ui, sans-serif; background: #f5f6fa; margin: 0; min-height: 100vh; display: grid; place-items: center; color: #1e2a45; }
   .box { background: #fff; border-radius: 16px; padding: 28px 24px; width: min(92vw, 360px); text-align: center; box-shadow: 0 8px 30px rgba(15,67,155,.12); }

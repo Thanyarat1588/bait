@@ -255,11 +255,11 @@ function renderOneAboutSection(array $asec, string $lang, $t, Database $db, bool
 // as its own full-width row.
 $aboutSections = $db->fetchAll("SELECT * FROM about_sections WHERE is_active = 1 AND (slug IS NULL OR slug <> 'history') ORDER BY display_order ASC");
 
-trackPageView($_SERVER['REQUEST_URI'], $lang === 'en' ? 'About BAIT' : 'เกี่ยวกับคณะ');
+trackPageView($_SERVER['REQUEST_URI'], $lang === 'en' ? 'About BA&IT' : 'เกี่ยวกับคณะ');
 
-$pageTitle = $lang === 'en' ? 'About BAIT' : 'เกี่ยวกับคณะ';
+$pageTitle = $lang === 'en' ? 'About BA&IT' : 'เกี่ยวกับคณะ';
 $metaDesc  = $lang === 'en'
-    ? 'Learn about the Faculty of Business Administration and Information Technology (BAIT) at Rajamangala University of Technology Suvarnabhumi.'
+    ? 'Learn about the Faculty of Business Administration and Information Technology (BA&IT) at Rajamangala University of Technology Suvarnabhumi.'
     : 'ข้อมูลคณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ มหาวิทยาลัยเทคโนโลยีราชมงคลสุวรรณภูมิ';
 
 $orgGraph = orgSchema($db, $lang);
@@ -288,7 +288,7 @@ $breadcrumbItems = [
   <div class="container about-split">
     <div class="reveal">
       <?php if (!empty($faculty['logo'])): ?>
-      <img src="<?= UPLOAD_URL . '/' . e($faculty['logo']) ?>" class="about-logo" alt="BAIT Logo"<?= imgSizeAttrs($faculty['logo']) ?> decoding="async" style="max-height:110px;margin-bottom:24px">
+      <img src="<?= UPLOAD_URL . '/' . e($faculty['logo']) ?>" class="about-logo" alt="BA&amp;IT Logo"<?= imgSizeAttrs($faculty['logo']) ?> decoding="async" style="max-height:110px;margin-bottom:24px">
       <?php endif; ?>
       <h2 style="color:var(--primary);margin-bottom:8px">
         <?= $lang === 'en' ? e($faculty['faculty_name_en'] ?? 'Faculty of Business Administration and Information Technology') : e($faculty['faculty_name_th'] ?? 'คณะบริหารธุรกิจและเทคโนโลยีสารสนเทศ') ?>
@@ -448,7 +448,7 @@ endwhile;
 <!-- ============ CTA ============ -->
 <section class="cta-band">
   <div class="container reveal">
-    <h2><?= $t('พร้อมที่จะเข้าร่วม BAIT?') ?></h2>
+    <h2><?= $t('พร้อมที่จะเข้าร่วม BA&IT?') ?></h2>
     <p><?= $t('สำรวจหลักสูตรของเราและเริ่มต้นการเดินทางกับเรา') ?></p>
     <div class="cluster gap-3" style="justify-content:center">
       <a href="<?= BASE_URL ?>/programs.php?lang=<?= e($lang) ?>" class="btn btn-light"><?= icon('book', 'icon-sm') ?> <?= $t('ดูหลักสูตร') ?></a>

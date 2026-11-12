@@ -169,7 +169,7 @@ $schemaJson = json_encode([
     '@type'       => 'Course',
     'name'        => $displayName,
     'description' => $metaDesc,
-    'provider'    => ['@type' => 'Organization', 'name' => 'BAIT RMUTSB', 'url' => BASE_URL_ABSOLUTE],
+    'provider'    => ['@type' => 'Organization', 'name' => 'BA&IT RMUTSB', 'url' => BASE_URL_ABSOLUTE],
     'url'         => BASE_URL_ABSOLUTE . '/program-detail.php?id=' . $programId,
     'courseMode'  => 'onsite',
 ], JSON_UNESCAPED_UNICODE);

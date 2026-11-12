@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="only light">   <!-- the admin has one (light) design; stops browsers from forcing a broken dark version of it -->
-<title>403 - ไม่มีสิทธิ์เข้าถึง | BAIT Admin</title>
+<title>403 - ไม่มีสิทธิ์เข้าถึง | BA&amp;IT Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">

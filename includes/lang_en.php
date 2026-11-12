@@ -155,7 +155,7 @@ return [
     'สนใจสมัครเรียน?' => 'Interested in applying?',
     'คลิกเพื่อสมัครเรียนออนไลน์' => 'Click to apply online',
     'สำรวจหลักสูตรของเราและเริ่มต้นการเดินทางกับเรา' => 'Explore our programs and begin your journey with us',
-    'พร้อมที่จะเข้าร่วม BAIT?' => 'Ready to join BAIT?',
+    'พร้อมที่จะเข้าร่วม BA&IT?' => 'Ready to join BA&IT?',
     'เยี่ยมชมคณะ' => 'Visit the Faculty',
     'เข้าเยี่ยมชมหรือติดต่อผ่านศูนย์พื้นที่ทั้ง 4 แห่ง' => 'Visit or get in touch through any of our 4 campuses',
 
