@@ -104,7 +104,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         usleep(400000);   // slows down automated guessing
         $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
     }
+    // Post/Redirect/Get: show the message on a fresh GET of this page. Otherwise the page on screen is the answer to a
+    // POST, and pressing F5 sent the old form again — with its now-used token, so a plain refresh said "หน้านี้หมดอายุ"
+    // (and re-sent the password). The message goes in the address (no session needed); the typed name, if the session works.
+    $codes = ['หน้านี้หมดอายุ กรุณาลองเข้าสู่ระบบอีกครั้ง' => 'stale', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' => 'empty',
+              'เข้าสู่ระบบผิดพลาดหลายครั้งเกินไป กรุณารอประมาณ 15 นาทีแล้วลองใหม่อีกครั้ง' => 'locked', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' => 'bad'];
+    $_SESSION['login_name'] = mb_substr((string)$username, 0, 100);
+    header('Location: ' . BASE_URL . '/admin/login.php?e=' . ($codes[$error] ?? 'bad'), true, 303);
+    exit;
 }
+// the message after a failed attempt (see the redirect above)
+$errorTexts = ['stale' => 'หน้านี้หมดอายุ กรุณากรอกรหัสผ่านแล้วเข้าสู่ระบบอีกครั้ง', 'empty' => 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน',
+               'locked' => 'เข้าสู่ระบบผิดพลาดหลายครั้งเกินไป กรุณารอประมาณ 15 นาทีแล้วลองใหม่อีกครั้ง', 'bad' => 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'];
+$error = $errorTexts[getStr('e')] ?? '';
+$lastName = (string)($_SESSION['login_name'] ?? '');
+unset($_SESSION['login_name']);
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -374,7 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <span class="input-group-text"><i class="bi bi-person"></i></span>
           <input type="text" class="form-control" id="username" name="username"
                  placeholder="กรอกชื่อผู้ใช้" autocomplete="username"
-                 value="<?= e(is_string($_POST['username'] ?? '') ? ($_POST['username'] ?? '') : '') ?>" required autofocus>
+                 value="<?= e($lastName) ?>" required<?= $lastName === '' ? ' autofocus' : '' ?>>
         </div>
       </div>
 
@@ -385,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
           <input type="password" class="form-control" id="password" name="password"
-                 placeholder="กรอกรหัสผ่าน" autocomplete="current-password" required>
+                 placeholder="กรอกรหัสผ่าน" autocomplete="current-password" required<?= $lastName !== '' ? ' autofocus' : '' ?>>
           <button type="button" class="show-password-btn px-3" id="togglePwd" tabindex="-1">
             <i class="bi bi-eye" id="eyeIcon"></i>
           </button>
