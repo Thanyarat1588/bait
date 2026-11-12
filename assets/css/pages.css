@@ -394,8 +394,21 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .page-banner .hero-arrow { width: 40px; height: 40px; background: rgba(255,255,255,.92); color: var(--navy-800); box-shadow: var(--shadow-sm); }
 .page-banner .hero-arrow:hover { background: #fff; }
 .page-banner .hero-arrow-prev { left: 12px; } .page-banner .hero-arrow-next { right: 12px; }
-.page-banner--wide { margin-bottom: 24px; }
-@media (min-width: 1024px) { .page-banner--wide { margin-bottom: 32px; } .page-banner--wide .hero-arrow { width: 48px; height: 48px; } .page-banner--wide .hero-arrow-prev { left: 20px; } .page-banner--wide .hero-arrow-next { right: 20px; } }
+/* link tiles (linkTiles(): E-Bidding's กรมบัญชีกลาง and other sites) — small 2:1 pictures on white cards, lifted on hover.
+   Phones: two per row; wider screens: as many ~220px tiles as fit, left-aligned (a few tiles stay small, never stretched) */
+.link-tiles { margin-top: 40px; }
+.link-tiles-title { margin: 0 0 14px; padding-left: 12px; border-left: 5px solid var(--primary); font-size: 1.125rem; line-height: 1.4; color: var(--ink); }
+.link-tiles ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 560px) { .link-tiles ul { grid-template-columns: repeat(auto-fill, minmax(200px, 240px)); gap: 16px; } }
+.link-tile { position: relative; display: block; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard); }
+.link-tile img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; object-fit: contain; }
+.link-tile:hover, .link-tile:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--secondary); text-decoration: none; }
+.link-tile-ext { position: absolute; top: 6px; right: 6px; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255,255,255,.92); color: var(--primary); box-shadow: var(--shadow-sm); opacity: 0; transition: opacity var(--dur-base) var(--ease-standard); }
+.link-tile:hover .link-tile-ext, .link-tile:focus-visible .link-tile-ext { opacity: 1; }
+@media (hover: none) { .link-tile-ext { opacity: 1; } }   /* touch screens: always show that it leaves the site */
+@media (prefers-reduced-motion: reduce) { .link-tile, .link-tile:hover { transition: none; transform: none; } }
 
 .tu-info { position: relative; display: flex; flex-direction: column; gap: 16px; padding: 20px; overflow: hidden;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }

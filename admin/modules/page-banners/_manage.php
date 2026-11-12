@@ -14,10 +14,12 @@ require_once dirname(dirname(dirname(__DIR__))) . '/includes/helpers.php';
 $bannerPages = [
     'tuition'  => ['name' => 'หน้าค่าเทอม', 'public' => '/tuition.php', 'menu' => 'programs-tuition', 'back' => ['ค่าเทอม', '/admin/modules/tuition/index.php'],
                    'crumbs' => [['label' => 'หลักสูตร', 'url' => '/admin/modules/programs/index.php'], ['label' => 'ค่าเทอม', 'url' => '/admin/modules/tuition/index.php']],
-                   'where' => 'แสดงเป็นสไลด์ด้านซ้ายบนสุดของหน้าค่าเทอม คู่กับการ์ดข้อมูลปีการศึกษา · ไม่มีภาพที่แสดงอยู่ = หน้าเว็บแสดงเฉพาะการ์ดข้อมูลปีการศึกษาเต็มความกว้าง'],
+                   'where' => 'แสดงเป็นสไลด์ด้านซ้ายบนสุดของหน้าค่าเทอม คู่กับการ์ดข้อมูลปีการศึกษา เปลี่ยนภาพเองทุก 6 วินาที · ไม่มีภาพที่แสดงอยู่ = หน้าเว็บแสดงเฉพาะการ์ดข้อมูลปีการศึกษาเต็มความกว้าง',
+                   'ratio' => '3 / 1', 'size' => '<strong>แนะนำภาพขนาด 1500×500 พิกเซล</strong> (อัตราส่วน 3:1)', 'needLink' => false],
     'ebidding' => ['name' => 'หน้า E-Bidding', 'public' => '/ebidding.php', 'menu' => 'ebidding', 'back' => ['E-Bidding', '/admin/modules/ebidding/index.php'],
                    'crumbs' => [['label' => 'E-Bidding', 'url' => '/admin/modules/ebidding/index.php']],
-                   'where' => 'แสดงเป็นสไลด์เต็มความกว้างด้านบนสุดของหน้า E-Bidding (เหนือช่องค้นหา) · ไม่มีภาพที่แสดงอยู่ = ไม่แสดงแบนเนอร์'],
+                   'where' => 'แสดงเป็นการ์ดลิงก์ขนาดเล็ก หัวข้อ "เว็บไซต์ที่เกี่ยวข้อง" ท้ายหน้า E-Bidding (เช่น กรมบัญชีกลาง ระบบ e-GP) เรียงตามลำดับที่ตั้งไว้ · ไม่มีภาพที่แสดงอยู่ = ไม่แสดงหัวข้อนี้',
+                   'ratio' => '2 / 1', 'size' => '<strong>แนะนำภาพขนาด 600×300 พิกเซล</strong> (อัตราส่วน 2:1) เช่น โลโก้หรือแบนเนอร์ของเว็บไซต์นั้น', 'needLink' => true],
 ];
 if (!isset($bannerPage, $bannerPages[$bannerPage])) { http_response_code(404); exit; }
 $bp  = $bannerPages[$bannerPage];
@@ -61,6 +63,7 @@ if ($post === 'save') {
     $id      = (int)postStr('banner_id');
     $title   = mb_substr(postStr('title'), 0, 255);
     $linkUrl = postStr('link_url');
+    if ($linkUrl === '' && $bp['needLink']) jsonError('กรุณาใส่ลิงก์เว็บไซต์ (การ์ดลิงก์ต้องมีลิงก์ จึงจะแสดงบนหน้าเว็บ)');
     if ($linkUrl !== '' && !isHttpUrl($linkUrl)) jsonError('ลิงก์ไม่ถูกต้อง กรุณาใส่ URL ที่ขึ้นต้นด้วย http:// หรือ https://');
     if (mb_strlen($linkUrl) > 500) jsonError('ลิงก์ยาวเกิน 500 ตัวอักษร');
 
@@ -100,11 +103,11 @@ $breadcrumb  = array_map(fn($c) => ['label' => $c['label'], 'url' => BASE_URL . 
 $breadcrumb[] = ['label' => 'แบนเนอร์'];
 $pageActions = '';
 include BASE_PATH . '/admin/layout/header.php';
-$sizeHint = '<strong>แนะนำภาพขนาด 1500×500 พิกเซล</strong> (อัตราส่วน 3:1) ไม่เกิน 5MB · ภาพที่ไม่ตรงสัดส่วนจะแสดงครบทั้งภาพ แต่มีขอบว่างด้านข้างหรือบนล่าง';
+$sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ภาพที่ไม่ตรงสัดส่วนจะแสดงครบทั้งภาพ แต่มีขอบว่างด้านข้างหรือบนล่าง';
 ?>
 <style>
-.tb-item { position: relative; border: 1px solid var(--ne-line); border-radius: 10px; overflow: hidden; background: #0C3566; cursor: grab; }
-.tb-item img { display: block; width: 100%; aspect-ratio: 3 / 1; object-fit: contain; }
+.tb-item { position: relative; border: 1px solid var(--ne-line); border-radius: 10px; overflow: hidden; background: <?= $bp['needLink'] ? '#fff' : '#0C3566' ?>; cursor: grab; }
+.tb-item img { display: block; width: 100%; aspect-ratio: <?= $bp['ratio'] ?>; object-fit: contain; }
 .tb-item.is-off img { opacity: .35; }
 .tb-cap { position: absolute; inset: auto 0 0 0; padding: 8px 10px; background: linear-gradient(transparent, rgba(0,0,0,.72)); color: #fff; font-size: 13px; line-height: 1.35; }
 .tb-cap small { display: block; opacity: .8; word-break: break-all; }
@@ -112,7 +115,7 @@ $sizeHint = '<strong>แนะนำภาพขนาด 1500×500 พิกเ
 .tb-off { position: absolute; top: 6px; left: 44px; background: #fff; color: #5b6480; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
 .tb-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
 .tb-actions .ne-icon-btn { background: #fff; }
-#tbPreview { width: 100%; aspect-ratio: 3 / 1; object-fit: contain; background: #0C3566; border-radius: 8px; }
+#tbPreview { width: 100%; aspect-ratio: <?= $bp['ratio'] ?>; object-fit: contain; background: <?= $bp['needLink'] ? '#fff; border: 1px solid var(--ne-line)' : '#0C3566' ?>; border-radius: 8px; }
 </style>
 
 <div class="ne">
@@ -132,7 +135,7 @@ $sizeHint = '<strong>แนะนำภาพขนาด 1500×500 พิกเ
       <div class="ne-panel">
         <div class="ne-panel-head"><span>ภาพสไลด์ (ลาก-วาง เพื่อเรียงลำดับ)</span></div>
         <div class="ne-panel-body">
-          <p class="ne-hint" style="margin-top:0;"><?= e($bp['where']) ?> · เปลี่ยนภาพเองทุก 6 วินาที</p>
+          <p class="ne-hint" style="margin-top:0;"><?= e($bp['where']) ?></p>
           <div id="tbGrid" class="row g-2">
             <?php foreach ($banners as $i => $b): $on = (int)$b['is_active'] === 1; ?>
             <div class="col-md-6" data-id="<?= (int)$b['banner_id'] ?>">
@@ -141,7 +144,7 @@ $sizeHint = '<strong>แนะนำภาพขนาด 1500×500 พิกเ
                 <span class="tb-pos" data-pos title="ลำดับที่แสดงบนหน้าเว็บ">#<?= $i + 1 ?></span>
                 <?php if (!$on): ?><span class="tb-off">ซ่อนอยู่</span><?php endif; ?>
                 <div class="tb-cap"><?= e($b['title'] ?: 'ไม่มีชื่อ') ?>
-                  <small><?= $b['link_url'] ? '<i class="bi bi-link-45deg"></i> ' . e(mb_strimwidth($b['link_url'], 0, 60, '…', 'UTF-8')) : 'ไม่มีลิงก์ (คลิกแล้วขยายภาพ)' ?></small></div>
+                  <small><?= $b['link_url'] ? '<i class="bi bi-link-45deg"></i> ' . e(mb_strimwidth($b['link_url'], 0, 60, '…', 'UTF-8')) : ($bp['needLink'] ? 'ไม่มีลิงก์ — ไม่แสดงบนหน้าเว็บ' : 'ไม่มีลิงก์ (คลิกแล้วขยายภาพ)') ?></small></div>
                 <div class="tb-actions ne-actions">
                   <button type="button" class="ne-icon-btn ne-icon-edit" onclick="tbEdit(<?= (int)$b['banner_id'] ?>)" title="แก้ไข" aria-label="แก้ไข"><i class="bi bi-pencil"></i></button>
                   <button type="button" class="ne-icon-btn<?= $on ? ' ne-icon-edit' : '' ?>" onclick="tbToggle(<?= (int)$b['banner_id'] ?>)" title="<?= $on ? 'ซ่อน' : 'แสดง' ?>" aria-label="<?= $on ? 'ซ่อน' : 'แสดง' ?>"><i class="bi bi-<?= $on ? 'eye' : 'eye-slash' ?>"></i></button>
@@ -180,9 +183,9 @@ $sizeHint = '<strong>แนะนำภาพขนาด 1500×500 พิกเ
             <p class="ne-hint">ใช้เป็นข้อความแทนภาพสำหรับผู้ใช้โปรแกรมอ่านหน้าจอ ควรสรุปข้อความสำคัญในภาพ</p>
           </div>
           <div class="ne-field">
-            <label for="tbLink">ลิงก์เมื่อคลิก (เว็บไซต์ภายนอกได้)</label>
+            <label for="tbLink">ลิงก์เมื่อคลิก (เว็บไซต์ภายนอกได้)<?= $bp['needLink'] ? ' <span style="color:var(--ne-danger)">*</span>' : '' ?></label>
             <input type="url" class="ne-input" id="tbLink" maxlength="500" placeholder="https://...">
-            <p class="ne-hint">เปิดในแท็บใหม่ · เว้นว่าง = คลิกแล้วขยายดูภาพ</p>
+            <p class="ne-hint"><?= $bp['needLink'] ? 'จำเป็นต้องใส่ · เปิดในแท็บใหม่' : 'เปิดในแท็บใหม่ · เว้นว่าง = คลิกแล้วขยายดูภาพ' ?></p>
           </div>
           <button type="button" class="ne-btn ne-btn-primary ne-btn-block" id="tbSaveBtn" onclick="tbSave()"><i class="bi bi-plus-lg"></i>เพิ่มแบนเนอร์</button>
           <button type="button" class="ne-btn ne-btn-ghost ne-btn-block mt-2 d-none" id="tbCancelBtn" onclick="tbReset()">ยกเลิกการแก้ไข</button>

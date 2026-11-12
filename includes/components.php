@@ -47,6 +47,28 @@ function pageBannerSlider(array $banners, string $label, string $extraClass = ''
 }
 
 /**
+ * A strip of small link tiles (E-Bidding: กรมบัญชีกลาง and other procurement sites), rows from pageBanners(): each picture
+ * (2:1, shown whole on white) opens its site in a new tab. Rows without a link are skipped — a tile here is only a link.
+ * Phones: two per row; wider screens: as many ~220px tiles as fit, left-aligned. Returns '' when there is nothing to show.
+ */
+function linkTiles(array $rows, string $heading): string {
+    $rows = array_values(array_filter($rows, fn($b) => isHttpUrl((string)$b['link_url'])));
+    if (!$rows) return '';
+    $en = currentLang() === 'en';
+    $t  = fn(string $s) => $en ? translateText($s, 'en') : $s;
+    $id = 'linkTiles' . substr(md5($heading), 0, 6);
+    $h = '<section class="link-tiles" aria-labelledby="' . $id . '"><h2 id="' . $id . '" class="link-tiles-title">' . e($heading) . '</h2><ul>';
+    foreach ($rows as $i => $b) {
+        $name = $b['title'] ? $t($b['title']) : (parse_url($b['link_url'], PHP_URL_HOST) ?: 'Link ' . ($i + 1));
+        $h .= '<li><a class="link-tile" href="' . e($b['link_url']) . '" target="_blank" rel="noopener">'
+            . '<img src="' . UPLOAD_URL . '/' . e($b['image']) . '" alt="' . e($name) . '" loading="lazy" decoding="async"' . imgSizeAttrs($b['image']) . '>'
+            . '<span class="link-tile-ext" aria-hidden="true">' . icon('external-link', 'icon-sm') . '</span>'
+            . '<span class="visually-hidden"> (' . e($t('เปิดในแท็บใหม่')) . ')</span></a></li>';
+    }
+    return $h . '</ul></section>';
+}
+
+/**
  * Renders an admin-uploaded custom icon (info_links.icon_image / form_categories.image).
  * SVGs are inlined (sanitized) rather than put in an <img> — an <img>-loaded SVG
  * is rendered in its own document context, so a `stroke="currentColor"` icon (e.g.
