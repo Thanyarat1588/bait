@@ -362,6 +362,11 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
   .promo--solo { grid-template-columns: minmax(0, 860px); justify-content: center; }
   .promo--video-right .promo-media { order: 2; }
   .promo.has-bg .promo-text { padding: 32px; }
+  /* side by side: both columns always the same height. The video is at least 16:9 of its column; when the text is
+     taller the video box stretches with it (the player centres the picture on the dark background), and when the
+     video is taller the text card stretches (grid stretch). width 100% keeps the 16:9 from turning a stretched height
+     back into a wider box. */
+  .promo:not(.promo--solo) .promo-media { align-self: stretch; width: 100%; }
 }
 
 /* promo logo (above the heading): the picture's white background melts into the card's light colour; on a dark page with no custom card colour it gets a white plate instead */
