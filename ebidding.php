@@ -1,7 +1,7 @@
 <?php
 /**
  * BAIT - E-Bidding: the faculty's procurement announcements (ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์),
- * newest first, 20 per page, with a title search and a year filter. Each one links out to its documents on Google Drive.
+ * newest first, 10 per page, with a title search and a year filter. Each one links out to its documents on Google Drive.
  * Rows come from admin → E-Bidding (table `ebidding`, migration 20).
  */
 require_once __DIR__ . '/config/database.php';
@@ -29,7 +29,7 @@ $st     = isset($statuses[getStr('st')]) ? getStr('st') : '';
 $page   = max(1, (int)getStr('page'));
 $filtered = $search !== '' || $fy || $st !== '';
 $rows = []; $years = []; $total = 0;
-$pager = paginate(0, 20, 1);
+$pager = paginate(0, 10, 1);
 if (hasEbidding()) {
     $years = [];   // [fiscal year => number of announcements], for the drop-down
     foreach ($db->fetchAll("SELECT fiscal_year AS y, COUNT(*) AS c FROM ebidding WHERE is_active = 1 AND fiscal_year > 0 GROUP BY y ORDER BY y DESC") as $yr) $years[(int)$yr['y']] = (int)$yr['c'];
@@ -39,7 +39,7 @@ if (hasEbidding()) {
     if ($fy) { $where .= ' AND fiscal_year = ?'; $params[] = $fy; }
     if ($st !== '') { $where .= ' AND is_draft = ? AND is_closed = ?'; $params[] = $statuses[$st][0]; $params[] = $statuses[$st][1]; }
     $total = (int)($db->fetchOne("SELECT COUNT(*) AS c FROM ebidding WHERE $where", $params)['c'] ?? 0);
-    $pager = paginate($total, 20, $page, '?' . http_build_query(array_filter(['search' => $search, 'fy' => $fy ?: '', 'st' => $st, 'lang' => $lang])) . '&page={page}');
+    $pager = paginate($total, 10, $page, '?' . http_build_query(array_filter(['search' => $search, 'fy' => $fy ?: '', 'st' => $st, 'lang' => $lang])) . '&page={page}');
     $rows = $db->fetchAll("SELECT * FROM ebidding WHERE $where ORDER BY announce_date DESC, bid_id DESC LIMIT {$pager['per_page']} OFFSET {$pager['offset']}", $params);
 }
 $fyYear  = fn(int $y) => (string)($lang === 'en' ? $y - 543 : $y);
