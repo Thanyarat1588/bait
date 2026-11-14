@@ -192,12 +192,19 @@ include BASE_PATH . '/admin/layout/header.php';
 .tu-rate-table td { white-space: nowrap; }
 .tu-rate-table .ne-input { min-width: 110px; }
 /* Rate table card folds away (state kept per browser); rows with nothing filled are folded by default. */
-.tu-fold-head { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--ne-line); cursor: pointer; font: inherit; text-align: left; }
-.tu-fold-head:hover { background: #F7F9FD; }
-.tu-fold-head .tu-fold-meta { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; }
-.tu-fold-head .bi-chevron-down { transition: transform .2s; }
+.tu-fold-head { width: 100%; background: linear-gradient(90deg, #EEF3FF, #F8FAFF); border: 0; border-bottom: 1px solid #D9E2F7; border-left: 4px solid var(--ne-blue); cursor: pointer; font: inherit; text-align: left; padding-block: 16px; }
+.tu-fold-head > span:first-child { font-size: 15px; font-weight: 700; color: var(--ne-blue); }
+.tu-fold-head:hover { background: linear-gradient(90deg, #E3EBFF, #F1F5FF); }
+.tu-fold-head:focus-visible { outline: 2px solid var(--ne-blue); outline-offset: -2px; }
+.tu-fold-head .tu-fold-meta { display: inline-flex; align-items: center; gap: 12px; font-weight: 600; color: var(--ne-ink-soft); }
+.tu-fold-head .tu-fold-action { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--ne-blue); color: #fff; font-size: 12.5px; font-weight: 600; }
+.tu-fold-head .tu-fold-action i { color: #fff; transition: transform .2s; }
+.tu-fold-head .tu-fold-action span.tu-fold-open { display: none; }
+#rates.is-folded { border-color: #C9D6F5; box-shadow: 0 4px 14px rgba(22,46,147,.10); }
 #rates.is-folded .tu-fold-head { border-bottom: 0; }
-#rates.is-folded .tu-fold-head .bi-chevron-down { transform: rotate(-90deg); }
+#rates.is-folded .tu-fold-head .tu-fold-action span.tu-fold-open { display: inline; }
+#rates.is-folded .tu-fold-head .tu-fold-action span.tu-fold-close { display: none; }
+#rates.is-folded .tu-fold-head .tu-fold-action i { transform: rotate(-90deg); }
 .tu-rate-table tr.tu-rate-empty td:first-child { color: var(--ne-ink-soft); }
 .tu-rate-table.hide-empty tr.tu-rate-empty { display: none; }
 .tu-empty-toggle { margin-top: 10px; }
@@ -286,7 +293,7 @@ include BASE_PATH . '/admin/layout/header.php';
   <form method="POST" class="ne-panel" id="rates" style="margin-bottom:18px;">
     <?= csrfField() ?><input type="hidden" name="action" value="rates"><input type="hidden" name="year" value="<?= e($year) ?>">
     <?php $rateRows = 0; $rateFilled = 0; foreach ($levelList as $lv) foreach (TUITION_MODES as $m => $_n) { $rateRows++; $r = $rates[(int)$lv['level_id']][$m] ?? []; if (($r['entry_fee'] ?? null) !== null || ($r['term_fee'] ?? null) !== null || ($r['summer_fee'] ?? null) !== null) $rateFilled++; } ?>
-    <button type="button" class="ne-panel-head tu-fold-head" id="ratesFold" aria-expanded="true" aria-controls="ratesBody"><span><i class="bi bi-table"></i>อัตราตามระเบียบการ ปีการศึกษา <?= e($year) ?></span><span class="tu-fold-meta">กรอกแล้ว <?= $rateFilled ?> / <?= $rateRows ?> แถว <i class="bi bi-chevron-down"></i></span></button>
+    <button type="button" class="ne-panel-head tu-fold-head" id="ratesFold" aria-expanded="true" aria-controls="ratesBody"><span><i class="bi bi-table"></i>อัตราตามระเบียบการ ปีการศึกษา <?= e($year) ?></span><span class="tu-fold-meta">กรอกแล้ว <?= $rateFilled ?> / <?= $rateRows ?> แถว<span class="tu-fold-action"><span class="tu-fold-open">กดเพื่อเปิดดู</span><span class="tu-fold-close">พับเก็บ</span><i class="bi bi-chevron-down"></i></span></span></button>
     <div class="ne-panel-body" id="ratesBody">
       <p class="ne-hint" style="margin:0 0 10px;">กรอกตามตารางค่าธรรมเนียมในระเบียบการคัดเลือก ครั้งเดียวต่อระดับ × รูปแบบ (เช่น ปริญญาตรี ภาคสมทบ = แถว "หลักสูตรอื่น ๆ") · หลักสูตรที่เปิดสอนรูปแบบนั้นจะใช้อัตรานี้ เว้นแต่หลักสูตรนั้นกรอกค่าเทอมเอง (ปุ่ม "แก้ไข" ในรายการด้านล่าง) · เว้นว่างทั้งแถว = ไม่มีอัตรานี้</p>
       <div class="table-responsive">
