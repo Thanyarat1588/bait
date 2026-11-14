@@ -114,6 +114,13 @@ $breadcrumbItems = [
     </div>
     <?php endforeach; ?>
   </div>
+  <?php if ($staffByCampus): ?>
+  <div class="stat-picks-wrap reveal">
+    <p class="stat-picks-title"><?= icon('building', 'icon-sm') ?> <?= $t('เลือกศูนย์พื้นที่') ?> <small class="text-faint"><?= $lang === 'en' ? '(click to filter the whole page)' : '(กดเพื่อกรองทั้งหน้า)' ?></small></p>
+    <div class="stat-picks" id="campusPicks" role="group" aria-label="<?= e($t('ศูนย์พื้นที่')) ?>"></div>
+  </div>
+  <?php endif; ?>
+
   <div class="section-header"><div><h2><?= $t('สถิติบุคลากร') ?></h2><p><?= $t('ข้อมูลบุคลากรจำแนกตามศูนย์พื้นที่และประเภท') ?></p></div></div>
 
   <div class="grid grid-2" style="margin-bottom:32px">
@@ -219,11 +226,12 @@ $explorerCfg = [
         ['el' => '#statCardTypes',    'kind' => 'withData', 'dim' => 'type',   'initial' => count($staffByType)],
     ],
     'charts' => [
-        ['canvas' => '#staffCampusChart', 'dim' => 'campus', 'kind' => 'bar'],
-        ['canvas' => '#staffTypeChart',   'dim' => 'type',   'kind' => 'doughnut'],
-        ['canvas' => '#staffMajorChart',  'dim' => 'major',  'kind' => 'barH'],
-        ['canvas' => '#staffDeptChart',   'dim' => 'dept',   'kind' => 'barH'],
+        ['canvas' => '#staffCampusChart', 'dim' => 'campus', 'kind' => 'bar', 'tools' => true],
+        ['canvas' => '#staffTypeChart',   'dim' => 'type',   'kind' => 'doughnut', 'tools' => true],
+        ['canvas' => '#staffMajorChart',  'dim' => 'major',  'kind' => 'barH', 'tools' => true],
+        ['canvas' => '#staffDeptChart',   'dim' => 'dept',   'kind' => 'barH', 'tools' => true],
     ],
+    'picks' => [['el' => '#campusPicks', 'dim' => 'campus']],   // a card per campus that filters the page
     'tables' => [
         ['el' => '#tblMajor', 'dim' => 'major', 'pageSize' => 0],
         ['el' => '#tblDept',  'dim' => 'dept',  'pageSize' => 10, 'pager' => '#pagerDept'],

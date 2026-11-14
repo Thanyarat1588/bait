@@ -1298,6 +1298,62 @@ html.has-img-viewer { overflow: hidden; }
 .stat-row { transition: background .15s ease; }
 .stat-hint { font-size: .82rem; color: var(--ink-soft); margin: -6px 0 12px; }
 
+/* ---------- Statistics: chart tools (ring / bars, most / fewest first), above each chart, right-aligned ---------- */
+.chart-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: -4px 0 10px; }
+.chart-seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+.chart-seg button { min-width: 38px; min-height: 34px; padding: 0 10px; border: 0; background: none; color: var(--ink-soft); font: inherit; font-size: .8125rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); }
+.chart-seg button + button { border-left: 1px solid var(--border); }
+.chart-seg button:hover { background: var(--surface-soft); color: var(--ink); }
+.chart-seg button.is-on { background: var(--primary); color: var(--primary-ink, #fff); }
+
+/* ---------- Statistics: campus cards that filter the page (stats-explorer picks) ---------- */
+.stat-picks-wrap { margin: -16px 0 36px; }
+.stat-picks-title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; font-weight: 600; color: var(--ink); }
+.stat-picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 1024px) { .stat-picks { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.stat-pick { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 4px 10px; padding: 14px 14px 12px 18px; text-align: left; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; overflow: hidden;
+  transition: border-color var(--dur-base), box-shadow var(--dur-base), transform var(--dur-base), opacity var(--dur-base); }
+.stat-pick::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--pick); }
+.stat-pick:hover { border-color: var(--pick); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+.stat-pick.is-selected { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick) inset, var(--shadow-sm); }
+.stat-pick.is-faded { opacity: .55; }
+.stat-pick.is-zero .stat-pick-num { color: var(--ink-faint); }
+.stat-pick-name { grid-column: 1 / -1; font-size: .875rem; font-weight: 600; line-height: 1.35; color: var(--ink-soft); }
+.stat-pick-num { font-size: 1.6rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat-pick-pct { font-size: .75rem; color: var(--ink-faint); white-space: nowrap; }
+.stat-pick-bar { grid-column: 1 / -1; order: 5; height: 5px; border-radius: 3px; background: var(--surface-soft); overflow: hidden; }
+.stat-pick-bar i { display: block; height: 100%; background: var(--pick); border-radius: 3px; }
+@media (prefers-reduced-motion: reduce) { .stat-pick, .stat-pick:hover { transition: none; transform: none; } }
+
+/* ---------- Statistics: a programme row opens its students per campus ---------- */
+.stat-expand { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.stat-expand:hover { color: var(--primary); }
+.stat-expand-ic { flex: none; width: 8px; height: 8px; border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint); transform: rotate(-45deg); transition: transform var(--dur-fast); margin-right: 2px; }
+.stat-expand[aria-expanded="true"] .stat-expand-ic { transform: rotate(45deg); }
+.stat-detail td { background: var(--surface-soft); padding: 10px 14px 12px 34px; }
+.stat-detail-title { font-size: .75rem; font-weight: 600; color: var(--ink-faint); margin-bottom: 4px; }
+.stat-detail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.stat-detail li { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(60px, 1.4fr) auto 48px; align-items: center; gap: 8px; font-size: .875rem; }
+.stat-detail li.is-selected .nm { font-weight: 700; color: var(--ink); }
+.stat-detail .nm { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-detail .bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.stat-detail .bar i { display: block; height: 100%; border-radius: 3px; }
+.stat-detail .vl { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.stat-detail .pc { font-size: .75rem; color: var(--ink-faint); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Statistics: level × campus table, cells shaded by size ---------- */
+.stat-matrix th, .stat-matrix td { white-space: nowrap; }
+.stat-mx-head { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; margin: -4px -6px; border: 0; border-radius: var(--radius-sm); background: none; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
+.stat-mx-head:hover { background: var(--surface-soft); }
+.stat-mx-head.is-selected { background: var(--surface-soft); color: var(--primary); box-shadow: 0 0 0 1.5px var(--primary) inset; }
+.stat-mx-cell button { min-width: 64px; min-height: 36px; padding: 4px 10px; border: 0; border-radius: var(--radius-sm); font: inherit; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); cursor: pointer; transition: box-shadow var(--dur-fast); }
+.stat-mx-cell button:hover { box-shadow: 0 0 0 2px var(--primary) inset; }
+.stat-mx-cell.is-selected button { box-shadow: 0 0 0 2.5px var(--primary) inset; }
+.stat-mx-cell.is-faded { opacity: .4; }
+.stat-mx-zero { color: var(--ink-faint); }
+.stat-mx-total { font-weight: 700; }
+
 /* ---------- Toast (e.g. "link copied") ---------- */
 .toast-msg { position: fixed; left: 50%; bottom: 24px; z-index: 1200; transform: translate(-50%, 20px); max-width: calc(100vw - 32px); padding: 10px 18px; border-radius: 999px; background: var(--navy-900, #0d1440); color: #fff; font-size: .9rem; box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,.25)); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
 .toast-msg.is-visible { opacity: 1; transform: translate(-50%, 0); }

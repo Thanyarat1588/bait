@@ -150,6 +150,14 @@ $breadcrumbItems = [
     </div>
     <?php endforeach; ?>
   </div>
+
+  <?php if ($studentByCampus): ?>
+  <div class="stat-picks-wrap reveal">
+    <p class="stat-picks-title"><?= icon('building', 'icon-sm') ?> <?= $t('เลือกศูนย์พื้นที่') ?> <small class="text-faint"><?= $lang === 'en' ? '(click to filter the whole page)' : '(กดเพื่อกรองทั้งหน้า)' ?></small></p>
+    <div class="stat-picks" id="campusPicks" role="group" aria-label="<?= e($t('ศูนย์พื้นที่')) ?>"></div>
+  </div>
+  <?php endif; ?>
+
   <div class="section-header"><div><h2><?= $t('สถิตินักศึกษา') ?></h2><p><?= $t('ข้อมูลจำนวนนักศึกษา จำแนกตามศูนย์พื้นที่และระดับการศึกษา') ?></p></div></div>
 
   <div class="grid grid-2" style="margin-bottom:32px">
@@ -170,6 +178,14 @@ $breadcrumbItems = [
       <?php endif; ?>
     </div>
   </div>
+
+  <?php if ($studentByCampus && $studentByLevel): ?>
+  <div class="card chart-card reveal" style="margin-bottom:40px">
+    <h3><?= icon('list', 'icon-sm') ?> <?= $lang === 'en' ? 'Students: level × campus' : 'นักศึกษา จำแนกระดับการศึกษา × ศูนย์พื้นที่' ?></h3>
+    <p class="text-faint" style="font-size:.82rem;margin:-8px 0 14px"><?= $lang === 'en' ? 'Darker cells hold more students. Click a number to see that level at that campus, or a heading to filter by it.' : 'ช่องสีเข้มคือจำนวนมาก · กดตัวเลขเพื่อดูเฉพาะระดับนั้นที่ศูนย์นั้น หรือกดหัวแถว/หัวคอลัมน์เพื่อกรองตามนั้น' ?></p>
+    <div class="tbl-wrap" style="overflow-x:auto"><table class="data-table stat-matrix" id="matrixLevelCampus"></table></div>
+  </div>
+  <?php endif; ?>
 
   <?php if ($studentByMajor): ?>
   <div class="card chart-card reveal" style="margin-bottom:40px">
@@ -204,6 +220,7 @@ $breadcrumbItems = [
   <?php if ($studentByProgram): $programPerPage = 10; $programPageCount = (int)ceil(count($studentByProgram) / $programPerPage); ?>
   <div class="card chart-card reveal" style="margin-bottom:40px">
     <h3><?= icon('book', 'icon-sm') ?> <?= $t('นักศึกษาตามหลักสูตร') ?> <small class="text-faint" data-scope style="font-weight:400">(<?= $t('ทุกศูนย์พื้นที่') ?>)</small></h3>
+    <p class="text-faint" style="font-size:.82rem;margin:-8px 0 14px"><?= $lang === 'en' ? 'Click a programme to see its students at each campus.' : 'กดที่ชื่อหลักสูตรเพื่อดูจำนวนนักศึกษาแยกตามศูนย์พื้นที่' ?></p>
     <div class="tbl-wrap" style="overflow-x:auto">
       <table class="data-table" id="tblProgram">
         <thead><tr><th><?= $t('หลักสูตร') ?></th><th style="text-align:right"><?= $t('นักศึกษา') ?></th><th><?= $t('สัดส่วน') ?></th></tr></thead>
@@ -253,14 +270,16 @@ $explorerCfg = [
         ['el' => '#statCardCampuses', 'kind' => 'withData', 'dim' => 'campus',  'initial' => (int)$totalCampuses],
         ['el' => '#statCardLevels',   'kind' => 'withData', 'dim' => 'level',   'initial' => count($studentByLevel)],
     ],
-    'charts' => [
-        ['canvas' => '#studentCampusChart', 'dim' => 'campus', 'kind' => 'bar'],
-        ['canvas' => '#studentLevelChart',  'dim' => 'level',  'kind' => 'doughnut'],
-        ['canvas' => '#studentMajorChart',  'dim' => 'major',  'kind' => 'barH'],
+    'charts' => [   // tools: ring / bars and most / fewest first for the visitor
+        ['canvas' => '#studentCampusChart', 'dim' => 'campus', 'kind' => 'bar',      'tools' => true],
+        ['canvas' => '#studentLevelChart',  'dim' => 'level',  'kind' => 'doughnut', 'tools' => true],
+        ['canvas' => '#studentMajorChart',  'dim' => 'major',  'kind' => 'barH',     'tools' => true],
     ],
+    'picks'  => [['el' => '#campusPicks', 'dim' => 'campus']],                       // a card per campus that filters the page
+    'matrix' => [['el' => '#matrixLevelCampus', 'rows' => 'level', 'cols' => 'campus']],
     'tables' => [
         ['el' => '#tblMajor',   'dim' => 'major',   'pageSize' => 0],
-        ['el' => '#tblProgram', 'dim' => 'program', 'pageSize' => 10, 'pager' => '#pagerProgram'],
+        ['el' => '#tblProgram', 'dim' => 'program', 'pageSize' => 10, 'pager' => '#pagerProgram', 'expand' => 'campus'],   // a row opens its students per campus
     ],
 ];
 $extraJs = '

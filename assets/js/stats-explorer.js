@@ -483,10 +483,63 @@
       });
     }
 
+    /* ---- chart tools (cfg.charts[].tools): ring / bars, most first / fewest first — remembered in this browser ---- */
+    var L = cfg.lang === 'en'
+      ? { ring: 'Ring chart', bars: 'Bar chart', desc: 'Most first', asc: 'Fewest first', order: 'Order', view: 'Chart type' }
+      : { ring: 'กราฟวงกลม', bars: 'กราฟแท่ง', desc: 'มาก → น้อย', asc: 'น้อย → มาก', order: 'เรียงลำดับ', view: 'รูปแบบกราฟ' };
+    var store = {
+      get: function (k) { try { return JSON.parse(localStorage.getItem('bait-stat-' + k)) || null; } catch (e) { return null; } },
+      set: function (k, v) { try { localStorage.setItem('bait-stat-' + k, JSON.stringify(v)); } catch (e) { /* private window */ } }
+    };
+    var ICON_RING = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>';
+    var ICON_BARS = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="11"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="14"/></svg>';
+    /** The kind actually drawn: the visitor's ring / bars choice, otherwise the page's own. */
+    function kindOf(c) {
+      if (!c._view) return c.kind;
+      if (c._view === 'ring') return 'doughnut';
+      return c.kind !== 'doughnut' ? c.kind : (dims[c.dim].items.length > 5 ? 'barH' : 'bar');
+    }
+    function addTools(c, canvas) {
+      if (!c.tools || c._toolsEl) return;
+      var saved = store.get(canvas.id) || {};
+      c._view = saved.view === 'ring' || saved.view === 'bars' ? saved.view : (c.kind === 'doughnut' ? 'ring' : 'bars');
+      c._sort = saved.sort === 'asc' ? 'asc' : 'desc';
+      var el = document.createElement('div'); el.className = 'chart-tools';
+      el.innerHTML = '<div class="chart-seg" role="group" aria-label="' + esc(L.view) + '">'
+        + '<button type="button" data-view="ring" title="' + esc(L.ring) + '" aria-label="' + esc(L.ring) + '">' + ICON_RING + '</button>'
+        + '<button type="button" data-view="bars" title="' + esc(L.bars) + '" aria-label="' + esc(L.bars) + '">' + ICON_BARS + '</button></div>'
+        + '<div class="chart-seg chart-seg--text" role="group" aria-label="' + esc(L.order) + '">'
+        + '<button type="button" data-sort="desc">' + esc(L.desc) + '</button><button type="button" data-sort="asc">' + esc(L.asc) + '</button></div>';
+      var box = canvas.parentElement; box.parentNode.insertBefore(el, box);
+      c._toolsEl = el; c._box = box; c._boxH0 = box.style.height;
+      el.addEventListener('click', function (e) {
+        var v = e.target.closest('[data-view]'), s = e.target.closest('[data-sort]');
+        if (v && v.dataset.view !== c._view) { c._view = v.dataset.view; store.set(canvas.id, { view: c._view, sort: c._sort }); rebuild(c); }
+        else if (s && s.dataset.sort !== c._sort) { c._sort = s.dataset.sort; store.set(canvas.id, { view: c._view, sort: c._sort }); render(); }
+      });
+    }
+    function paintTools(c) {
+      if (!c._toolsEl) return;
+      c._toolsEl.querySelectorAll('[data-view]').forEach(function (b) { var on = b.dataset.view === c._view; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      c._toolsEl.querySelectorAll('[data-sort]').forEach(function (b) { var on = b.dataset.sort === c._sort; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    }
+    /** Redraws one chart as another kind: the ring's own wrapper is taken apart first, the box gets its first height back. */
+    function rebuild(c) {
+      var i = charts.findIndex(function (x) { return x.cfg === c; }); if (i < 0) return;
+      var inst = charts[i];
+      inst.chart.destroy();
+      if (inst.shell) { c._box.appendChild(inst.canvas); inst.shell.root.remove(); }
+      c._box.style.height = c._boxH0;
+      var again = makeChart(c); if (again) charts[i] = again;
+      render();
+    }
+
     /* ---- charts ---- */
     function makeChart(c) {
       var canvas = document.querySelector(c.canvas); if (!canvas) return null;
-      var kind = c.kind, box0 = canvas.parentElement;
+      addTools(c, canvas);
+      var kind = kindOf(c), box0 = canvas.parentElement;
+      var baseKind = kind;
       // upright bars turn into horizontal ones (names above the bars) when the card is too narrow for their names, e.g. a portrait tablet
       if (kind === 'bar' && box0 && box0.clientWidth && box0.clientWidth < BAR_NARROW) kind = 'barH';
       if (kind === 'bar' && box0 && box0.clientHeight < 280) box0.style.height = '280px';
@@ -513,13 +566,15 @@
       inst.chart = new window.Chart(canvas, { type: kind === 'doughnut' ? 'doughnut' : 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] }, options: opts,
         plugins: inst.shell ? [centrePlugin(inst.shell)] : kind === 'barH' ? [barLabelPlugin(function () { return { faded: inst.faded }; })] : (xPlug ? [xPlug] : []) });
       inst.box = canvas.parentElement; inst.boxH = inst.box ? inst.box.style.height : '';
-      inst.kind = kind;
+      inst.kind = kind; inst.baseKind = baseKind;
       return inst;
     }
     function renderCharts() {
       var ink = cssVar('--ink', '#14203A'), soft = cssVar('--ink-soft', '#4A5878'), grid = cssVar('--border', '#E3E6EE'), surface = cssVar('--surface', '#fff');
       charts.forEach(function (inst) {
         var c = inst.cfg, agg = aggregate(c.dim), list = itemsFor(c.dim, agg), chosen = sel[c.dim];
+        if (c._sort === 'asc') list = list.slice().reverse();   // the visitor's order (itemsFor gives most first)
+        paintTools(c);
         var any = chosen.size > 0;
         inst.ids = list.map(function (x) { return x.id; });
         inst.colors = list.map(function (x) { return x.color; });
@@ -587,8 +642,105 @@
     function wireTable(t) {
       var c = t.cfg;
       var pager = c.pager ? document.querySelector(c.pager) : null;
-      if (pager) pager.addEventListener('click', function (e) { var b = e.target.closest('[data-page-btn]'); if (b) { t.page = Number(b.dataset.pageBtn); renderTable(t); } });
+      if (pager) pager.addEventListener('click', function (e) { var b = e.target.closest('[data-page-btn]'); if (b) { t.page = Number(b.dataset.pageBtn); renderTable(t); decorateExpand(t); } });
+      if (c.expand && dims[c.expand]) {   // a row opens / closes its breakdown (e.g. a programme's students per campus)
+        t.open = new Set();
+        t.el.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-expand]'); if (!b) return;
+          var id = Number(b.dataset.expand);
+          if (t.open.has(id)) t.open.delete(id); else t.open.add(id);
+          renderTable(t); decorateExpand(t);
+          var again = t.el.querySelector('[data-expand="' + id + '"]'); if (again) again.focus();
+        });
+      }
     }
+    /** The rows of a table with cfg.expand get a toggle button and, when open, a line with the breakdown by that group
+     *  (filters of the other groups apply; the breakdown group itself is not narrowed, so every campus shows). */
+    function decorateExpand(t) {
+      var c = t.cfg; if (!c.expand || !t.open) return;
+      var ex = c.expand, other = dims[ex];
+      t.el.querySelectorAll('tbody tr.stat-row[data-id]').forEach(function (tr) {
+        var id = Number(tr.dataset.id), open = t.open.has(id), first = tr.querySelector('td');
+        first.innerHTML = '<button type="button" class="stat-expand" data-expand="' + id + '" aria-expanded="' + (open ? 'true' : 'false') + '">'
+          + '<span class="stat-expand-ic" aria-hidden="true"></span>' + first.innerHTML + '</button>';
+        if (!open) return;
+        var per = new Map(), sum = 0;
+        rows.forEach(function (r) { if (r[c.dim] === id && r[ex] != null && pass(r, [ex, c.dim])) { per.set(r[ex], (per.get(r[ex]) || 0) + r.v); sum += r.v; } });
+        var parts = other.items.filter(function (it) { return per.get(it.id) > 0; }).sort(function (a, b) { return per.get(b.id) - per.get(a.id); });
+        var html = parts.length ? parts.map(function (it) {
+          var v = per.get(it.id), pct = sum ? Math.round(v / sum * 1000) / 10 : 0, on = sel[ex].has(it.id);
+          return '<li class="' + (on ? 'is-selected' : '') + '"><span class="legend-dot" style="background:' + it.color + '"></span><span class="nm">' + esc(it.name) + '</span>'
+            + '<span class="bar"><i style="width:' + pct + '%;background:' + it.color + '"></i></span><span class="vl">' + fmt(v) + '</span><span class="pc">' + pct + '%</span></li>';
+        }).join('') : '<li class="stat-none">' + esc(T.noData || '') + '</li>';
+        var d = document.createElement('tr'); d.className = 'stat-detail';
+        d.innerHTML = '<td colspan="3"><div class="stat-detail-title">' + esc(other.title) + '</div><ul>' + html + '</ul></td>';
+        tr.after(d);
+      });
+    }
+
+    /* ---- pick cards (cfg.picks): one button per item of a group (e.g. each campus) with its number; a click filters ---- */
+    var picks = (cfg.picks || []).map(function (p) { return { cfg: p, el: document.querySelector(p.el) }; }).filter(function (p) { return p.el && dims[p.cfg.dim]; });
+    function renderPicks() {
+      picks.forEach(function (p) {
+        var dim = p.cfg.dim, agg = aggregate(dim), chosen = sel[dim], any = chosen.size > 0;
+        var total = 0; agg.forEach(function (v) { total += v; });
+        p.el.innerHTML = dims[dim].items.map(function (it) {
+          var v = agg.get(it.id) || 0, on = chosen.has(it.id), pct = total ? Math.round(v / total * 100) : 0;
+          return '<button type="button" class="stat-pick' + (on ? ' is-selected' : '') + (any && !on ? ' is-faded' : '') + (v ? '' : ' is-zero') + '" data-pick-dim="' + dim + '" data-pick-id="' + it.id + '" aria-pressed="' + (on ? 'true' : 'false') + '" style="--pick:' + it.color + '">'
+            + '<span class="stat-pick-name">' + esc(it.name) + '</span><span class="stat-pick-num">' + fmt(v) + '</span>'
+            + '<span class="stat-pick-bar"><i style="width:' + pct + '%"></i></span><span class="stat-pick-pct">' + pct + '% · ' + esc(cfg.unit || '') + '</span></button>';
+        }).join('');
+      });
+    }
+    picks.forEach(function (p) {
+      p.el.addEventListener('click', function (e) { var b = e.target.closest('[data-pick-id]'); if (b) toggle(b.dataset.pickDim, Number(b.dataset.pickId)); });
+    });
+
+    /* ---- cross table (cfg.matrix): rows group × columns group, shaded by size; a cell picks both, a heading picks one ---- */
+    var matrices = (cfg.matrix || []).map(function (m) { return { cfg: m, el: document.querySelector(m.el) }; }).filter(function (m) { return m.el && dims[m.cfg.rows] && dims[m.cfg.cols]; });
+    function renderMatrix(m) {
+      var R = m.cfg.rows, C = m.cfg.cols, cell = new Map(), rowT = new Map(), colT = new Map(), all = 0, max = 0;
+      rows.forEach(function (r) {
+        if (r[R] == null || r[C] == null || !pass(r, [R, C])) return;
+        var k = r[R] + ':' + r[C], v = (cell.get(k) || 0) + r.v; cell.set(k, v);
+        rowT.set(r[R], (rowT.get(r[R]) || 0) + r.v); colT.set(r[C], (colT.get(r[C]) || 0) + r.v); all += r.v;
+      });
+      cell.forEach(function (v) { if (v > max) max = v; });
+      var rItems = dims[R].items.filter(function (it) { return rowT.get(it.id) > 0 || sel[R].has(it.id); });
+      var cItems = dims[C].items.filter(function (it) { return colT.get(it.id) > 0 || sel[C].has(it.id); });
+      var anyR = sel[R].size > 0, anyC = sel[C].size > 0;
+      var shade = cssVar('--primary', '#1558A6');
+      if (!rItems.length || !cItems.length) { m.el.innerHTML = '<tbody><tr><td class="stat-none">' + esc(T.noData || '') + '</td></tr></tbody>'; return; }
+      var h = '<thead><tr><th scope="col">' + esc(dims[R].title) + ' × ' + esc(dims[C].title) + '</th>';
+      cItems.forEach(function (it) { var on = sel[C].has(it.id); h += '<th scope="col" class="num-cell"><button type="button" class="stat-mx-head' + (on ? ' is-selected' : '') + '" data-mx-dim="' + C + '" data-mx-id="' + it.id + '" aria-pressed="' + on + '"><span class="legend-dot" style="background:' + it.color + '"></span>' + esc(it.name) + '</button></th>'; });
+      h += '<th scope="col" class="num-cell">' + esc(T.total || (cfg.lang === 'en' ? 'Total' : 'รวม')) + '</th></tr></thead><tbody>';
+      rItems.forEach(function (ri) {
+        var rOn = sel[R].has(ri.id);
+        h += '<tr><th scope="row"><button type="button" class="stat-mx-head' + (rOn ? ' is-selected' : '') + '" data-mx-dim="' + R + '" data-mx-id="' + ri.id + '" aria-pressed="' + rOn + '"><span class="legend-dot" style="background:' + ri.color + '"></span>' + esc(ri.name) + '</button></th>';
+        cItems.forEach(function (ci) {
+          var v = cell.get(ri.id + ':' + ci.id) || 0, a = max ? 0.07 + 0.5 * v / max : 0, on = rOn && sel[C].has(ci.id), dim = (anyR || anyC) && !((!anyR || rOn) && (!anyC || sel[C].has(ci.id)));
+          h += '<td class="num-cell stat-mx-cell' + (on ? ' is-selected' : '') + (dim ? ' is-faded' : '') + '">'
+            + (v ? '<button type="button" data-mx-r="' + ri.id + '" data-mx-c="' + ci.id + '" style="background:' + rgba(shade, a) + '" title="' + esc(ri.name + ' · ' + ci.name) + '">' + fmt(v) + '</button>' : '<span class="stat-mx-zero">–</span>') + '</td>';
+        });
+        h += '<td class="num-cell stat-mx-total">' + fmt(rowT.get(ri.id) || 0) + '</td></tr>';
+      });
+      h += '</tbody><tfoot><tr><td>' + esc(T.total || (cfg.lang === 'en' ? 'Total' : 'รวม')) + '</td>';
+      cItems.forEach(function (ci) { h += '<td class="num-cell">' + fmt(colT.get(ci.id) || 0) + '</td>'; });
+      h += '<td class="num-cell">' + fmt(all) + '</td></tr></tfoot>';
+      m.el.innerHTML = h;
+    }
+    matrices.forEach(function (m) {
+      m.el.addEventListener('click', function (e) {
+        var hd = e.target.closest('[data-mx-dim]');
+        if (hd) { toggle(hd.dataset.mxDim, Number(hd.dataset.mxId)); return; }
+        var c = e.target.closest('[data-mx-r]'); if (!c) return;
+        var R = m.cfg.rows, C = m.cfg.cols, r = Number(c.dataset.mxR), k = Number(c.dataset.mxC);
+        var same = sel[R].size === 1 && sel[R].has(r) && sel[C].size === 1 && sel[C].has(k);
+        sel[R].clear(); sel[C].clear();
+        if (!same) { sel[R].add(r); sel[C].add(k); }   // a cell = exactly that pair; the same cell again = both cleared
+        render();
+      });
+    });
 
     /* ---- filter bar (chips + reset) ---- */
     var bar = document.querySelector(cfg.filterBar || '[data-filterbar]');
@@ -621,7 +773,7 @@
       });
     }
 
-    function render() { renderCards(); renderCharts(); tables.forEach(renderTable); renderBar(); renderScope(); }
+    function render() { renderCards(); renderPicks(); renderCharts(); tables.forEach(function (t) { renderTable(t); decorateExpand(t); }); matrices.forEach(renderMatrix); renderBar(); renderScope(); }
 
     /* ---- go ---- */
     (cfg.charts || []).forEach(function (c) { var inst = makeChart(c); if (inst) charts.push(inst); });
@@ -638,7 +790,7 @@
       resizeTimer = setTimeout(function () {
         var changed = false;
         charts.forEach(function (inst, i) {
-          if (inst.cfg.kind !== 'bar' || !inst.box || !inst.box.clientWidth) return;
+          if (inst.baseKind !== 'bar' || !inst.box || !inst.box.clientWidth) return;
           var want = inst.box.clientWidth < BAR_NARROW ? 'barH' : 'bar';
           if (want === inst.kind) return;
           inst.chart.destroy(); inst.box.style.height = inst.boxH;
