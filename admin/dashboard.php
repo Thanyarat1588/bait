@@ -130,6 +130,11 @@ include __DIR__ . '/layout/header.php';
 .ne-stat-icon.is-green { background: var(--ne-green-soft); color: var(--ne-green); }
 .ne-stat-icon.is-gold  { background: var(--ne-gold-soft);  color: #a06e00; }
 .ne-stat-icon.is-danger{ background: var(--ne-danger-soft);color: var(--ne-danger); }
+a.ne-stat-card { position: relative; color: inherit; text-decoration: none; transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease; }
+a.ne-stat-card:hover, a.ne-stat-card:focus-visible { transform: translateY(-2px); border-color: #c9d2ea; box-shadow: 0 10px 22px rgba(30,42,69,.09); }
+.ne-stat-go { margin-left: auto; color: var(--ne-slate); font-size: 14px; opacity: 0; transition: opacity .15s ease, transform .15s ease; }
+a.ne-stat-card:hover .ne-stat-go, a.ne-stat-card:focus-visible .ne-stat-go { opacity: 1; transform: translateX(2px); }
+@media (hover: none) { .ne-stat-go { opacity: .6; } }
 .ne-stat-num { font-family: 'Kanit', sans-serif; font-size: 24px; font-weight: 700; line-height: 1.1; color: var(--ne-ink); }
 .ne-stat-label { font-size: 12.5px; color: var(--ne-slate); margin-top: 3px; }
 
@@ -150,6 +155,32 @@ include __DIR__ . '/layout/header.php';
 .ne-chart-box { position: relative; height: 190px; }
 .ne-chart-box.is-compact { height: 150px; }
 .ne-chart-legend { font-size: 11.5px; color: var(--ne-ink-soft); }
+/* interactive charts (dashboard-interactive.js): view + order controls in the panel head, a clickable list under the chart */
+.ne-panel-head { flex-wrap: wrap; gap: 8px; }
+.dash-tools { display: flex; align-items: center; gap: 6px; }
+.dash-seg { display: inline-flex; border: 1px solid var(--ne-line); border-radius: 8px; overflow: hidden; }
+.dash-seg button { border: 0; background: #fff; color: var(--ne-slate); width: 32px; height: 30px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.dash-seg button + button { border-left: 1px solid var(--ne-line); }
+.dash-seg button.is-on { background: var(--ne-blue-soft); color: var(--ne-blue); }
+.dash-sort { height: 30px; border: 1px solid var(--ne-line); border-radius: 8px; padding: 0 6px; font: inherit; font-size: 12.5px; color: var(--ne-ink-soft); background: #fff; }
+.dash-chart { height: auto; min-height: 190px; }
+.dash-chart.is-bar { height: 230px; }
+.dash-chart .dn-legend { display: none; }   /* the list below replaces the ring's own list */
+.dash-chart .dn-ring { width: min(100%, 210px); }
+.dash-empty { display: flex; align-items: center; justify-content: center; min-height: 160px; color: var(--ne-slate); font-size: 13px; text-align: center; }
+.dash-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 2px; }
+.dash-list li { display: flex; align-items: center; gap: 2px; border-radius: 8px; transition: background .12s ease, opacity .12s ease; }
+.dash-list li:hover { background: var(--ne-paper); }
+.dash-list li.is-off { opacity: .45; }
+.dash-list li.is-off .nm { text-decoration: line-through; }
+.dash-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 6px 8px; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; color: var(--ne-ink); }
+.dash-row .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.dash-row .nm { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ne-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-row .vl { font-weight: 700; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.dash-row .pc { width: 52px; text-align: right; font-size: 12px; color: var(--ne-slate); font-variant-numeric: tabular-nums; }
+.dash-go { flex: none; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; color: var(--ne-slate); font-size: 12.5px; }
+.dash-go:hover, .dash-go:focus-visible { background: var(--ne-blue-soft); color: var(--ne-blue); }
+.dash-hint { margin: 8px 0 0; font-size: 11.5px; color: var(--ne-slate); }
 
 /* ── Table ────────────────────────────────── */
 .ne-table { width: 100%; border-collapse: collapse; }
@@ -190,77 +221,77 @@ include __DIR__ . '/layout/header.php';
 
   <!-- Stat cards -->
   <div class="ne-stat-grid">
-    <div class="ne-stat-card">
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/news/index.php" title="ไปที่หน้าจัดการข่าวสารที่เผยแพร่">
       <div class="ne-stat-icon is-blue"><i class="bi bi-newspaper"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['news']) ?></div>
         <div class="ne-stat-label">ข่าวสารที่เผยแพร่</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/articles/index.php" title="ไปที่หน้าจัดการบทความที่เผยแพร่">
       <div class="ne-stat-icon is-green"><i class="bi bi-file-earmark-text"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['articles']) ?></div>
         <div class="ne-stat-label">บทความที่เผยแพร่</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/programs/index.php" title="ไปที่หน้าจัดการหลักสูตรทั้งหมด">
       <div class="ne-stat-icon is-gold"><i class="bi bi-book"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['programs']) ?></div>
         <div class="ne-stat-label">หลักสูตรทั้งหมด</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/staff/index.php" title="ไปที่หน้าจัดการบุคลากรทั้งหมด">
       <div class="ne-stat-icon is-danger"><i class="bi bi-people"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['staff']) ?></div>
         <div class="ne-stat-label">บุคลากรทั้งหมด</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/majors/index.php" title="ไปที่หน้าจัดการสาขาวิชา">
       <div class="ne-stat-icon is-blue"><i class="bi bi-diagram-3"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['majors']) ?></div>
         <div class="ne-stat-label">สาขาวิชา</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/campus/index.php" title="ไปที่หน้าจัดการศูนย์พื้นที่">
       <div class="ne-stat-icon is-green"><i class="bi bi-geo-alt"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['campuses']) ?></div>
         <div class="ne-stat-label">ศูนย์พื้นที่</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/departments/index.php" title="ไปที่หน้าจัดการหน่วยงาน">
       <div class="ne-stat-icon is-gold"><i class="bi bi-diagram-2"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['departments']) ?></div>
         <div class="ne-stat-label">หน่วยงาน</div>
       </div>
-    </div>
-    <div class="ne-stat-card">
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
+    <a class="ne-stat-card" href="<?= BASE_URL ?>/admin/modules/forms/index.php" title="ไปที่หน้าจัดการแบบฟอร์มดาวน์โหลด">
       <div class="ne-stat-icon is-danger"><i class="bi bi-file-earmark-arrow-down"></i></div>
       <div>
         <div class="ne-stat-num"><?= number_format($stats['forms']) ?></div>
         <div class="ne-stat-label">แบบฟอร์มดาวน์โหลด</div>
       </div>
-    </div>
+    <i class="bi bi-chevron-right ne-stat-go" aria-hidden="true"></i></a>
   </div>
 
   <!-- Charts -->
   <div class="ne-chart-grid is-triple">
     <div class="ne-panel">
       <div class="ne-panel-head"><span><i class="bi bi-bar-chart"></i>ข่าวสารตามหมวดหมู่</span></div>
-      <div class="ne-panel-body"><div class="ne-chart-box"><canvas id="newsCatChart"></canvas></div></div>
+      <div class="ne-panel-body"><div class="ne-chart-box dash-chart" data-dash="newsCatChart"><canvas id="newsCatChart"></canvas></div></div>
     </div>
     <div class="ne-panel">
       <div class="ne-panel-head"><span><i class="bi bi-bar-chart-line"></i>หลักสูตรแยกตามระดับการศึกษา</span></div>
-      <div class="ne-panel-body"><div class="ne-chart-box"><canvas id="programsLevelChart"></canvas></div></div>
+      <div class="ne-panel-body"><div class="ne-chart-box dash-chart" data-dash="programsLevelChart"><canvas id="programsLevelChart"></canvas></div></div>
     </div>
     <div class="ne-panel">
       <div class="ne-panel-head"><span><i class="bi bi-people"></i>บุคลากรแยกตามประเภท</span></div>
-      <div class="ne-panel-body"><div class="ne-chart-box"><canvas id="staffTypeChart"></canvas></div></div>
+      <div class="ne-panel-body"><div class="ne-chart-box dash-chart" data-dash="staffTypeChart"><canvas id="staffTypeChart"></canvas></div></div>
     </div>
   </div>
   <!-- Latest news -->
@@ -306,35 +337,32 @@ include __DIR__ . '/layout/header.php';
 </div>
 
 <?php
-$newsCatLabels = array_map(fn($r) => $r['category_name'], $newsByCat);
-$newsCatData   = array_map(fn($r) => (int)$r['c'], $newsByCat);
-$newsCatColors = array_map(fn($r) => preg_match('/^#[0-9A-Fa-f]{6}$/', (string)$r['color']) ? $r['color'] : '#162E93', $newsByCat);   // the colour the admin chose on the ประเภทข่าวสาร page
-$progLevelLabels = array_map(fn($r) => $r['level_name'], $programsByLevel);
-$progLevelData   = array_map(fn($r) => (int)$r['c'], $programsByLevel);
-$staffTypeLabels = array_map(fn($r) => $r['staff_type_name'], $staffByType);
-$staffTypeData   = array_map(fn($r) => (int)$r['c'], $staffByType);
-
-// A type / level / category with nothing in it (0) is left out: a ring has no slice for it and a row of "0" is just noise.
-$nonZero = function (array $labels, array $data, ?array $colors = null): array {
-    $out = ['labels' => [], 'data' => [], 'colors' => []];
-    foreach ($data as $i => $v) { if ($v > 0) { $out['labels'][] = $labels[$i]; $out['data'][] = $v; if ($colors) $out['colors'][] = $colors[$i]; } }
+// The three charts: one item per category / level / staff type that has something in it (a 0 is left out — a ring has no
+// slice for it), with the admin list filtered to it (↗ / clicking a slice). News keeps the colour chosen on ประเภทข่าวสาร.
+$adm = BASE_URL . '/admin/modules';
+$items = function (array $rows, string $idCol, string $nameCol, string $url, ?string $colorCol = null): array {
+    $out = [];
+    foreach ($rows as $r) {
+        if ((int)$r['c'] <= 0) continue;
+        $it = ['id' => (string)$r[$idCol], 'name' => (string)$r[$nameCol], 'value' => (int)$r['c'], 'url' => $url . (int)$r[$idCol]];
+        if ($colorCol && preg_match('/^#[0-9A-Fa-f]{6}$/', (string)$r[$colorCol])) $it['color'] = $r[$colorCol];
+        $out[] = $it;
+    }
     return $out;
 };
-$cNews  = $nonZero($newsCatLabels, $newsCatData, $newsCatColors);
-$cLevel = $nonZero($progLevelLabels, $progLevelData);
-$cStaff = $nonZero($staffTypeLabels, $staffTypeData);
+$chartData = [
+    ['id' => 'newsCatChart',       'unit' => 'ข่าว',     'items' => $items($newsByCat, 'category_id', 'category_name', $adm . '/news/index.php?status=' . rawurlencode('เผยแพร่') . '&cat=', 'color')],
+    ['id' => 'programsLevelChart', 'unit' => 'หลักสูตร', 'items' => $items($programsByLevel, 'level_id', 'level_name', $adm . '/programs/index.php?level=')],
+    ['id' => 'staffTypeChart',     'unit' => 'คน',       'items' => $items($staffByType, 'staff_type_id', 'staff_type_name', $adm . '/staff/index.php?type=')],
+];
 
-// Same chart rules as the statistics pages: every bar in a chart gets its own clearly different colour, with its number on it
+// Same chart rules as the statistics pages (stats-explorer.js); dashboard-interactive.js adds the view / order / show-hide / open-list controls
 $vendor = BASE_URL . '/assets/js/vendor';
 $ver = fn(string $f) => '?v=' . (@filemtime(dirname(__DIR__) . '/' . $f) ?: time());
-$chartData = [
-    ['id' => 'newsCatChart',      'type' => 'doughnut', 'unit' => 'ข่าว',     'labels' => $cNews['labels'],  'data' => $cNews['data'],  'colors' => $cNews['colors']],   // colours = the ones chosen on the ประเภทข่าวสาร page
-    ['id' => 'programsLevelChart','type' => 'doughnut', 'unit' => 'หลักสูตร', 'labels' => $cLevel['labels'], 'data' => $cLevel['data']],
-    ['id' => 'staffTypeChart',    'type' => 'doughnut', 'unit' => 'คน',       'labels' => $cStaff['labels'],  'data' => $cStaff['data']],
-];
 $extraJs = '
 <script src="' . $vendor . '/chart.umd.min.js' . $ver('assets/js/vendor/chart.umd.min.js') . '"></script>
 <script src="' . $vendor . '/chartjs-plugin-datalabels.min.js' . $ver('assets/js/vendor/chartjs-plugin-datalabels.min.js') . '"></script>
 <script src="' . BASE_URL . '/assets/js/stats-explorer.js' . $ver('assets/js/stats-explorer.js') . '"></script>
-<script>const CH=' . json_encode($chartData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) . ';CH.forEach(c=>BaitStats.staticChart(c));</script>';
+<script src="' . BASE_URL . '/admin/assets/js/dashboard-interactive.js' . $ver('admin/assets/js/dashboard-interactive.js') . '"></script>
+<script>BaitDashboard.init(' . json_encode($chartData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ');</script>';
 include __DIR__ . '/layout/footer.php'; ?>
