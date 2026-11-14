@@ -32,6 +32,35 @@ $articles = $db->fetchAll(
     $params
 );
 
+// "อ้างอิงภายนอก": visits that arrived at each article from another website (backlinks, table page_referrers written by
+// recordReferrer()). Its page_url is the address as opened — articles.php?id=18&… or ?slug=… — so the article is read
+// back from the id or slug in it. Per article: the visits, and the referring pages for the details pop-up.
+$backlinks = [];
+if ($articles) {
+    $byId = $bySlug = [];
+    foreach ($articles as $a) { $byId[(int)$a['article_id']] = (int)$a['article_id']; if (!empty($a['slug'])) $bySlug[mb_strtolower($a['slug'])] = (int)$a['article_id']; }
+    try {
+        $rows = $db->fetchAll("SELECT page_url, ref_url, ref_domain, COUNT(*) AS visits, MAX(viewed_at) AS last_seen
+                               FROM page_referrers WHERE page_url LIKE '%articles.php?%' GROUP BY page_url, ref_url, ref_domain");
+    } catch (Throwable $e) { $rows = []; }   // no table yet (before migration step 10): the column shows 0
+    foreach ($rows as $r) {
+        $aid = null;
+        if (preg_match('/[?&]id=(\d+)/', $r['page_url'], $m) && isset($byId[(int)$m[1]])) $aid = (int)$m[1];
+        elseif (preg_match('/[?&]slug=([^&#]+)/', $r['page_url'], $m) && isset($bySlug[mb_strtolower(urldecode($m[1]))])) $aid = $bySlug[mb_strtolower(urldecode($m[1]))];
+        if ($aid === null) continue;
+        $b = &$backlinks[$aid];
+        $b['visits'] = ($b['visits'] ?? 0) + (int)$r['visits'];
+        $key = $r['ref_url'];
+        $b['refs'][$key]['domain'] = $r['ref_domain'];
+        $b['refs'][$key]['url']    = $r['ref_url'];
+        $b['refs'][$key]['visits'] = ($b['refs'][$key]['visits'] ?? 0) + (int)$r['visits'];
+        $b['refs'][$key]['last']   = max((string)($b['refs'][$key]['last'] ?? ''), (string)$r['last_seen']);
+        unset($b);
+    }
+    foreach ($backlinks as &$b) { $b['refs'] = array_values($b['refs']); usort($b['refs'], fn($x, $y) => $y['visits'] <=> $x['visits']); $b['domains'] = count(array_unique(array_column($b['refs'], 'domain'))); }
+    unset($b);
+}
+
 if (isset($_GET['deleted'])) $_SESSION['flash_success'] = 'ลบบทความเรียบร้อยแล้ว';
 
 $pageTitle   = 'จัดการบทความ';
@@ -141,6 +170,15 @@ include BASE_PATH . '/admin/layout/header.php';
 .ne-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 .ne-views { display: inline-flex; align-items: center; gap: 5px; color: var(--ne-ink-soft); font-size: 13px; }
+/* อ้างอิงภายนอก (backlinks): a teal pill with the visit count, opens the list of referring pages; grey 0 when none */
+.ne-backlink { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border: 0; border-radius: 999px; background: #E3F6F4; color: #0E6E66; font-size: 12.5px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.ne-backlink:hover, .ne-backlink:focus-visible { background: #0E8A80; color: #fff; }
+.ne-backlink.is-none { background: transparent; color: var(--ne-ink-soft); font-weight: 500; cursor: default; padding-left: 12px; }
+.bl-table { width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left; }
+.bl-table th { font-weight: 600; color: #5b6480; border-bottom: 1px solid #E2E5F1; padding: 6px 8px; white-space: nowrap; }
+.bl-table td { border-bottom: 1px solid #EEF0F5; padding: 7px 8px; vertical-align: top; }
+.bl-table td a { word-break: break-all; }
+.bl-table .n { text-align: right; white-space: nowrap; }
 
 .ne-actions { display: flex; gap: 6px; }
 .ne-icon-btn {
@@ -233,6 +271,7 @@ include BASE_PATH . '/admin/layout/header.php';
             <th>หัวข้อบทความ</th>
             <th style="width:110px">สถานะ</th>
             <th style="width:90px">เข้าชม</th>
+            <th style="width:110px" title="จำนวนครั้งที่มีผู้เข้ามาที่บทความนี้จากเว็บไซต์อื่น (Backlink) กดตัวเลขเพื่อดูว่ามาจากที่ใด">อ้างอิงภายนอก</th>
             <th style="width:120px">วันที่</th>
             <th style="width:130px">จัดการ</th>
           </tr>
@@ -268,6 +307,14 @@ include BASE_PATH . '/admin/layout/header.php';
               <?php endif; ?>
             </td>
             <td><span class="ne-views"><i class="bi bi-eye"></i><?= number_format($a['view_count']) ?></span></td>
+            <td>
+              <?php $bl = $backlinks[(int)$a['article_id']] ?? null; if ($bl): ?>
+              <button type="button" class="ne-backlink" data-backlinks="<?= e(json_encode(['title' => $a['title'], 'refs' => $bl['refs']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                      title="จาก <?= $bl['domains'] ?> เว็บไซต์ · กดเพื่อดูรายละเอียด"><i class="bi bi-link-45deg"></i><?= number_format($bl['visits']) ?> ครั้ง</button>
+              <?php else: ?>
+              <span class="ne-backlink is-none" title="ยังไม่มีผู้เข้ามาจากเว็บไซต์อื่น">0</span>
+              <?php endif; ?>
+            </td>
             <td><small class="text-muted"><?= thaiDate($a['created_at']) ?></small></td>
             <td>
               <div class="ne-actions">
@@ -333,6 +380,21 @@ document.addEventListener('keydown', function (e) {
     document.getElementById('neLightbox').classList.remove('active');
     document.body.style.overflow = '';
   }
+});
+// อ้างอิงภายนอก: which outside pages sent visitors to this article (most visits first)
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('.ne-backlink[data-backlinks]');
+  if (!btn) return;
+  const d = JSON.parse(btn.dataset.backlinks);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const when = s => { const t = new Date(String(s).replace(' ', 'T')); return isNaN(t) ? '-' : t.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + t.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); };
+  const rows = d.refs.map(r => '<tr><td><strong>' + esc(r.domain) + '</strong><br><a href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">' + esc(r.url) + '</a></td>'
+    + '<td class="n">' + r.visits + '</td><td class="n">' + when(r.last) + '</td></tr>').join('');
+  const html = '<p style="margin:0 0 10px;color:#5b6480;font-size:14px">' + esc(d.title) + '</p>'
+    + '<div style="max-height:55vh;overflow:auto"><table class="bl-table"><thead><tr><th>มาจาก (เว็บไซต์ / หน้า)</th><th class="n">ครั้ง</th><th class="n">ล่าสุด</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+    + '<p style="margin:12px 0 0;font-size:12.5px;color:#5b6480">นับเมื่อผู้ชมกดลิงก์จากเว็บไซต์อื่นเข้ามา (คนเดิมจากลิงก์เดิมภายใน 30 นาทีนับครั้งเดียว) · ดูภาพรวมทั้งเว็บที่ สถิติเว็บไซต์ › Backlink</p>';
+  if (window.Swal) Swal.fire({ title: 'อ้างอิงภายนอก (Backlink)', html: html, width: 760, confirmButtonText: 'ปิด' });
+  else alert(d.refs.map(r => r.domain + ' — ' + r.visits + ' ครั้ง').join('\n'));
 });
 </script>
 
