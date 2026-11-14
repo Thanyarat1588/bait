@@ -191,6 +191,16 @@ include BASE_PATH . '/admin/layout/header.php';
 .tu-offer { display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; margin: 2px 0; }
 .tu-rate-table td { white-space: nowrap; }
 .tu-rate-table .ne-input { min-width: 110px; }
+/* Rate table card folds away (state kept per browser); rows with nothing filled are folded by default. */
+.tu-fold-head { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--ne-line); cursor: pointer; font: inherit; text-align: left; }
+.tu-fold-head:hover { background: #F7F9FD; }
+.tu-fold-head .tu-fold-meta { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; }
+.tu-fold-head .bi-chevron-down { transition: transform .2s; }
+#rates.is-folded .tu-fold-head { border-bottom: 0; }
+#rates.is-folded .tu-fold-head .bi-chevron-down { transform: rotate(-90deg); }
+.tu-rate-table tr.tu-rate-empty td:first-child { color: var(--ne-ink-soft); }
+.tu-rate-table.hide-empty tr.tu-rate-empty { display: none; }
+.tu-empty-toggle { margin-top: 10px; }
 </style>
 <div class="ne">
   <?php if (!$ready): ?>
@@ -275,15 +285,16 @@ include BASE_PATH . '/admin/layout/header.php';
   <?php if ($modes): $levelList = $db->fetchAll('SELECT el.level_id, el.level_name FROM education_levels el WHERE EXISTS (SELECT 1 FROM programs p WHERE p.level_id = el.level_id) ORDER BY el.level_order'); ?>
   <form method="POST" class="ne-panel" id="rates" style="margin-bottom:18px;">
     <?= csrfField() ?><input type="hidden" name="action" value="rates"><input type="hidden" name="year" value="<?= e($year) ?>">
-    <div class="ne-panel-head"><span><i class="bi bi-table"></i>อัตราตามระเบียบการ ปีการศึกษา <?= e($year) ?></span></div>
-    <div class="ne-panel-body">
+    <?php $rateRows = 0; $rateFilled = 0; foreach ($levelList as $lv) foreach (TUITION_MODES as $m => $_n) { $rateRows++; $r = $rates[(int)$lv['level_id']][$m] ?? []; if (($r['entry_fee'] ?? null) !== null || ($r['term_fee'] ?? null) !== null || ($r['summer_fee'] ?? null) !== null) $rateFilled++; } ?>
+    <button type="button" class="ne-panel-head tu-fold-head" id="ratesFold" aria-expanded="true" aria-controls="ratesBody"><span><i class="bi bi-table"></i>อัตราตามระเบียบการ ปีการศึกษา <?= e($year) ?></span><span class="tu-fold-meta">กรอกแล้ว <?= $rateFilled ?> / <?= $rateRows ?> แถว <i class="bi bi-chevron-down"></i></span></button>
+    <div class="ne-panel-body" id="ratesBody">
       <p class="ne-hint" style="margin:0 0 10px;">กรอกตามตารางค่าธรรมเนียมในระเบียบการคัดเลือก ครั้งเดียวต่อระดับ × รูปแบบ (เช่น ปริญญาตรี ภาคสมทบ = แถว "หลักสูตรอื่น ๆ") · หลักสูตรที่เปิดสอนรูปแบบนั้นจะใช้อัตรานี้ เว้นแต่หลักสูตรนั้นกรอกค่าเทอมเอง (ปุ่ม "แก้ไข" ในรายการด้านล่าง) · เว้นว่างทั้งแถว = ไม่มีอัตรานี้</p>
       <div class="table-responsive">
-        <table class="ne-table tu-rate-table">
+        <table class="ne-table tu-rate-table hide-empty" id="rateTable">
           <thead><tr><th>ระดับการศึกษา</th><th style="width:110px">รูปแบบ</th><th>ค่าแรกเข้า (ครั้งเดียว)</th><th>ค่าเทอม/ภาคการศึกษาปกติ</th><th>ภาคฤดูร้อน</th></tr></thead>
           <tbody>
-          <?php foreach ($levelList as $lv): foreach (TUITION_MODES as $m => $mName): $r = $rates[(int)$lv['level_id']][$m] ?? []; $nm = 'rates[' . (int)$lv['level_id'] . '][' . $m . ']'; $fmt = fn($k) => isset($r[$k]) && $r[$k] !== null ? number_format((int)$r[$k]) : ''; ?>
-            <tr>
+          <?php foreach ($levelList as $lv): foreach (TUITION_MODES as $m => $mName): $r = $rates[(int)$lv['level_id']][$m] ?? []; $nm = 'rates[' . (int)$lv['level_id'] . '][' . $m . ']'; $fmt = fn($k) => isset($r[$k]) && $r[$k] !== null ? number_format((int)$r[$k]) : ''; $empty = $fmt('entry_fee') === '' && $fmt('term_fee') === '' && $fmt('summer_fee') === ''; ?>
+            <tr<?= $empty ? ' class="tu-rate-empty"' : '' ?>>
               <td><?= e($lv['level_name']) ?></td>
               <td><span class="tu-a-badge <?= $m === 2 ? 'tu-a-todo' : 'tu-a-done' ?>"><?= e($mName) ?></span></td>
               <td><input class="ne-input" name="<?= $nm ?>[entry_fee]" inputmode="numeric" placeholder="-" value="<?= e($fmt('entry_fee')) ?>" aria-label="ค่าแรกเข้า <?= e($lv['level_name'] . ' ' . $mName) ?>"></td>
@@ -294,9 +305,29 @@ include BASE_PATH . '/admin/layout/header.php';
           </tbody>
         </table>
       </div>
+      <?php if ($rateRows > $rateFilled): ?><button type="button" class="ne-btn ne-btn-ghost tu-empty-toggle" id="rateEmptyToggle" aria-controls="rateTable" aria-expanded="false"><i class="bi bi-eye"></i><span>แสดงแถวที่ยังไม่กรอก (<?= $rateRows - $rateFilled ?>)</span></button><?php endif; ?>
       <button type="submit" class="ne-btn ne-btn-primary" style="margin-top:12px;"><i class="bi bi-check-lg"></i>บันทึกอัตรา</button>
     </div>
   </form>
+  <script>
+  (function () {
+    // Fold the whole card (remembered in this browser) and show/hide the rows that have no rate yet.
+    var form = document.getElementById('rates'), head = document.getElementById('ratesFold'), body = document.getElementById('ratesBody');
+    var table = document.getElementById('rateTable'), tog = document.getElementById('rateEmptyToggle'), KEY = 'bait.tuitionRatesFolded';
+    function fold(on) { form.classList.toggle('is-folded', on); body.hidden = on; head.setAttribute('aria-expanded', on ? 'false' : 'true'); }
+    try { fold(localStorage.getItem(KEY) === '1'); } catch (e) {}
+    head.addEventListener('click', function () { var on = !form.classList.contains('is-folded'); fold(on); try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} });
+    if (tog) {
+      var n = table.querySelectorAll('tr.tu-rate-empty').length;
+      tog.addEventListener('click', function () {
+        var hide = !table.classList.toggle('hide-empty') ? false : true;
+        tog.setAttribute('aria-expanded', hide ? 'false' : 'true');
+        tog.querySelector('i').className = hide ? 'bi bi-eye' : 'bi bi-eye-slash';
+        tog.querySelector('span').textContent = (hide ? 'แสดงแถวที่ยังไม่กรอก (' : 'ซ่อนแถวที่ยังไม่กรอก (') + n + ')';
+      });
+    }
+  })();
+  </script>
   <?php endif; ?>
 
   <form class="ne-filters" method="GET">
