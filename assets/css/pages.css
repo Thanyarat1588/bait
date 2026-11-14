@@ -698,3 +698,16 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
   .bid-item .bid-cal { align-self: start; }
   .bid-doc { grid-column: 3; justify-self: end; }
 }
+
+/* Partner logo marquee (assets/js/filmstrip.js initMarquee): .pm-track holds the logos twice; it slides left by half its
+   width and starts over, so the loop is seamless (padding-right = one gap keeps the halves equal). Soft fade at the edges. */
+.partner-strip .pm-track { display: contents; }
+.partner-strip .pm-clone { display: none; }
+.partner-strip.is-marquee { display: block; overflow: hidden; padding-block: 4px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.partner-strip.is-marquee .pm-track { display: flex; gap: 16px; width: max-content; padding-right: 16px; animation: pmScroll var(--pm-dur, 30s) linear infinite; }
+.partner-strip.is-marquee .pm-clone { display: flex; }
+.partner-strip.is-marquee .partner-tile { flex: none; }
+.partner-strip.is-marquee:hover .pm-track, .partner-strip.is-marquee:focus-within .pm-track { animation-play-state: paused; }
+@keyframes pmScroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .partner-strip.is-marquee .pm-track { animation: none; } }

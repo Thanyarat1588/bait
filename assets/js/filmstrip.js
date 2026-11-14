@@ -52,3 +52,36 @@ export function initFilmstrip() {
     }
   });
 }
+
+/**
+ * Logo marquee (home "พันธมิตรของเรา", [data-marquee]): when the logos no longer fit in one row, they glide sideways in
+ * a loop instead of wrapping onto more rows. The tiles are copied once so the loop has no gap; the copies are hidden
+ * from screen readers and the keyboard. Pauses on hover / keyboard focus. When they fit (or with reduced motion) the
+ * row stays still and centred as before.
+ */
+export function initMarquee() {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-marquee]').forEach((strip) => {
+    const tiles = [...strip.children];
+    if (reduced || tiles.length < 2) return;
+    const track = document.createElement('div');
+    track.className = 'pm-track';
+    tiles.forEach((t) => track.appendChild(t));
+    tiles.forEach((t) => {
+      const c = t.cloneNode(true);
+      c.classList.add('pm-clone');
+      c.setAttribute('aria-hidden', 'true');
+      if (c.tagName === 'A') c.tabIndex = -1;
+      c.querySelectorAll('img').forEach((i) => { i.loading = 'eager'; });
+      track.appendChild(c);
+    });
+    strip.appendChild(track);
+    track.style.setProperty('--pm-dur', (tiles.length * 3) + 's');   // ~3 s per logo, same speed whatever the count
+    const fit = () => {
+      const one = tiles.reduce((w, t) => w + t.getBoundingClientRect().width + 16, -16);
+      strip.classList.toggle('is-marquee', one > strip.clientWidth);
+    };
+    window.addEventListener('resize', fit);
+    fit();
+  });
+}

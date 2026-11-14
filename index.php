@@ -402,7 +402,7 @@ if ($mqOpt['enabled'] && $mq['items']):
       <h2><?= $lang === 'en' ? 'Our Partners' : 'พันธมิตรของเรา' ?></h2>
       <p><?= $lang === 'en' ? 'Organizations we work with for co-op education and career placement' : 'องค์กรที่ร่วมมือด้านสหกิจศึกษาและการจ้างงาน' ?></p>
     </div>
-    <div class="partner-strip reveal">
+    <div class="partner-strip reveal" data-marquee>
       <?php foreach ($partners as $p): ?>
       <?php if (!empty($p['link_url'])): ?>
       <a href="<?= e($p['link_url']) ?>" target="_blank" rel="noopener" class="partner-tile" title="<?= e($p['name']) ?>">
