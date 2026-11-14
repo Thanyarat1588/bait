@@ -19,7 +19,13 @@ $bannerPages = [
     'ebidding' => ['name' => 'หน้า E-Bidding', 'public' => '/ebidding.php', 'menu' => 'ebidding', 'back' => ['E-Bidding', '/admin/modules/ebidding/index.php'],
                    'crumbs' => [['label' => 'E-Bidding', 'url' => '/admin/modules/ebidding/index.php']],
                    'where' => 'แสดงเป็นการ์ดลิงก์ขนาดเล็ก หัวข้อ "เว็บไซต์ที่เกี่ยวข้อง" ท้ายหน้า E-Bidding (เช่น กรมบัญชีกลาง ระบบ e-GP) เรียงตามลำดับที่ตั้งไว้ · ไม่มีภาพที่แสดงอยู่ = ไม่แสดงหัวข้อนี้',
-                   'ratio' => '2 / 1', 'size' => '<strong>แนะนำภาพขนาด 600×300 พิกเซล</strong> (อัตราส่วน 2:1) เช่น โลโก้หรือแบนเนอร์ของเว็บไซต์นั้น', 'needLink' => true, 'fit' => 'contain'],
+                   'ratio' => '2 / 1', 'size' => '<strong>แนะนำภาพขนาด 600×300 พิกเซล</strong> (อัตราส่วน 2:1) เช่น โลโก้หรือแบนเนอร์ของเว็บไซต์นั้น', 'needLink' => true, 'fit' => 'contain',
+                   'sql' => 'migration_ebidding_banners.sql'],
+    'ebidding_top' => ['name' => 'ด้านบนหน้า E-Bidding', 'public' => '/ebidding.php', 'menu' => 'ebidding', 'back' => ['E-Bidding', '/admin/modules/ebidding/index.php'],
+                   'crumbs' => [['label' => 'E-Bidding', 'url' => '/admin/modules/ebidding/index.php']],
+                   'where' => 'แสดงเป็นสไลด์แบบเตี้ยเต็มความกว้าง ด้านบนสุดของหน้า E-Bidding (เหนือช่องค้นหา) เปลี่ยนภาพเองทุก 6 วินาที · ไม่มีภาพที่แสดงอยู่ = ไม่แสดงแบนเนอร์ (การ์ดลิงก์เว็บไซต์ที่เกี่ยวข้องท้ายหน้าจัดการแยกที่ปุ่ม "ลิงก์เว็บไซต์ที่เกี่ยวข้อง")',
+                   'ratio' => '5 / 1', 'size' => '<strong>ใช้ภาพอัตราส่วน 5:1 เช่น 1500×300 หรือ 1920×384 พิกเซล</strong>', 'fit' => 'cover', 'needLink' => false,
+                   'sql' => 'migration_ebidding_top_banners.sql'],
 ];
 if (!isset($bannerPage, $bannerPages[$bannerPage])) { http_response_code(404); exit; }
 $bp  = $bannerPages[$bannerPage];
@@ -103,7 +109,7 @@ $breadcrumb  = array_map(fn($c) => ['label' => $c['label'], 'url' => BASE_URL . 
 $breadcrumb[] = ['label' => 'แบนเนอร์'];
 $pageActions = '';
 include BASE_PATH . '/admin/layout/header.php';
-$sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ' . ($bp['fit'] === 'cover' ? 'ภาพจะเต็มกรอบเสมอ ไม่มีขอบ — ภาพที่ไม่ใช่ 3:1 พอดีจะถูกตัดขอบบน-ล่างหรือซ้าย-ขวาออกเล็กน้อย จึงไม่ควรวางข้อความสำคัญชิดขอบภาพ' : 'ภาพที่ไม่ตรงสัดส่วนจะแสดงครบทั้งภาพ แต่มีขอบว่างด้านข้างหรือบนล่าง');
+$sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ' . ($bp['fit'] === 'cover' ? 'ภาพจะเต็มกรอบเสมอ ไม่มีขอบ — ภาพที่สัดส่วนไม่ตรง ' . str_replace(' / ', ':', $bp['ratio']) . ' พอดีจะถูกตัดขอบบน-ล่างหรือซ้าย-ขวาออกเล็กน้อย จึงไม่ควรวางข้อความสำคัญชิดขอบภาพ' : 'ภาพที่ไม่ตรงสัดส่วนจะแสดงครบทั้งภาพ แต่มีขอบว่างด้านข้างหรือบนล่าง');
 ?>
 <style>
 .tb-item { position: relative; border: 1px solid var(--ne-line); border-radius: 10px; overflow: hidden; background: <?= $bp['needLink'] ? '#fff' : '#0C3566' ?>; cursor: grab; }
@@ -120,7 +126,7 @@ $sizeHint = $bp['size'] . ' ไม่เกิน 5MB · ' . ($bp['fit'] === 'co
 
 <div class="ne">
   <?php if (!$ready): ?>
-  <div class="ne-panel"><div class="ne-panel-body"><p class="ne-hint" style="margin:0;color:#b45309;font-weight:600;">ยังใช้งานไม่ได้: ฐานข้อมูลยังไม่มีตาราง <code><?= e($tbl) ?></code> กรุณาแจ้งผู้ดูแลระบบ<?= $bannerPage === 'ebidding' ? ' (รันไฟล์ <code>database/migration_ebidding_banners.sql</code> ใน phpMyAdmin หนึ่งครั้ง)' : '' ?></p></div></div>
+  <div class="ne-panel"><div class="ne-panel-body"><p class="ne-hint" style="margin:0;color:#b45309;font-weight:600;">ยังใช้งานไม่ได้: ฐานข้อมูลยังไม่มีตาราง <code><?= e($tbl) ?></code> กรุณาแจ้งผู้ดูแลระบบ<?= !empty($bp['sql']) ? ' (รันไฟล์ <code>database/' . e($bp['sql']) . '</code> ใน phpMyAdmin หนึ่งครั้ง)' : '' ?></p></div></div>
   <?php else: ?>
   <div class="ne-topbar">
     <h1>แบนเนอร์<?= e($bp['name']) ?> <span class="ne-count">แสดง <?= $shownN ?> จาก <?= count($banners) ?> ภาพ</span></h1>

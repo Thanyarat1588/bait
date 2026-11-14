@@ -397,6 +397,9 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .page-banner .hero-arrow { width: 40px; height: 40px; background: rgba(255,255,255,.92); color: var(--navy-800); box-shadow: var(--shadow-sm); }
 .page-banner .hero-arrow:hover { background: #fff; }
 .page-banner .hero-arrow-prev { left: 12px; } .page-banner .hero-arrow-next { right: 12px; }
+/* slim variant (top of the E-Bidding page): 5:1 across the page — about 250px tall on a wide screen, 70px on a phone */
+.hero.page-banner--slim { aspect-ratio: 5 / 1; margin-bottom: 20px; }
+@media (min-width: 1024px) { .hero.page-banner--slim { margin-bottom: 28px; } }
 /* link tiles (linkTiles(): E-Bidding's กรมบัญชีกลาง and other sites) — small 2:1 pictures on white cards, lifted on hover.
    Phones: two per row; wider screens: as many ~220px tiles as fit, left-aligned (a few tiles stay small, never stretched) */
 .link-tiles { margin-top: 40px; }

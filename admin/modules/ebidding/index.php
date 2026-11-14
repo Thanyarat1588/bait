@@ -89,6 +89,7 @@ include BASE_PATH . '/admin/layout/header.php';
   <div class="ne-topbar">
     <h1>E-Bidding <span class="ne-count"><?= $total ?> ประกาศ</span></h1>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;">
+      <a href="top-banners.php" class="ne-btn ne-btn-ghost"><i class="bi bi-image"></i>แบนเนอร์ด้านบน</a>
       <a href="banners.php" class="ne-btn ne-btn-ghost"><i class="bi bi-images"></i>ลิงก์เว็บไซต์ที่เกี่ยวข้อง</a>
       <?php if ($ready): ?>
       <button type="button" class="ne-btn ne-btn-primary" onclick="openBid(0)"><i class="bi bi-plus-lg"></i>เพิ่มประกาศ</button>

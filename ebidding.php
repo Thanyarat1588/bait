@@ -73,6 +73,7 @@ $breadcrumbItems = [
 </section>
 
 <div class="container section">
+  <?= pageBannerSlider(pageBanners('ebidding_top'), $lang === 'en' ? 'Procurement announcements' : 'ประกาศจัดซื้อจัดจ้าง', 'page-banner--slim') ?>
   <p class="bid-intro"><?= $t('ประกาศประกวดราคาด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding) ของคณะ กดปุ่ม "เอกสารรายละเอียด" เพื่อเปิดดูและดาวน์โหลดเอกสาร') ?></p>
 
   <form class="filter-bar bid-filter" method="GET" role="search">

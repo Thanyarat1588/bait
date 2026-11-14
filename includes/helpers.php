@@ -1676,7 +1676,7 @@ function hasTuitionGradRules(): bool {
  * Banner slideshows at the top of some pages, one table each (same columns): page key => table.
  * Admin: admin/modules/page-banners/_manage.php (opened from ค่าเทอม and from E-Bidding).
  */
-const PAGE_BANNER_TABLES = ['tuition' => 'tuition_banners', 'ebidding' => 'ebidding_banners'];
+const PAGE_BANNER_TABLES = ['tuition' => 'tuition_banners', 'ebidding' => 'ebidding_banners', 'ebidding_top' => 'ebidding_top_banners'];
 
 function hasPageBanners(string $page): bool {
     static $has = [];
