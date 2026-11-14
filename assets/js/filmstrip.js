@@ -28,5 +28,27 @@ export function initFilmstrip() {
     track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); }, { passive: true });
     window.addEventListener('resize', paint);
     paint();
+
+    // Auto-advance one card every 4 s; back to the first card after the last. Pauses while the pointer is over the row,
+    // while something in it has keyboard focus, for a while after a swipe, while the row is off screen or the tab is hidden.
+    // Off for prefers-reduced-motion.
+    if (reduced) return;
+    const DELAY = 4000;
+    let hover = false, visible = true, touchedAt = 0;
+    const tick = () => {
+      if (hover || fs.querySelector(':focus-visible') || !visible || document.hidden || Date.now() - touchedAt < 8000) return;
+      const max = track.scrollWidth - track.clientWidth;
+      if (max <= 4) return;
+      if (track.scrollLeft > max - 4) track.scrollTo({ left: 0, behavior: 'smooth' });
+      else go(1);
+    };
+    setInterval(tick, DELAY);
+    fs.addEventListener('mouseenter', () => { hover = true; });
+    fs.addEventListener('mouseleave', () => { hover = false; });
+    track.addEventListener('touchstart', () => { touchedAt = Date.now(); }, { passive: true });
+    [prev, next].forEach((b) => b && b.addEventListener('click', () => { touchedAt = Date.now(); }));
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0.3 }).observe(fs);
+    }
   });
 }
