@@ -65,10 +65,10 @@ $partners = $db->fetchAll("SELECT * FROM partners WHERE is_active = 1 ORDER BY d
 // "ภาพกิจกรรมของคณะ" should only be photos from actual event/activity news
 // (category = กิจกรรม), not every news item that happens to carry an image.
 $galleryImages = $db->fetchAll(
-    "SELECT n.news_id, n.title, n.image FROM news n
+    "SELECT n.news_id, n.title, n.image, n.created_at FROM news n
      JOIN categories c ON c.category_id = n.category_id
      WHERE n.status='เผยแพร่' AND c.category_name = 'กิจกรรม'
-       AND n.image IS NOT NULL AND n.image <> '' ORDER BY n.created_at DESC LIMIT 5"
+       AND n.image IS NOT NULL AND n.image <> '' ORDER BY n.created_at DESC LIMIT 12"   // a filmstrip: 4 on screen, the rest scroll in
 );
 
 trackPageView($_SERVER['REQUEST_URI'], $lang === 'en' ? 'Home' : 'หน้าหลัก');
@@ -185,9 +185,9 @@ if ($mqOpt['enabled'] && $mq['items']):
      filled in yet). -->
 <div class="container">
   <div class="cluster gap-3 reveal" style="justify-content:center;padding-block:28px">
-    <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-accent"><?= $t('สมัครเรียน') ?></a>
-    <a href="<?= BASE_URL ?>/programs.php?lang=<?= e($lang) ?>" class="btn btn-secondary"><?= $t('ดูหลักสูตร') ?></a>
-    <a href="<?= BASE_URL ?>/tuition.php?lang=<?= e($lang) ?>" class="btn btn-tuition"><?= $lang === 'en' ? 'Tuition fees' : 'ค่าเทอม' ?></a>
+    <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-accent btn-glass-fx"><?= $t('สมัครเรียน') ?></a>
+    <a href="<?= BASE_URL ?>/programs.php?lang=<?= e($lang) ?>" class="btn btn-secondary btn-glass-fx"><?= $t('ดูหลักสูตร') ?></a>
+    <a href="<?= BASE_URL ?>/tuition.php?lang=<?= e($lang) ?>" class="btn btn-tuition btn-glass-fx"><?= $lang === 'en' ? 'Tuition fees' : 'ค่าเทอม' ?></a>
   </div>
 </div>
 <?php endif; ?>
@@ -372,12 +372,23 @@ if ($mqOpt['enabled'] && $mq['items']):
       <h2><?= $lang === 'en' ? 'Faculty Life in Pictures' : 'ภาพกิจกรรมของคณะ' ?></h2>
       <p><?= $lang === 'en' ? 'A glimpse into life at BA&amp;IT' : 'ภาพบรรยากาศและกิจกรรมต่าง ๆ ของคณะ' ?></p>
     </div>
-    <div class="gallery-grid reveal">
-      <?php foreach ($galleryImages as $g): ?>
-      <a href="<?= BASE_URL ?>/news-detail.php?id=<?= (int)$g['news_id'] ?>&lang=<?= e($lang) ?>" class="gallery-item">
-        <img src="<?= UPLOAD_URL . '/' . e($g['image']) ?>" alt="<?= e($t($g['title'])) ?>" loading="lazy" decoding="async"<?= imgSizeAttrs($g['image']) ?>>
-      </a>
-      <?php endforeach; ?>
+    <!-- filmstrip: one row of photo cards (date + title), swipe / arrows; assets/js/filmstrip.js adds the arrows' work and the progress bar -->
+    <div class="fs reveal" data-filmstrip>
+      <div class="fs-track" tabindex="0" aria-label="<?= e($lang === 'en' ? 'Activity photos, scroll sideways' : 'ภาพกิจกรรม เลื่อนซ้ายขวาได้') ?>">
+        <?php foreach ($galleryImages as $g): $gTitle = $t($g['title']); ?>
+        <a class="fs-card" href="<?= BASE_URL ?>/news-detail.php?id=<?= (int)$g['news_id'] ?>&amp;lang=<?= e($lang) ?>">
+          <img src="<?= UPLOAD_URL . '/' . e($g['image']) ?>" alt="" loading="lazy" decoding="async"<?= imgSizeAttrs($g['image']) ?>>
+          <span class="fs-cap"><time datetime="<?= e(date('Y-m-d', strtotime($g['created_at']))) ?>"><?= e(thaiDate($g['created_at'])) ?></time><strong><?= e($gTitle) ?></strong></span>
+        </a>
+        <?php endforeach; ?>
+      </div>
+      <?php if (count($galleryImages) > 1): ?>
+      <div class="fs-nav">
+        <button type="button" class="fs-btn" data-fs-prev aria-label="<?= $lang === 'en' ? 'Previous photos' : 'ภาพก่อนหน้า' ?>"><?= icon('chevron-left') ?></button>
+        <span class="fs-progress" aria-hidden="true"><i></i></span>
+        <button type="button" class="fs-btn" data-fs-next aria-label="<?= $lang === 'en' ? 'Next photos' : 'ภาพถัดไป' ?>"><?= icon('chevron-right') ?></button>
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 </section>
@@ -414,9 +425,9 @@ if ($mqOpt['enabled'] && $mq['items']):
     <h2><?= $lang === 'en' ? 'Ready to Join BA&amp;IT?' : 'พร้อมเป็นส่วนหนึ่งของ BA&amp;IT แล้วหรือยัง?' ?></h2>
     <p><?= $lang === 'en' ? 'Take the next step in your education journey with us' : 'ก้าวต่อไปในเส้นทางการศึกษาของคุณไปกับเรา' ?></p>
     <div class="cluster gap-3" style="justify-content:center">
-      <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-pill cta-btn cta-btn--apply"><?= icon('graduation-cap', 'icon-sm') ?> <?= $t('สมัครเรียน') ?></a>
-      <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--contact"><?= icon('phone', 'icon-sm') ?> <?= $t('ติดต่อเรา') ?></a>
-      <a href="<?= BASE_URL ?>/about.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--visit"><?= icon('pin', 'icon-sm') ?> <?= $t('เยี่ยมชมคณะ') ?></a>
+      <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-pill cta-btn cta-btn--apply btn-glass-fx"><?= icon('graduation-cap', 'icon-sm') ?> <?= $t('สมัครเรียน') ?></a>
+      <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--contact btn-glass-fx"><?= icon('phone', 'icon-sm') ?> <?= $t('ติดต่อเรา') ?></a>
+      <a href="<?= BASE_URL ?>/about.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--visit btn-glass-fx"><?= icon('pin', 'icon-sm') ?> <?= $t('เยี่ยมชมคณะ') ?></a>
     </div>
   </div>
 </section>

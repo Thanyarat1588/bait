@@ -24,7 +24,7 @@ const MODULES = [
   ['initSearch', 'search'], ['initCampusTabs', 'campus-tabs'], ['initFilters', 'filters'], ['initCounters', 'counters'],
   ['initStaffTreeScale', 'staff-tree-scale'], ['initExecBoard', 'exec-board'], ['initExecScroll', 'exec-scroll'],
   ['initCampusMap', 'campus-map'], ['initHistoryTimeline', 'history-timeline'], ['initCardSlider', 'card-slider'], ['initThaiWrap', 'thai-wrap'], ['initMourning', 'mourning'],
-  ['initImageViewer', 'image-viewer'], ['initLinkTiles', 'link-tiles'],
+  ['initImageViewer', 'image-viewer'], ['initLinkTiles', 'link-tiles'], ['initFilmstrip', 'filmstrip'],
 ];
 // (a promise, not a top-level await: Safari 14 and older load module scripts but do not know top-level await, and
 // there the whole file failed to parse, so no menu, slider or search worked at all)
@@ -128,6 +128,7 @@ function boot() {
   run('initCardSlider');
   run('initImageViewer');
   run('initLinkTiles');
+  run('initFilmstrip');
   initCopyLink();
   initShareFacebook();
 }
