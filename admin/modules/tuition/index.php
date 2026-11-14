@@ -305,7 +305,7 @@ include BASE_PATH . '/admin/layout/header.php';
           </tbody>
         </table>
       </div>
-      <?php if ($rateRows > $rateFilled): ?><button type="button" class="ne-btn ne-btn-ghost tu-empty-toggle" id="rateEmptyToggle" aria-controls="rateTable" aria-expanded="false"><i class="bi bi-eye"></i><span>แสดงแถวที่ยังไม่กรอก (<?= $rateRows - $rateFilled ?>)</span></button><?php endif; ?>
+      <?php if ($rateRows > $rateFilled): ?><button type="button" class="ne-btn ne-btn-ghost tu-empty-toggle" id="rateEmptyToggle" aria-controls="rateTable" aria-expanded="false"><i class="bi bi-eye"></i><span>แสดงรูปแบบทั้งหมด</span></button><?php endif; ?>
       <button type="submit" class="ne-btn ne-btn-primary" style="margin-top:12px;"><i class="bi bi-check-lg"></i>บันทึกอัตรา</button>
     </div>
   </form>
@@ -318,12 +318,11 @@ include BASE_PATH . '/admin/layout/header.php';
     try { fold(localStorage.getItem(KEY) === '1'); } catch (e) {}
     head.addEventListener('click', function () { var on = !form.classList.contains('is-folded'); fold(on); try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} });
     if (tog) {
-      var n = table.querySelectorAll('tr.tu-rate-empty').length;
       tog.addEventListener('click', function () {
         var hide = !table.classList.toggle('hide-empty') ? false : true;
         tog.setAttribute('aria-expanded', hide ? 'false' : 'true');
         tog.querySelector('i').className = hide ? 'bi bi-eye' : 'bi bi-eye-slash';
-        tog.querySelector('span').textContent = (hide ? 'แสดงแถวที่ยังไม่กรอก (' : 'ซ่อนแถวที่ยังไม่กรอก (') + n + ')';
+        tog.querySelector('span').textContent = hide ? 'แสดงรูปแบบทั้งหมด' : 'ซ่อนรูปแบบที่ยังไม่กรอก';
       });
     }
   })();
