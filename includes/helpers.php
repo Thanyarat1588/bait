@@ -1150,6 +1150,45 @@ function pageTypeOf(string $url): string {
     return 'other';
 }
 
+/**
+ * Backlinks of one news item / article: an SQL condition on page_referrers.page_url for news-detail.php / articles.php with
+ * that id (?id=19, also after "&" or a stored "&amp;") or its slug (?slug=…). Returns [sql, params]; [‘0=1’, []] for an
+ * unknown kind. Used by the Backlink report's item filter and the articles list's "อ้างอิงภายนอก" pop-up.
+ */
+function backlinkItemWhere(string $kind, int $id): array {
+    $map = ['news' => ['news-detail.php', 'news', 'news_id'], 'article' => ['articles.php', 'articles', 'article_id']];
+    if (!isset($map[$kind]) || $id <= 0) return ['0=1', []];
+    [$file, $table, $idCol] = $map[$kind];
+    $sql = "(page_url LIKE ? AND (page_url REGEXP ?";
+    $params = ['%/' . $file . '?%', '[?&;]id=' . $id . '([^0-9]|$)'];
+    try { $slug = (string)(Database::getInstance()->fetchOne("SELECT slug FROM `$table` WHERE `$idCol` = ?", [$id])['slug'] ?? ''); } catch (Throwable $e) { $slug = ''; }
+    if ($slug !== '') {
+        $sql .= ' OR page_url LIKE ? OR page_url LIKE ?';
+        $params[] = '%slug=' . addcslashes(rawurlencode($slug), '%_\\') . '%';
+        $params[] = '%slug=' . addcslashes($slug, '%_\\') . '%';
+    }
+    return [$sql . '))', $params];
+}
+
+/** The news item / article a backlinked address leads to: ['news'|'article', id], or null (other pages, unknown slug). */
+function backlinkItemOf(string $pageUrl): ?array {
+    static $slugs = null;
+    $file = basename((string)parse_url(str_replace('&amp;', '&', $pageUrl), PHP_URL_PATH));
+    $kind = $file === 'news-detail.php' ? 'news' : ($file === 'articles.php' ? 'article' : null);
+    if ($kind === null) return null;
+    if (preg_match('/[?&;]id=(\d+)/', $pageUrl, $m)) return [$kind, (int)$m[1]];
+    if (!preg_match('/[?&;]slug=([^&#]+)/', $pageUrl, $m)) return null;
+    if ($slugs === null) {
+        $slugs = ['news' => [], 'article' => []];
+        try {
+            foreach (Database::getInstance()->fetchAll("SELECT news_id AS id, slug FROM news WHERE slug <> ''") as $r) $slugs['news'][mb_strtolower($r['slug'])] = (int)$r['id'];
+            foreach (Database::getInstance()->fetchAll("SELECT article_id AS id, slug FROM articles WHERE slug <> ''") as $r) $slugs['article'][mb_strtolower($r['slug'])] = (int)$r['id'];
+        } catch (Throwable $e) { /* no slug columns: ids only */ }
+    }
+    $id = $slugs[$kind][mb_strtolower(urldecode($m[1]))] ?? null;
+    return $id ? [$kind, $id] : null;
+}
+
 /** Thai labels of pageTypeOf() values, in menu order. */
 function pageTypeLabels(): array {
     return ['home' => 'หน้าแรก', 'news' => 'ข่าวสาร', 'article' => 'บทความ', 'program' => 'หลักสูตร / สาขาวิชา', 'staff' => 'บุคลากร',

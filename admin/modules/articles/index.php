@@ -11,6 +11,23 @@ $auth = new Auth();
 $auth->requireLogin();
 $db   = Database::getInstance();
 
+// ── "อ้างอิงภายนอก" pop-up, fetched only when an admin clicks a count (?backlinks=<article id>): the referring websites,
+//    most visits first, the first 20; the full list is the Backlink report filtered to this article ──
+if (isset($_GET['backlinks'])) {
+    $aid = (int)getStr('backlinks');
+    $art = $db->fetchOne('SELECT article_id, title FROM articles WHERE article_id = ?', [$aid]);
+    if (!$art) jsonError('ไม่พบบทความ');
+    [$isql, $iparams] = backlinkItemWhere('article', $aid);
+    try {
+        $tot = $db->fetchOne("SELECT COUNT(*) AS visits, COUNT(DISTINCT ref_domain) AS domains FROM page_referrers WHERE $isql", $iparams);
+        $top = $db->fetchAll("SELECT ref_domain AS domain, COUNT(DISTINCT ref_url) AS pages, COUNT(*) AS visits, MAX(viewed_at) AS last,
+                                     SUBSTRING_INDEX(GROUP_CONCAT(ref_url ORDER BY viewed_at DESC SEPARATOR '\n'), '\n', 1) AS sample
+                              FROM page_referrers WHERE $isql GROUP BY ref_domain ORDER BY visits DESC, ref_domain LIMIT 20", $iparams);
+    } catch (Throwable $e) { $tot = ['visits' => 0, 'domains' => 0]; $top = []; }
+    jsonSuccess(['title' => $art['title'], 'visits' => (int)$tot['visits'], 'domains' => (int)$tot['domains'], 'top' => $top,
+                 'report' => BASE_URL . '/admin/modules/statistics/backlinks.php?' . http_build_query(['type' => 'article', 'item' => 'article:' . $aid])]);
+}
+
 $search  = getStr('search');
 $status  = getStr('status');
 $page    = max(1, (int)($_GET['page'] ?? 1));
@@ -33,32 +50,21 @@ $articles = $db->fetchAll(
 );
 
 // "อ้างอิงภายนอก": visits that arrived at each article from another website (backlinks, table page_referrers written by
-// recordReferrer()). Its page_url is the address as opened — articles.php?id=18&… or ?slug=… — so the article is read
-// back from the id or slug in it. Per article: the visits, and the referring pages for the details pop-up.
-$backlinks = [];
+// recordReferrer()). The article is read back from the id or slug in the address opened (backlinkItemOf()). Only the
+// counts are worked out here; the list of websites is fetched when a count is clicked (?backlinks= above).
+$backlinks = [];   // article id => ['visits' => n, 'domains' => [domain => true]]
 if ($articles) {
-    $byId = $bySlug = [];
-    foreach ($articles as $a) { $byId[(int)$a['article_id']] = (int)$a['article_id']; if (!empty($a['slug'])) $bySlug[mb_strtolower($a['slug'])] = (int)$a['article_id']; }
+    $shown = array_flip(array_map(fn($a) => (int)$a['article_id'], $articles));
     try {
-        $rows = $db->fetchAll("SELECT page_url, ref_url, ref_domain, COUNT(*) AS visits, MAX(viewed_at) AS last_seen
-                               FROM page_referrers WHERE page_url LIKE '%articles.php?%' GROUP BY page_url, ref_url, ref_domain");
+        $rows = $db->fetchAll("SELECT page_url, ref_domain, COUNT(*) AS visits FROM page_referrers
+                               WHERE page_url LIKE '%articles.php?%' GROUP BY page_url, ref_domain");
     } catch (Throwable $e) { $rows = []; }   // no table yet (before migration step 10): the column shows 0
     foreach ($rows as $r) {
-        $aid = null;
-        if (preg_match('/[?&]id=(\d+)/', $r['page_url'], $m) && isset($byId[(int)$m[1]])) $aid = (int)$m[1];
-        elseif (preg_match('/[?&]slug=([^&#]+)/', $r['page_url'], $m) && isset($bySlug[mb_strtolower(urldecode($m[1]))])) $aid = $bySlug[mb_strtolower(urldecode($m[1]))];
-        if ($aid === null) continue;
-        $b = &$backlinks[$aid];
-        $b['visits'] = ($b['visits'] ?? 0) + (int)$r['visits'];
-        $key = $r['ref_url'];
-        $b['refs'][$key]['domain'] = $r['ref_domain'];
-        $b['refs'][$key]['url']    = $r['ref_url'];
-        $b['refs'][$key]['visits'] = ($b['refs'][$key]['visits'] ?? 0) + (int)$r['visits'];
-        $b['refs'][$key]['last']   = max((string)($b['refs'][$key]['last'] ?? ''), (string)$r['last_seen']);
-        unset($b);
+        $it = backlinkItemOf((string)$r['page_url']);
+        if (!$it || !isset($shown[$it[1]])) continue;
+        $backlinks[$it[1]]['visits'] = ($backlinks[$it[1]]['visits'] ?? 0) + (int)$r['visits'];
+        $backlinks[$it[1]]['domains'][$r['ref_domain']] = true;
     }
-    foreach ($backlinks as &$b) { $b['refs'] = array_values($b['refs']); usort($b['refs'], fn($x, $y) => $y['visits'] <=> $x['visits']); $b['domains'] = count(array_unique(array_column($b['refs'], 'domain'))); }
-    unset($b);
 }
 
 if (isset($_GET['deleted'])) $_SESSION['flash_success'] = 'ลบบทความเรียบร้อยแล้ว';
@@ -309,8 +315,8 @@ include BASE_PATH . '/admin/layout/header.php';
             <td><span class="ne-views"><i class="bi bi-eye"></i><?= number_format($a['view_count']) ?></span></td>
             <td>
               <?php $bl = $backlinks[(int)$a['article_id']] ?? null; if ($bl): ?>
-              <button type="button" class="ne-backlink" data-backlinks="<?= e(json_encode(['title' => $a['title'], 'refs' => $bl['refs']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
-                      title="จาก <?= $bl['domains'] ?> เว็บไซต์ · กดเพื่อดูรายละเอียด"><i class="bi bi-link-45deg"></i><?= number_format($bl['visits']) ?> ครั้ง</button>
+              <button type="button" class="ne-backlink" data-backlinks="<?= (int)$a['article_id'] ?>"
+                      title="จาก <?= count($bl['domains']) ?> เว็บไซต์ · กดเพื่อดูรายละเอียด"><i class="bi bi-link-45deg"></i><?= number_format($bl['visits']) ?> ครั้ง</button>
               <?php else: ?>
               <span class="ne-backlink is-none" title="ยังไม่มีผู้เข้ามาจากเว็บไซต์อื่น">0</span>
               <?php endif; ?>
@@ -381,20 +387,40 @@ document.addEventListener('keydown', function (e) {
     document.body.style.overflow = '';
   }
 });
-// อ้างอิงภายนอก: which outside pages sent visitors to this article (most visits first)
-document.addEventListener('click', function (e) {
+// อ้างอิงภายนอก: the websites that sent visitors to this article — the first 20 (most visits first), fetched on click;
+// "ดูทั้งหมดในหน้า Backlink" opens the report filtered to this article (paging + Excel export there)
+document.addEventListener('click', async function (e) {
   const btn = e.target.closest('.ne-backlink[data-backlinks]');
-  if (!btn) return;
-  const d = JSON.parse(btn.dataset.backlinks);
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  if (!btn || btn.disabled) return;
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const when = s => { const t = new Date(String(s).replace(' ', 'T')); return isNaN(t) ? '-' : t.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + t.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); };
-  const rows = d.refs.map(r => '<tr><td><strong>' + esc(r.domain) + '</strong><br><a href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">' + esc(r.url) + '</a></td>'
-    + '<td class="n">' + r.visits + '</td><td class="n">' + when(r.last) + '</td></tr>').join('');
-  const html = '<p style="margin:0 0 10px;color:#5b6480;font-size:14px">' + esc(d.title) + '</p>'
-    + '<div style="max-height:55vh;overflow:auto"><table class="bl-table"><thead><tr><th>มาจาก (เว็บไซต์ / หน้า)</th><th class="n">ครั้ง</th><th class="n">ล่าสุด</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
-    + '<p style="margin:12px 0 0;font-size:12.5px;color:#5b6480">นับเมื่อผู้ชมกดลิงก์จากเว็บไซต์อื่นเข้ามา (คนเดิมจากลิงก์เดิมภายใน 30 นาทีนับครั้งเดียว) · ดูภาพรวมทั้งเว็บที่ สถิติเว็บไซต์ › Backlink</p>';
-  if (window.Swal) Swal.fire({ title: 'อ้างอิงภายนอก (Backlink)', html: html, width: 760, confirmButtonText: 'ปิด' });
-  else alert(d.refs.map(r => r.domain + ' — ' + r.visits + ' ครั้ง').join('\n'));
+  btn.disabled = true;
+  let d;
+  try {
+    const r = await fetch('?backlinks=' + encodeURIComponent(btn.dataset.backlinks), { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+    const j = await r.json();
+    if (j.status !== 'success') throw new Error(j.message || 'error');
+    d = j.data;
+  } catch (err) {
+    btn.disabled = false;
+    if (window.Swal) Swal.fire({ icon: 'error', title: 'โหลดข้อมูลไม่สำเร็จ', text: 'กรุณาลองใหม่อีกครั้ง' }); else alert('โหลดข้อมูลไม่สำเร็จ');
+    return;
+  }
+  btn.disabled = false;
+  const rows = d.top.map((r, i) => '<tr><td class="n">' + (i + 1) + '</td><td><strong>' + esc(r.domain) + '</strong>'
+    + (r.pages > 1 ? ' <span style="color:#5b6480;font-size:12px">· ' + r.pages + ' หน้า</span>' : '')
+    + (/^https?:\/\//.test(r.sample) ? '<br><a href="' + esc(r.sample) + '" target="_blank" rel="noopener noreferrer">' + esc(r.sample) + '</a>' : '')
+    + '</td><td class="n">' + Number(r.visits).toLocaleString() + '</td><td class="n">' + when(r.last) + '</td></tr>').join('');
+  const more = d.domains > d.top.length ? '<p style="margin:10px 0 0;font-size:13px;color:#5b6480">แสดง ' + d.top.length + ' จาก ' + d.domains.toLocaleString() + ' เว็บไซต์</p>' : '';
+  const html = '<p style="margin:0 0 4px;color:#5b6480;font-size:14px">' + esc(d.title) + '</p>'
+    + '<p style="margin:0 0 12px;font-size:13.5px"><strong>' + d.visits.toLocaleString() + '</strong> ครั้ง จาก <strong>' + d.domains.toLocaleString() + '</strong> เว็บไซต์</p>'
+    + '<div style="max-height:50vh;overflow:auto"><table class="bl-table"><thead><tr><th class="n">#</th><th>เว็บไซต์ (ลิงก์ล่าสุด)</th><th class="n">ครั้ง</th><th class="n">ล่าสุด</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+    + more
+    + '<p style="margin:12px 0 0;font-size:12.5px;color:#5b6480">นับเมื่อผู้ชมกดลิงก์จากเว็บไซต์อื่นเข้ามา (คนเดิมจากลิงก์เดิมภายใน 30 นาทีนับครั้งเดียว)</p>';
+  if (!window.Swal) { alert(d.top.map(r => r.domain + ' — ' + r.visits + ' ครั้ง').join('\n')); return; }
+  const res = await Swal.fire({ title: 'อ้างอิงภายนอก (Backlink)', html: html, width: 780, showCancelButton: true, reverseButtons: true,
+    confirmButtonText: '<i class="bi bi-box-arrow-up-right"></i> ดูทั้งหมดในหน้า Backlink', cancelButtonText: 'ปิด' });
+  if (res.isConfirmed) window.location.href = d.report;
 });
 </script>
 

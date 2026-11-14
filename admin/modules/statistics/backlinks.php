@@ -1,7 +1,7 @@
 <?php
 /**
  * BAIT Admin - สถิติเว็บไซต์ > Backlink: which other websites visitors clicked through from (table page_referrers,
- * written by recordReferrer() in includes/helpers.php). Filters: date range, kind of page landed on, source domain.
+ * written by recordReferrer() in includes/helpers.php). Filters: date range, kind of page landed on, one news item / article (item=news:19), source domain; the Excel export follows them.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/includes/Database.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/includes/Auth.php';
@@ -23,6 +23,9 @@ $types  = pageTypeLabels();
 $type   = getStr('type');
 if (!isset($types[$type])) $type = '';
 $domain = mb_substr(strtolower(getStr('domain')), 0, 100);
+// one news item / article ("news:19", "article:18"): only when the type filter is that kind (picking another type drops it)
+$itemKey = getStr('item'); $itemKind = ''; $itemId = 0; $itemTitle = '';
+if (preg_match('/^(news|article):(\d+)$/', $itemKey, $m) && $m[1] === $type) { $itemKind = $m[1]; $itemId = (int)$m[2]; } else { $itemKey = ''; }
 
 $where = '1=1'; $params = [];
 if ($from !== '')   { $where .= ' AND viewed_at >= ?'; $params[] = $from . ' 00:00:00'; }
@@ -30,7 +33,14 @@ if ($to !== '')     { $where .= ' AND viewed_at < DATE_ADD(?, INTERVAL 1 DAY)'; 
 if ($type !== '')   { $where .= ' AND page_type = ?'; $params[] = $type; }
 if ($domain !== '') { $where .= ' AND ref_domain LIKE ?'; $params[] = '%' . addcslashes($domain, '%_\\') . '%'; }
 
-$keep = array_filter(['from' => $from, 'to' => $to, 'type' => $type, 'domain' => $domain], fn($v) => $v !== '');
+// opened from the articles list's "ดูทั้งหมดในหน้า Backlink" (?type=article&item=article:18): that one article only
+if ($itemKind !== '') {
+    [$isql, $iparams] = backlinkItemWhere($itemKind, $itemId);
+    $where .= ' AND ' . $isql; $params = array_merge($params, $iparams);
+    $itemTitle = (string)($db->fetchOne($itemKind === 'news' ? 'SELECT title FROM news WHERE news_id = ?' : 'SELECT title FROM articles WHERE article_id = ?', [$itemId])['title'] ?? ('#' . $itemId));
+}
+
+$keep = array_filter(['from' => $from, 'to' => $to, 'type' => $type, 'item' => $itemKey, 'domain' => $domain], fn($v) => $v !== '');
 $qs   = fn(array $extra = []) => '?' . http_build_query(array_merge($keep, $extra));
 $pageNo = fn(string $k) => max(1, (int)getStr($k, '1'));
 $pat    = fn(string $k) => $qs() . ($keep ? '&' : '') . $k . '={page}';   // pager address: {page} must stay literal (http_build_query would encode it)
@@ -115,6 +125,7 @@ if ($ready && getStr('export') === 'xlsx') {
         ['หัวข้อ', 'ค่า'],
         ['ช่วงวันที่', $day($from) . ' ถึง ' . $day($to)],
         ['ประเภทเนื้อหา', $type !== '' ? $types[$type] : 'ทั้งหมด'],
+        [$type === 'news' ? 'ข่าว' : 'บทความ', $itemKind !== '' ? $itemTitle : 'ทั้งหมด'],
         ['โดเมนต้นทาง', $domain !== '' ? $domain : 'ทั้งหมด'],
         ['เว็บไซต์ที่อ้างอิงถึงเรา', (int)$stats['domains']],
         ['หน้าเว็บต้นทาง', (int)$stats['pages']],
@@ -127,7 +138,7 @@ if ($ready && getStr('export') === 'xlsx') {
     $x = new SimpleXlsx();
     $x->addSheet('สรุป', $summary, [30, 40]);
     foreach ($sheets as [$name, $rows, $w]) $x->addSheet($name, $rows, $w);
-    $x->download('bait-backlinks-' . date('Ymd') . '.xlsx');
+    $x->download('bait-backlinks' . ($type !== '' ? '-' . $type : '') . ($itemId ? '-' . $itemId : '') . '-' . date('Ymd') . '.xlsx');
 }
 
 $pageTitle   = 'การอ้างอิงจากเว็บไซต์ภายนอก (Backlink)';
@@ -142,6 +153,7 @@ include BASE_PATH . '/admin/layout/header.php';
 .bl-tablewrap { overflow-x: auto; }
 .bl-tablewrap td, .bl-tablewrap .ne-title-link { white-space: normal; }
 .ne-table th.bl-num, .ne-table td.bl-num { text-align: center; white-space: nowrap; }   /* numbers centred under their heading */
+.bl-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 14px; margin: 0 0 16px; border-radius: 10px; background: #FFF7E6; border: 1px solid #F5D9A6; color: #6B4A00; font-size: 14px; }
 </style>
 <div class="ne">
   <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 14px;">
@@ -170,12 +182,20 @@ include BASE_PATH . '/admin/layout/header.php';
         <?php foreach ($types as $k => $label): ?><option value="<?= e($k) ?>"<?= $type === $k ? ' selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?>
       </select>
     </div>
+    <?php if ($itemKind !== ''): ?><input type="hidden" name="item" value="<?= e($itemKey) ?>"><?php endif; ?>
     <div class="ne-filters-field ne-search"><label for="fDomain">โดเมนต้นทาง</label><input type="text" id="fDomain" class="ne-input" name="domain" placeholder="เช่น facebook.com" value="<?= e($domain) ?>"></div>
     <div class="ne-filters-actions">
       <button type="submit" class="ne-btn ne-btn-primary"><i class="bi bi-funnel"></i>แสดงรายงาน</button>
       <a href="?" class="ne-btn ne-btn-ghost">ล้างตัวกรอง</a>
     </div>
   </form>
+
+  <?php if ($itemKind !== ''): ?>
+  <div class="bl-scope"><i class="bi bi-funnel-fill" aria-hidden="true"></i>
+    <span>แสดงเฉพาะ<?= $itemKind === 'news' ? 'ข่าว' : 'บทความ' ?>: <strong><?= e($itemTitle) ?></strong> · ปุ่มส่งออก Excel จะส่งออกเฉพาะรายการนี้</span>
+    <a href="<?= e('?' . http_build_query(array_diff_key($keep, ['item' => 1]))) ?>" style="margin-left:auto;font-weight:600;">ดูทุก<?= $itemKind === 'news' ? 'ข่าว' : 'บทความ' ?></a>
+  </div>
+  <?php endif; ?>
 
   <div class="ne-stat-grid">
     <div class="ne-stat-card"><div class="ne-stat-icon is-blue"><i class="bi bi-globe2"></i></div><div><div class="ne-stat-num"><?= number_format((int)$stats['domains']) ?></div><div class="ne-stat-label">เว็บไซต์ที่อ้างอิงถึงเรา</div></div></div>
