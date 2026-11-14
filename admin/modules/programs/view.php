@@ -15,7 +15,7 @@ $programId = (int)($_GET['id'] ?? 0);
 $program = $db->fetchOne(
     "SELECT p.*, m.major_name, el.level_name
      FROM programs p
-     JOIN majors m ON m.major_id = p.major_id
+     LEFT JOIN majors m ON m.major_id = p.major_id
      JOIN education_levels el ON el.level_id = p.level_id
      WHERE p.program_id = ?",
     [$programId]
@@ -228,7 +228,7 @@ include BASE_PATH . '/admin/layout/header.php';
         <?php endif; ?>
         <div class="ne-hero-meta">
           <span><i class="bi bi-mortarboard"></i><?= e($program['level_name']) ?></span>
-          <span><i class="bi bi-diagram-3"></i><?= e($program['major_name']) ?></span>
+          <span><i class="bi bi-diagram-3"></i><?= e($program['major_name'] ?: 'บัณฑิตศึกษา') ?></span>
         </div>
         <div class="ne-campus-chips">
           <?php if (empty($campusNames)): ?>
@@ -312,7 +312,7 @@ include BASE_PATH . '/admin/layout/header.php';
         <p class="ne-panel-title"><i class="bi bi-list-check"></i>ข้อมูลทั่วไป</p>
         <div class="ne-panel-body">
           <table class="ne-info-table">
-            <tr><td>สาขาวิชา</td><td><?= e($program['major_name']) ?></td></tr>
+            <tr><td>สาขาวิชา</td><td><?= e($program['major_name'] ?: 'บัณฑิตศึกษา') ?></td></tr>
             <tr><td>ระดับการศึกษา</td><td><?= e($program['level_name']) ?></td></tr>
             <tr><td>ศูนย์พื้นที่</td><td><?= e($campusNames ? implode(', ', $campusNames) : 'ทุกศูนย์') ?></td></tr>
             <tr><td>สถานะ</td><td><?= $program['is_active'] ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร' ?></td></tr>
