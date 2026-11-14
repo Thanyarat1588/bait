@@ -185,9 +185,9 @@ if ($mqOpt['enabled'] && $mq['items']):
      filled in yet). -->
 <div class="container">
   <div class="cluster gap-3 reveal" style="justify-content:center;padding-block:28px">
-    <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-accent btn-glass-fx"><?= $t('สมัครเรียน') ?></a>
-    <a href="<?= BASE_URL ?>/programs.php?lang=<?= e($lang) ?>" class="btn btn-secondary btn-glass-fx"><?= $t('ดูหลักสูตร') ?></a>
-    <a href="<?= BASE_URL ?>/tuition.php?lang=<?= e($lang) ?>" class="btn btn-tuition btn-glass-fx"><?= $lang === 'en' ? 'Tuition fees' : 'ค่าเทอม' ?></a>
+    <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-accent"><?= $t('สมัครเรียน') ?></a>
+    <a href="<?= BASE_URL ?>/programs.php?lang=<?= e($lang) ?>" class="btn btn-secondary"><?= $t('ดูหลักสูตร') ?></a>
+    <a href="<?= BASE_URL ?>/tuition.php?lang=<?= e($lang) ?>" class="btn btn-tuition"><?= $lang === 'en' ? 'Tuition fees' : 'ค่าเทอม' ?></a>
   </div>
 </div>
 <?php endif; ?>
@@ -425,9 +425,9 @@ if ($mqOpt['enabled'] && $mq['items']):
     <h2><?= $lang === 'en' ? 'Ready to Join BA&amp;IT?' : 'พร้อมเป็นส่วนหนึ่งของ BA&amp;IT แล้วหรือยัง?' ?></h2>
     <p><?= $lang === 'en' ? 'Take the next step in your education journey with us' : 'ก้าวต่อไปในเส้นทางการศึกษาของคุณไปกับเรา' ?></p>
     <div class="cluster gap-3" style="justify-content:center">
-      <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-pill cta-btn cta-btn--apply btn-glass-fx"><?= icon('graduation-cap', 'icon-sm') ?> <?= $t('สมัครเรียน') ?></a>
-      <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--contact btn-glass-fx"><?= icon('phone', 'icon-sm') ?> <?= $t('ติดต่อเรา') ?></a>
-      <a href="<?= BASE_URL ?>/about.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--visit btn-glass-fx"><?= icon('pin', 'icon-sm') ?> <?= $t('เยี่ยมชมคณะ') ?></a>
+      <a href="https://admis.rmutsb.ac.th/admissions" target="_blank" rel="noopener" class="btn btn-pill cta-btn cta-btn--apply"><?= icon('graduation-cap', 'icon-sm') ?> <?= $t('สมัครเรียน') ?></a>
+      <a href="<?= BASE_URL ?>/contact.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--contact"><?= icon('phone', 'icon-sm') ?> <?= $t('ติดต่อเรา') ?></a>
+      <a href="<?= BASE_URL ?>/about.php?lang=<?= e($lang) ?>" class="btn btn-pill cta-btn cta-btn--visit"><?= icon('pin', 'icon-sm') ?> <?= $t('เยี่ยมชมคณะ') ?></a>
     </div>
   </div>
 </section>

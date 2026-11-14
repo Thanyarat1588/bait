@@ -1074,19 +1074,6 @@ a.tag-chip:hover .badge-soft { background: rgba(255,255,255,.25); color: #fff; }
 .fs-progress i { display: block; height: 100%; width: 25%; border-radius: 2px; background: var(--accent); transition: transform var(--dur-base) linear; }
 @media (prefers-reduced-motion: reduce) { .fs-card, .fs-card img { transition: none; } .fs-card:hover, .fs-card:hover img { transform: none; } }
 
-/* ---------- Glass finish for the home buttons (.btn-glass-fx): same colours and places, plus a glossy top, a light inner
-   rim and a light sweeping across now and then. The gloss sits behind the text (isolation + z-index -1). ---------- */
-.btn.btn-glass-fx { position: relative; isolation: isolate; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,.65), inset 0 -2px 6px rgba(0,0,0,.08), 0 8px 20px rgba(10,30,80,.16);
-  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard), background var(--dur-base), color var(--dur-base), border-color var(--dur-base); }
-.btn.btn-glass-fx::before { content: ""; position: absolute; z-index: -1; inset: 1px 1px 48% 1px; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.08)); pointer-events: none; }
-.btn.btn-glass-fx::after { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -70%; width: 45%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent); transform: skewX(-20deg); pointer-events: none;
-  animation: btnShine 4.2s ease-in-out infinite; }
-.btn.btn-glass-fx:nth-child(2)::after { animation-delay: .5s; }
-.btn.btn-glass-fx:nth-child(3)::after { animation-delay: 1s; }
-.btn.btn-glass-fx:hover, .btn.btn-glass-fx:focus-visible { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 12px 26px rgba(10,30,80,.24); }
-@keyframes btnShine { 0%, 60% { left: -70%; } 100% { left: 130%; } }
-@media (prefers-reduced-motion: reduce) { .btn.btn-glass-fx::after { animation: none; display: none; } .btn.btn-glass-fx:hover { transform: none; } }
-
 .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 120px; gap: 10px; }
 .gallery-grid .gallery-item:first-child { grid-row: span 2; grid-column: span 2; }
 @media (min-width: 768px) { .gallery-grid { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 160px; } }
