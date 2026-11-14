@@ -150,8 +150,8 @@ $cols = $en
       <div class="tu-rules-box">
         <span class="tu-rules-title"><?= icon('book', 'icon-sm') ?> <?= $en ? 'Admission regulations' : 'ระเบียบการคัดเลือกเข้าศึกษา' ?><?= $tuSet['academic_year'] !== '' ? ' ' . ($en ? 'academic year ' : 'ปีการศึกษา ') . e($tuSet['academic_year']) : '' ?></span>
         <div class="tu-info-ctas">
-          <?php foreach ($rulesLinks as [$url, $label]): ?>
-          <a class="btn btn-primary" href="<?= e($url) ?>" target="_blank" rel="noopener"><span class="visually-hidden"><?= $en ? 'Admission regulations,' : 'ระเบียบการคัดเลือกเข้าศึกษา' ?> </span><span><?= $levelRange($label) ?></span> <?= icon('external-link', 'icon-sm') ?><?= $newTab ?></a>
+          <?php foreach ($rulesLinks as $ri => [$url, $label]): ?>
+          <a class="btn <?= $ri === 1 ? 'btn-tuition' : 'btn-primary' ?>" href="<?= e($url) ?>" target="_blank" rel="noopener"><span class="visually-hidden"><?= $en ? 'Admission regulations,' : 'ระเบียบการคัดเลือกเข้าศึกษา' ?> </span><span><?= $levelRange($label) ?></span> <?= icon('external-link', 'icon-sm') ?><?= $newTab ?></a>
           <?php endforeach; ?>
         </div>
       </div>
