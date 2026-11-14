@@ -657,18 +657,18 @@ a.partner-tile:hover { border-color: var(--secondary); background: var(--surface
 .bid-cal.is-empty .bid-cal-d { background: var(--surface-soft); color: var(--ink-faint); }
 .bid-cal.is-empty .bid-cal-m { background: var(--border); }
 .bid-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
-.bid-title { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.6; color: var(--ink); transition: color var(--dur-fast) var(--ease-standard); }
+.bid-title { margin: 0; font-size: 1rem; font-weight: 400; line-height: 1.6; color: var(--ink); transition: color var(--dur-fast) var(--ease-standard); }
 .bid-item.has-link:hover .bid-title, .bid-item.has-link:focus-within .bid-title { color: var(--primary); }   /* the row is pointed at: title turns faculty blue (no underline) */
 .bid-meta { margin: 0; font-size: .8125rem; color: var(--ink-soft); }
-/* documents button: an icon disc + two lines (what / action). The whole row also opens it (stretched link), no underline anywhere.
+/* documents button: an icon disc + two lines (what / action). Only the button opens the documents — clicking elsewhere in
+   the row does nothing; it fills blue only when the button itself is pointed at. No underline anywhere.
    Phones: under the text, lined up with it; from 1024px its own column on the right, centred on the row. */
 .bid-doc { grid-column: 2; justify-self: start; display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 16px 6px 6px;
   border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--surface); color: var(--primary); text-decoration: none;
   box-shadow: var(--shadow-sm); transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard); }
-.bid-doc::after { content: ""; position: absolute; inset: 0; }   /* the whole row is the link */
-.bid-doc:hover, .bid-doc:focus-visible, .bid-item.has-link:hover .bid-doc { text-decoration: none; background: var(--primary); border-color: var(--primary); color: #fff; }
+.bid-doc:hover, .bid-doc:focus-visible { text-decoration: none; background: var(--primary); border-color: var(--primary); color: #fff; }
 .bid-doc-ic { flex: none; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-soft); color: var(--primary); transition: inherit; }
-.bid-doc:hover .bid-doc-ic, .bid-doc:focus-visible .bid-doc-ic, .bid-item.has-link:hover .bid-doc-ic { background: #fff; color: var(--primary); }
+.bid-doc:hover .bid-doc-ic, .bid-doc:focus-visible .bid-doc-ic { background: #fff; color: var(--primary); }
 .bid-doc-ic .icon { width: 18px; height: 18px; }
 .bid-doc-txt { display: flex; flex-direction: column; line-height: 1.3; text-align: left; }
 .bid-doc-txt b { font-size: .875rem; font-weight: 700; white-space: nowrap; }
